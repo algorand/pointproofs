@@ -7,7 +7,7 @@ use ff::PrimeField;
 pub mod veccom;
 
 fn main() {
-    test_paramgen();
+    test_com();
 }
 
 fn test_paramgen() {
@@ -22,7 +22,7 @@ fn test_paramgen() {
     // g1_vec[i] should contain the generator of the G1 group raised to the power alpha^{i+1}
     // g2_vec[j] should contain the generator of the G2 group raised to the power alpha^{j+1}
 
-    let mut dh_values = Vec::new();
+    let mut dh_values = Vec::with_capacity(2*n);
     // dh_values[i] will contains the generator of the target group raised to the power alpha^{i+1}
 
 
@@ -42,5 +42,22 @@ fn test_paramgen() {
             //println!("{:?}", dh_values[i+j+1]==Bls12::pairing(g1_vec[i], g2_vec[j]));
         }
     }
+}
 
+fn test_com() {
+    let n = 10usize;
+    let r = FrRepr([ // arbitrary alpha for now
+        0x25ebe3a3ad3c0c6a,
+        0x6990e39d092e817c,
+        0x941f900d42f5658e,
+        0x44f8a103b38a71e0]);
+    let alpha = Fr::from_repr(r).unwrap();
+    let (g1_vec, _) = veccom::paramgen::paramgen(&alpha, n);
+
+    let mut values = Vec::with_capacity(n);
+    for i in 0..n {
+        let s = format!("this is message number {}", i);
+        values.push(s.into_bytes());
+    }
+    println!("{:?}", veccom::commit::commit(&g1_vec, &values));
 }
