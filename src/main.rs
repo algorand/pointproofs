@@ -4,7 +4,7 @@ use pairing::{bls12_381::*, CurveProjective, Engine};
 use ff::PrimeField;
 
 
-pub mod veccom;
+pub mod veccom_pairings;
 
 fn main() {
     test_paramgen();
@@ -19,7 +19,7 @@ fn test_paramgen() {
         0x941f900d42f5658e,
         0x44f8a103b38a71e0]);
     let alpha = Fr::from_repr(r).unwrap();
-    let (g1_vec, g2_vec, gt_value) = veccom::paramgen::paramgen(&alpha, n);
+    let (g1_vec, g2_vec, gt_value) = veccom_pairings::paramgen::paramgen(&alpha, n);
     // g1_vec[i] should contain the generator of the G1 group raised to the power alpha^{i+1},
     // except g1_vec[n] will contain nothing useful.
     // g2_vec[j] should contain the generator of the G2 group raised to the power alpha^{j+1}.
@@ -63,20 +63,20 @@ fn test_com() {
         0x941f900d42f5658e,
         0x44f8a103b38a71e0]);
     let alpha = Fr::from_repr(r).unwrap();
-    let (g1_vec, g2_vec, gt_value) = veccom::paramgen::paramgen(&alpha, n);
+    let (g1_vec, g2_vec, gt_value) = veccom_pairings::paramgen::paramgen(&alpha, n);
 
     let mut values = Vec::with_capacity(n);
     for i in 0..n {
         let s = format!("this is message number {}", i);
         values.push(s.into_bytes());
     }
-    let com = veccom::commit::commit(&g1_vec, &values);
+    let com = veccom_pairings::commit::commit(&g1_vec, &values);
 
     for i in 0..n {
-        let proof = veccom::prove::prove(&g1_vec, &values, i);
+        let proof = veccom_pairings::prove::prove(&g1_vec, &values, i);
         let wrong_string = format!("wrong string").into_bytes();
-        print!("{} ", veccom::verify::verify(&g2_vec, &gt_value, &com, &proof, &values[i], i));
-        println!("{} ", veccom::verify::verify(&g2_vec, &gt_value, &com, &proof, &wrong_string, i));
+        print!("{} ", veccom_pairings::verify::verify(&g2_vec, &gt_value, &com, &proof, &values[i], i));
+        println!("{} ", veccom_pairings::verify::verify(&g2_vec, &gt_value, &com, &proof, &wrong_string, i));
     }
 
 }

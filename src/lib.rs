@@ -1,3 +1,3 @@
 extern crate ff;
 extern crate pairing;
-pub mod veccom;
+pub mod veccom_pairings;
