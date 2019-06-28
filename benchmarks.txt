@@ -1,0 +1,33 @@
+committing to an n-vector: 270n microseconds
+proving a single element in an n-vector: 270n microseconds
+verifying a single proof: 5400 microseconds (regardless of n)
+updating a proof: 270 microseconds (regardless of n)
+updating a commitment: 270 microseconds (regardless of n)
+
+commitments and proofs are 48 bytes
+
+Room for improvement on individual operations:
+- Using multi-exponentiation and fixed-based precomputation, commit and prove can each be improved by about 5x-10x
+- Using fixed-based precomputation, updating commitments and proofs can be improved by about 2x-4x
+- Verifying cannot be improved much -- I'd be surprised if we could get 1.5x improvement
+
+Room for improvement via batching:
+- Proving for multiple values on a single commitment will cost at most 2x proving for a single value (as long as you produce a single combined proof, which will require all the values to which it refers in order to verify)
+- Verifying for multiple values on a single commitment should cost about the same as verifying a single value
+- Proofs for multiple values on the same commitment can be combined, and will remain 48 bytes
+
+
+~/RustProjects/veccom-rust/src> cargo bench
+   Compiling veccom v0.1.0 (/Users/reyzin/RustProjects/veccom-rust)
+    Finished release [optimized] target(s) in 2.43s
+     Running /Users/reyzin/RustProjects/veccom-rust/target/release/deps/veccom-c24313e5100a1949
+
+running 7 tests
+test veccom_pairings::tests::test_com ... ignored
+test veccom_pairings::tests::test_paramgen ... ignored
+test veccom_pairings::tests::bench_com           ... bench: 269,474,446 ns/iter (+/- 2,342,450)
+test veccom_pairings::tests::bench_commit_update ... bench:     275,024 ns/iter (+/- 3,721)
+test veccom_pairings::tests::bench_proof_update  ... bench:     271,164 ns/iter (+/- 4,119)
+test veccom_pairings::tests::bench_prove         ... bench: 269,051,170 ns/iter (+/- 2,396,572)
+test veccom_pairings::tests::bench_verify        ... bench:   5,409,661 ns/iter (+/- 38,217)
+
