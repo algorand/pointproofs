@@ -1,3 +1,5 @@
+Benchmarks on 3.1GHz Intel Core i5 (macOS Mojave 10.14.5)
+
 committing to an n-vector: 270n microseconds
 proving a single element in an n-vector: 270n microseconds
 verifying a single proof: 5400 microseconds (regardless of n)
@@ -14,7 +16,7 @@ Room for improvement on individual operations:
 Room for improvement via batching:
 - Proving for multiple values on a single commitment will cost at most 2x proving for a single value (as long as you produce a single combined proof, which will require all the values to which it refers in order to verify)
 - Verifying for multiple values on a single commitment should cost about the same as verifying a single value
-- Proofs for multiple values on the same commitment can be combined, and will remain 48 bytes
+- Proofs for multiple values on the same commitment can be combined very cheaply, and will remain 48 bytes
 
 
 ~/RustProjects/veccom-rust/src> cargo bench
