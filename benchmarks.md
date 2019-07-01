@@ -2,11 +2,11 @@
 
 ## Pairing-based scheme
 
-committing to an n-vector: 270n microseconds
-proving a single element in an n-vector: 270n microseconds
-verifying a single proof: 5400 microseconds (regardless of n)
-updating a proof: 270 microseconds (regardless of n)
-updating a commitment: 270 microseconds (regardless of n)
+- committing to an n-vector: 270n microseconds
+- proving a single element in an n-vector: 270n microseconds
+- verifying a single proof: 5400 microseconds (regardless of n)
+- updating a proof: 270 microseconds (regardless of n)
+- updating a commitment: 270 microseconds (regardless of n)
 
 commitments and proofs are 48 bytes
 
@@ -22,6 +22,7 @@ commitments and proofs are 48 bytes
 
 ### Benchmarking output for the pairing-based scheme
 
+```
 ~/RustProjects/veccom-rust/src> cargo bench
    Compiling veccom v0.1.0 (/Users/reyzin/RustProjects/veccom-rust)
     Finished release [optimized] target(s) in 2.43s
@@ -35,14 +36,15 @@ test veccom_pairings::tests::bench_commit_update ... bench:     275,024 ns/iter 
 test veccom_pairings::tests::bench_proof_update  ... bench:     271,164 ns/iter (+/- 4,119)
 test veccom_pairings::tests::bench_prove         ... bench: 269,051,170 ns/iter (+/- 2,396,572)
 test veccom_pairings::tests::bench_verify        ... bench:   5,409,661 ns/iter (+/- 38,217)
+```
 
 ## Merkle-based scheme
 
-committing to an n-vector: 1.2*n microseconds
-proving a single element in an n-vector: once commitment is done, essentially free (though in the current implementation we don't cache enough data and recomput each proof from scratch -- this should be fixed)
-verifying a single proof: 8 microseconds (for n = 1000)
-updating a proof: 6 microseconds (for n = 1000)
-updating a commitment: 8 microseconds (for n = 1000)
+- committing to an n-vector: 1.2*n microseconds
+- proving a single element in an n-vector: once commitment is done, essentially free (though in the current implementation we don't cache enough data and recomput each proof from scratch -- this should be fixed)
+- verifying a single proof: 8 microseconds (for n = 1000)
+- updating a proof: 6 microseconds (for n = 1000)
+- updating a commitment: 8 microseconds (for n = 1000)
 
 commitments are 32 bytes long; and proofs are 32 * log_2 n bytes
 
@@ -52,9 +54,11 @@ If enough proofs within the same tree are batched, total length goes down (reali
 
 
 ### Benchmarking output for the Merkle-based scheme
+```
 test veccom_merkle::tests::bench_com             ... bench:   1,186,305 ns/iter (+/- 14,333)
 test veccom_merkle::tests::bench_commit_update   ... bench:       7,845 ns/iter (+/- 117)
 test veccom_merkle::tests::bench_proof_update    ... bench:       6,390 ns/iter (+/- 173)
 test veccom_merkle::tests::bench_prove           ... bench:   1,171,829 ns/iter (+/- 30,216)
 test veccom_merkle::tests::bench_verify          ... bench:       7,924 ns/iter (+/- 1,873)
+```
 
