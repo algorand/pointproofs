@@ -11,5 +11,6 @@ pub fn paramgen(n : usize) -> Params {
     for i in 0..8 {
         n_bytes[i] = ((n>>(i*8)) & 0xff) as u8;
     }
-    Params {n, n_bytes, max_depth}
+    let hash_len = 32;
+    Params {n, n_bytes, max_depth, hash_len}
 }

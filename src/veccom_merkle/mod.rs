@@ -3,7 +3,8 @@
 pub struct Params {
     n : usize,
     n_bytes : [u8; 8],
-    max_depth : usize
+    max_depth : usize,
+    hash_len : usize
 }
 
 
@@ -65,28 +66,16 @@ mod tests {
             // Copy over the proof of the updated value in order to avoid mutable borrow isues in the proof_update
             let mut proof_of_updated_value = Vec::new();
             for k in 0..proofs[i].len() {
-                proof_of_updated_value.push (Vec::new());
-                for l in 0..proofs[i][k].len() {
-                    proof_of_updated_value[k].push(proofs[i][k][l]);
-                }   
+                proof_of_updated_value.push(proofs[i][k]);
             }
             // update proofs of other values
             for j in 0..n {
-                println!("{} {}", i, j);
                 // Old proofs should not verify when i!=j, regardless of whether they are for the old or the new value
                 if i!=j {
                     assert!(!verify(&params, &com, &proofs[j], &values[j], j));
                     assert!(!verify(&params,  &com, &proofs[j], &new_values[j], j));
                 }
-                println!("Old  proof for index {}", j);
-                for k in 0..proofs[j].len() {
-                    println!("       {}", print_bytes(&proofs[j][k]));
-                }
-                println!("New proof for index {}", j);
                 proof_update(&params, &mut proofs[j], j, i, &proof_of_updated_value, &new_values[i]);
-                for k in 0..proofs[j].len() {
-                    println!("       {}", print_bytes(&proofs[j][k]));
-                }
                 if j<=i {
                     assert!(verify(&params, &com, &proofs[j], &new_values[j], j));
                     assert!(!verify(&params, &com, &proofs[j], &values[j], j));
@@ -100,7 +89,6 @@ mod tests {
 
     
     #[bench]
-    #[ignore]
     fn bench_com(b: &mut Bencher) {
         let n = 1000usize;
 
@@ -118,7 +106,6 @@ mod tests {
     }
 
     #[bench]
-    #[ignore]
     fn bench_prove(b: &mut Bencher) {
         let n = 1000usize;
 
@@ -138,8 +125,6 @@ mod tests {
     }
 
     #[bench]
-    #[ignore]
-
     fn bench_verify(b: &mut Bencher) {
         let n = 1000usize;
 
@@ -164,8 +149,6 @@ mod tests {
     }
 
     #[bench]
-    #[ignore]
-
     fn bench_commit_update(b: &mut Bencher) {
         let n = 1000usize;
 
@@ -192,8 +175,6 @@ mod tests {
     }
 
     #[bench]
-    #[ignore]
-
     fn bench_proof_update(b: &mut Bencher) {
         let n = 1000usize;
         let update_index = n/2;  // We will update message number n/2 and then benchmark changing proofs for others
@@ -215,10 +196,7 @@ mod tests {
         // Copy over the proof of the updated value in order to avoid mutable borrow isues in the proof_update
         let mut proof_of_updated_value = Vec::new();
         for i in 0..proofs[update_index].len() {
-            proof_of_updated_value.push (Vec::new());
-            for j in 0..proofs[update_index][i].len() {
-                proof_of_updated_value[i].push(proofs[update_index][i][j]);
-            }
+            proof_of_updated_value.push(proofs[update_index][i]);
         }
 
         let new_value = format!("this is new message number {}", update_index).into_bytes();

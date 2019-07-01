@@ -1,4 +1,6 @@
-Benchmarks on 3.1GHz Intel Core i5 (macOS Mojave 10.14.5)
+# Benchmarks on 3.1GHz Intel Core i5 (macOS Mojave 10.14.5)
+
+## Pairing-based scheme
 
 committing to an n-vector: 270n microseconds
 proving a single element in an n-vector: 270n microseconds
@@ -8,16 +10,17 @@ updating a commitment: 270 microseconds (regardless of n)
 
 commitments and proofs are 48 bytes
 
-Room for improvement on individual operations:
+### Room for improvement on individual operations:
 - Using multi-exponentiation and fixed-based precomputation, commit and prove can each be improved by about 5x-10x
 - Using fixed-based precomputation, updating commitments and proofs can be improved by about 2x-4x
 - Verifying cannot be improved much -- I'd be surprised if we could get 1.5x improvement
 
-Room for improvement via batching:
+### Room for improvement via batching:
 - Proving for multiple values on a single commitment will cost at most 2x proving for a single value (as long as you produce a single combined proof, which will require all the values to which it refers in order to verify)
 - Verifying for multiple values on a single commitment should cost about the same as verifying a single value
 - Proofs for multiple values on the same commitment can be combined very cheaply, and will remain 48 bytes
 
+### Benchmarking output for the pairing-based scheme
 
 ~/RustProjects/veccom-rust/src> cargo bench
    Compiling veccom v0.1.0 (/Users/reyzin/RustProjects/veccom-rust)
@@ -32,4 +35,26 @@ test veccom_pairings::tests::bench_commit_update ... bench:     275,024 ns/iter 
 test veccom_pairings::tests::bench_proof_update  ... bench:     271,164 ns/iter (+/- 4,119)
 test veccom_pairings::tests::bench_prove         ... bench: 269,051,170 ns/iter (+/- 2,396,572)
 test veccom_pairings::tests::bench_verify        ... bench:   5,409,661 ns/iter (+/- 38,217)
+
+## Merkle-based scheme
+
+committing to an n-vector: 1.2*n microseconds
+proving a single element in an n-vector: once commitment is done, essentially free (though in the current implementation we don't cache enough data and recomput each proof from scratch -- this should be fixed)
+verifying a single proof: 8 microseconds (for n = 1000)
+updating a proof: 6 microseconds (for n = 1000)
+updating a commitment: 8 microseconds (for n = 1000)
+
+commitments are 32 bytes long; and proofs are 32 * log_2 n bytes
+
+### Room for improvement via batching:
+
+If enough proofs within the same tree are batched, total length goes down (realistic to see about 2x savings) and total verification times goes down by about the same factor
+
+
+### Benchmarking output for the Merkle-based scheme
+test veccom_merkle::tests::bench_com             ... bench:   1,186,305 ns/iter (+/- 14,333)
+test veccom_merkle::tests::bench_commit_update   ... bench:       7,845 ns/iter (+/- 117)
+test veccom_merkle::tests::bench_proof_update    ... bench:       6,390 ns/iter (+/- 173)
+test veccom_merkle::tests::bench_prove           ... bench:   1,171,829 ns/iter (+/- 30,216)
+test veccom_merkle::tests::bench_verify          ... bench:       7,924 ns/iter (+/- 1,873)
 

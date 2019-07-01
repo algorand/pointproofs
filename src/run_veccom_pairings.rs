@@ -47,7 +47,8 @@ pub fn run_veccom_pairings() {
     let new_value = s.into_bytes();
 
     let new_com = commit_update(&prover_params, &old_com, update_index, &old_values[update_index], &new_value);
-    println!("New Commitment:  {}", print_48_bytes(old_commitment_bytes));
+    let new_commitment_bytes = convert_commitment_to_bytes(&new_com);
+    println!("New Commitment:  {}", print_48_bytes(new_commitment_bytes));
 
     assert!(verify(&verifier_params, &new_com, &proofs[update_index], &new_value, update_index));
     assert!(!verify(&verifier_params, &new_com, &proofs[update_index], &old_values[update_index], update_index));
