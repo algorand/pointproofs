@@ -28,7 +28,7 @@ pub fn commit_update(prover_params: &ProverParams, com : &G1, changed_index : us
     new_com
 }
 
-// convert a proof (which is a projective G1 element) into a string of 48 bytes
+// convert a commitment (which is a projective G1 element) into a string of 48 bytes
 // Copied from the bls library
 pub fn convert_commitment_to_bytes (commitment: &G1) -> [u8; 48] {
     let s = pairing::bls12_381::G1Compressed::from_affine(commitment.into_affine());
@@ -37,7 +37,7 @@ pub fn convert_commitment_to_bytes (commitment: &G1) -> [u8; 48] {
     out
 }
   
-// take an array of 48 bytes and output a proof
+// take an array of 48 bytes and output a commitment
 // Copied from the bls library
 pub fn convert_bytes_to_commitment (input : &[u8; 48]) -> G1 {
     let mut commitment_compressed = G1Compressed::empty();

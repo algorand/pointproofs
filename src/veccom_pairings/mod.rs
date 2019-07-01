@@ -97,9 +97,11 @@ mod tests {
             assert!(verify(&verifier_params, &com, &proofs[i], &new_values[i], i));
             // update proofs of other values
             for j in 0..n {
-                // Old proofs should not verify, regardless of whether they are for the old or the new value
-                assert!(!verify(&verifier_params, &com, &proofs[j], &values[j], j));
-                assert!(!verify(&verifier_params,  &com, &proofs[j], &values[j], j));
+                // Old proofs should not verify for i!=j regardless of whether they are for the old or the new value
+                if i!=j {
+                    assert!(!verify(&verifier_params, &com, &proofs[j], &values[j], j));
+                    assert!(!verify(&verifier_params, &com, &proofs[j], &new_values[j], j));
+                }
                 proofs[j] = proof_update(&prover_params, &proofs[j], j, i, &values[i], &new_values[i]);
                 if j<=i {
                     assert!(verify(&verifier_params, &com, &proofs[j], &new_values[j], j));
