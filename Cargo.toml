@@ -10,6 +10,10 @@
   # Remember to change version string in README.md.
   version = "0.1.0"
 
+[lib]
+  name = "veccom"
+  crate-type = ["staticlib"]
+
 [dependencies]
   rand = "0.4"
   pairing = { path = "../pairing-fork" }
