@@ -24,11 +24,11 @@ func TestCommit(t *testing.T) {
 	for i := 0; i < n; i++ {
 		pf := p.Prove(values, i)
 		proofs = append(proofs, pf)
-		fmt.Printf("Old Proof %d: %s\n", i, hex.EncodeToString(pf[:]))
+		fmt.Printf("Old Proof %d: %s\n", i, hex.EncodeToString(pf.Proof[:]))
 	}
 
 	for i := 0; i < n; i++ {
-		if !v.Verify(com, proofs[i], values[i], i) {
+		if !v.Verify(com, proofs[i], values[i]) {
 			t.Errorf("Could not verify proof %d\n", i)
 		}
 	}
@@ -44,18 +44,18 @@ func TestCommit(t *testing.T) {
 
 	var newproofs []Proof
 	for i := 0; i < n; i++ {
-		npf := p.ProofUpdate(proofs[i], i, update_idx, values[update_idx], newval)
+		npf := p.ProofUpdate(proofs[i], update_idx, values[update_idx], newval)
 		newproofs = append(newproofs, npf)
-		fmt.Printf("New Proof %d: %s\n", i, hex.EncodeToString(npf[:]))
+		fmt.Printf("New Proof %d: %s\n", i, hex.EncodeToString(npf.Proof[:]))
 	}
 
 	values[update_idx] = newval
 
 	for i := 0; i < n; i++ {
-		if v.Verify(com, newproofs[i], values[i], i) {
+		if v.Verify(com, newproofs[i], values[i]) {
 			t.Errorf("Verified new proof %d against old commitment", i)
 		}
-		if !v.Verify(newcom, newproofs[i], values[i], i) {
+		if !v.Verify(newcom, newproofs[i], values[i]) {
 			t.Errorf("Could not verify new proof %d", i)
 		}
 	}
