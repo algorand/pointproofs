@@ -48,6 +48,12 @@ pub fn proof_update(prover_params: &ProverParams, proof : &G1, proof_index : usi
     }
 }
 
+// write a proof (which is a projective G1 element) into a 48-byte slice
+pub fn write_proof_into_slice(proof: &G1, out: &mut [u8]) {
+    let s = pairing::bls12_381::G1Compressed::from_affine(proof.into_affine());
+    out.copy_from_slice(s.as_ref());
+}
+
 // convert a proof (which is a projective G1 element) into a string of 48 bytes
 // Copied from the bls library
 pub fn convert_proof_to_bytes (proof: &G1) -> [u8; 48] {

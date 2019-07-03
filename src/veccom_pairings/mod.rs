@@ -13,6 +13,7 @@ pub mod paramgen;
 pub mod commit;
 pub mod prove;
 pub mod verify;
+pub mod c_api;
 
 #[cfg(test)]
 mod tests {
