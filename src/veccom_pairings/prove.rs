@@ -65,7 +65,7 @@ pub fn convert_proof_to_bytes (proof: &G1) -> [u8; 48] {
   
 // take an array of 48 bytes and output a proof
 // Copied from the bls library
-pub fn convert_bytes_to_proof (input : &[u8; 48]) -> G1 {
+pub fn convert_bytes_to_proof (input : &[u8]) -> G1 {
     let mut proof_compressed = G1Compressed::empty();
     proof_compressed
         .as_mut()
