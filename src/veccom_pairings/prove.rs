@@ -2,7 +2,7 @@ use pairing::{bls12_381::*, CurveAffine, CurveProjective, EncodedPoint};
 use ff::Field;
 use super::ProverParams;
 
-pub fn prove(prover_params: &ProverParams, values: &[Vec<u8>], index : usize) -> G1 {
+pub fn prove(prover_params: &ProverParams, values: &[&[u8]], index : usize) -> G1 {
     // TODO: error handling if the prover params length is not double values length
     // TODO: figure out if the input for values is the right one to use
     let n = values.len();

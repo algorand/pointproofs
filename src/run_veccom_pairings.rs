@@ -19,12 +19,17 @@ pub fn run_veccom_pairings() {
 
     let (prover_params, verifier_params) = paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n);
 
-    let mut old_values = Vec::with_capacity(n);
+    let mut init_values: Vec<Vec<u8>> = Vec::with_capacity(n);
     println!("Commiting to the following {} strings", n);
     for i in 0..n {
         let s = format!("this is message number {}", i);
         println!("{}", s);
-        old_values.push(s.into_bytes());
+        init_values.push(s.into_bytes());
+    }
+
+    let mut old_values: Vec<&[u8]> = Vec::with_capacity(n);
+    for i in 0..n {
+        old_values.push(&init_values[i]);
     }
 
     let old_com = commit(&prover_params, &old_values);
