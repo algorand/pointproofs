@@ -34,7 +34,7 @@ func TestCommit(t *testing.T) {
 	}
 
 	update_idx := n/2
-	newmsg := fmt.Sprintf("this is new message number %d", update_idx)
+	newmsg := fmt.Sprintf("\"this is new message number %d\"", update_idx)
 	newval := []byte(newmsg)
 
 	fmt.Printf("Updating string %d to \"%s\"\n", update_idx, newmsg)
