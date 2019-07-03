@@ -10,7 +10,12 @@ fn main() {
   let output_file_buf = target_dir.join(format!("{}.h", package_name));
   let output_file = output_file_buf.to_str().unwrap();
 
-  let hdrgen = cbindgen::generate(&crate_dir).unwrap();
+  let config = cbindgen::Config {
+    language: cbindgen::Language::C,
+    ..Default::default()
+  };
+
+  let hdrgen = cbindgen::generate_with_config(&crate_dir, config).unwrap();
   hdrgen.write_to_file(&output_file);
 }
 
