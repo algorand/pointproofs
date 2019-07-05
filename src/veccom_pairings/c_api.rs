@@ -113,6 +113,12 @@ pub extern fn vcp_verify(verifier: *const ffi::c_void, comptr: *const u8, proofp
 }
 
 #[no_mangle]
+pub extern fn vcp_bench_bytes_to_g1(comptr: *const u8) {
+  let combuf = unsafe { slice::from_raw_parts(comptr, 48) };
+  super::prove::convert_bytes_to_proof(&combuf);
+}
+
+#[no_mangle]
 pub extern fn vcp_bench_bytes_to_g1_to_bytes(comptr: *const u8, pout: *mut u8) {
   let combuf = unsafe { slice::from_raw_parts(comptr, 48) };
   let com = super::prove::convert_bytes_to_proof(&combuf);
