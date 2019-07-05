@@ -48,7 +48,7 @@ func release_verifier(v *Verifier) {
 
 func vcp_value(buf []byte) C.vcp_value {
 	return C.vcp_value{
-		buf: (*C.uchar)(&buf[0]),
+		buf:    (*C.uchar)(&buf[0]),
 		buflen: C.size_t(len(buf)),
 	}
 }

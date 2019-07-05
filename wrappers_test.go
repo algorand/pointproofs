@@ -34,7 +34,7 @@ func TestCommit(t *testing.T) {
 		}
 	}
 
-	update_idx := n/2
+	update_idx := n / 2
 	newmsg := fmt.Sprintf("\"this is new message number %d\"", update_idx)
 	newval := []byte(newmsg)
 
@@ -110,13 +110,13 @@ func BenchmarkOps(b *testing.B) {
 
 	Np := 10
 	var proofs []Proof
-	for i := 0; i < N; i += N/Np {
+	for i := 0; i < N; i += N / Np {
 		proofs = append(proofs, p.Prove(values, i))
 	}
 
 	b.Run("Verify", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			x := i%Np
+			x := i % Np
 			if !v.Verify(com, proofs[x], values[x*N/Np]) {
 				b.Errorf("Could not verify proof %d", x)
 			}
@@ -125,7 +125,7 @@ func BenchmarkOps(b *testing.B) {
 
 	b.Run("CommitUpdate", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			x := i%N
+			x := i % N
 			newval := []byte(fmt.Sprintf("this is new message number %d", x))
 			p.CommitUpdate(com, x, values[x], newval)
 		}
@@ -133,8 +133,8 @@ func BenchmarkOps(b *testing.B) {
 
 	b.Run("ProofUpdate", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			x := i%Np
-			v := rand.Int()%N
+			x := i % Np
+			v := rand.Int() % N
 			newval := []byte(fmt.Sprintf("this is new message number %d", v))
 			p.ProofUpdate(proofs[x], v, values[v], newval)
 		}
