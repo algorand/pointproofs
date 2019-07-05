@@ -87,6 +87,15 @@ func BenchmarkOps(b *testing.B) {
 
 	com := p.Commit(values)
 
+	b.Run("BytesToG1ToBytes", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			com2 := benchBytesToG1ToBytes(com)
+			if com != com2 {
+				b.Errorf("BytesToG1ToBytes mismatch")
+			}
+		}
+	})
+
 	b.Run("Prove", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			p.Prove(values, i%N)

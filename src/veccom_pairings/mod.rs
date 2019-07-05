@@ -231,12 +231,7 @@ mod tests {
         let mut com = commit(&prover_params, &old_values);
         let mut i : usize = 0;
         b.iter(|| {
-            if old_value[i] {
-                com = commit_update(&prover_params, &com, i, &old_values[i], &new_values[i])
-            }
-            else {
-                com = commit_update(&prover_params, &com, i, &new_values[i], &old_values[i])
-            }
+            commit_update(&prover_params, &com, i, &old_values[i], &new_values[i]);
             old_value[i] = !old_value[i];
             i = (i+1)%n;
         });

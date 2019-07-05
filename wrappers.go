@@ -97,3 +97,8 @@ func (p *Prover) CommitUpdate(com Commitment, changedidx int, oldval []byte, new
 		vcp_value(oldval), vcp_value(newval), (*C.uchar)(&out[0]))
 	return
 }
+
+func benchBytesToG1ToBytes(com Commitment) (out Commitment) {
+	C.vcp_bench_bytes_to_g1_to_bytes((*C.uchar)(&com[0]), (*C.uchar)(&out[0]))
+	return
+}
