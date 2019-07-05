@@ -45,13 +45,17 @@ func release_verifier(v *Verifier) {
 	C.vcp_free_verifier_params(v.ptr)
 }
 
+func vcp_value(buf []byte) C.vcp_value {
+	return C.vcp_value{
+		buf: (*C.uchar)(&buf[0]),
+		buflen: C.size_t(len(buf)),
+	}
+}
+
 func (p *Prover) Commit(vals [][]byte) (out Commitment) {
 	var valbufs []C.vcp_value
 	for _, val := range vals {
-		valbufs = append(valbufs, C.vcp_value{
-			buf: (*C.uchar)(&val[0]),
-			buflen: C.size_t(len(val)),
-		})
+		valbufs = append(valbufs, vcp_value(val))
 	}
 
 	C.vcp_commit(p.ptr, (*C.vcp_value)(&valbufs[0]), C.size_t(len(valbufs)), (*C.uchar)(&out[0]))
@@ -61,10 +65,7 @@ func (p *Prover) Commit(vals [][]byte) (out Commitment) {
 func (p *Prover) Prove(vals [][]byte, idx int) (out Proof) {
 	var valbufs []C.vcp_value
 	for _, val := range vals {
-		valbufs = append(valbufs, C.vcp_value{
-			buf: (*C.uchar)(&val[0]),
-			buflen: C.size_t(len(val)),
-		})
+		valbufs = append(valbufs, vcp_value(val))
 	}
 
 	C.vcp_prove(p.ptr, (*C.vcp_value)(&valbufs[0]), C.size_t(len(valbufs)), C.size_t(idx), (*C.uchar)(&out.Proof[0]))
@@ -74,40 +75,20 @@ func (p *Prover) Prove(vals [][]byte, idx int) (out Proof) {
 
 func (v *Verifier) Verify(com Commitment, proof Proof, val []byte) bool {
 	r := C.vcp_verify(v.ptr, (*C.uchar)(&com[0]), (*C.uchar)(&proof.Proof[0]),
-		C.vcp_value{
-			buf: (*C.uchar)(&val[0]),
-			buflen: C.size_t(len(val)),
-		},
-		C.size_t(proof.Index))
+		vcp_value(val), C.size_t(proof.Index))
 
 	return bool(r)
 }
 
 func (p *Prover) ProofUpdate(proof Proof, changedidx int, oldval []byte, newval []byte) (out Proof) {
 	C.vcp_proof_update(p.ptr, (*C.uchar)(&proof.Proof[0]), C.size_t(proof.Index), C.size_t(changedidx),
-		C.vcp_value{
-			buf: (*C.uchar)(&oldval[0]),
-			buflen: C.size_t(len(oldval)),
-		},
-		C.vcp_value{
-			buf: (*C.uchar)(&newval[0]),
-			buflen: C.size_t(len(newval)),
-		},
-		(*C.uchar)(&out.Proof[0]))
+		vcp_value(oldval), vcp_value(newval), (*C.uchar)(&out.Proof[0]))
 	out.Index = proof.Index
 	return
 }
 
 func (p *Prover) CommitUpdate(com Commitment, changedidx int, oldval []byte, newval []byte) (out Commitment) {
 	C.vcp_commit_update(p.ptr, (*C.uchar)(&com[0]), C.size_t(changedidx),
-		C.vcp_value{
-			buf: (*C.uchar)(&oldval[0]),
-			buflen: C.size_t(len(oldval)),
-		},
-		C.vcp_value{
-			buf: (*C.uchar)(&newval[0]),
-			buflen: C.size_t(len(newval)),
-		},
-		(*C.uchar)(&out[0]))
+		vcp_value(oldval), vcp_value(newval), (*C.uchar)(&out[0]))
 	return
 }

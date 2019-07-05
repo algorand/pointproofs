@@ -3,6 +3,7 @@ package veccom
 import (
 	"encoding/hex"
 	"fmt"
+	"math/rand"
 	"testing"
 )
 
@@ -59,4 +60,68 @@ func TestCommit(t *testing.T) {
 			t.Errorf("Could not verify new proof %d", i)
 		}
 	}
+}
+
+func BenchmarkOps(b *testing.B) {
+	seed := []byte("This is Leo's Favourite Seed")
+	N := 1000
+
+	b.Run("ParamGen", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			ParamGen(seed, N)
+		}
+	})
+
+	p, v := ParamGen(seed, N)
+
+	var values [][]byte
+	for i := 0; i < N; i++ {
+		values = append(values, []byte(fmt.Sprintf("this is old message number %d", i)))
+	}
+
+	b.Run("Commit", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			p.Commit(values)
+		}
+	})
+
+	com := p.Commit(values)
+
+	b.Run("Prove", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			p.Prove(values, i%N)
+		}
+	})
+
+	Np := 10
+	var proofs []Proof
+	for i := 0; i < N; i += N/Np {
+		proofs = append(proofs, p.Prove(values, i))
+	}
+
+	b.Run("Verify", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			x := i%Np
+			if !v.Verify(com, proofs[x], values[x*N/Np]) {
+				b.Errorf("Could not verify proof %d", x)
+			}
+		}
+	})
+
+	b.Run("CommitUpdate", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			x := i%N
+			newval := []byte(fmt.Sprintf("this is new message number %d", x))
+			p.CommitUpdate(com, x, values[x], newval)
+		}
+	})
+
+	b.Run("ProofUpdate", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			x := i%Np
+			v := rand.Int()%N
+			newval := []byte(fmt.Sprintf("this is new message number %d", v))
+			p.ProofUpdate(proofs[x], v, values[v], newval)
+		}
+	})
 }
