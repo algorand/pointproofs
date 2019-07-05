@@ -5,6 +5,7 @@ package veccom
 import "C"
 
 import (
+	"math"
 	"runtime"
 	"unsafe"
 )
@@ -52,23 +53,28 @@ func vcp_value(buf []byte) C.vcp_value {
 	}
 }
 
-func (p *Prover) Commit(vals [][]byte) (out Commitment) {
-	var valbufs []C.vcp_value
-	for _, val := range vals {
-		valbufs = append(valbufs, vcp_value(val))
+func vcp_values(vals [][]byte) *C.vcp_value {
+	p := (*C.vcp_value)(C.malloc(C.size_t(len(vals)) * C.sizeof_vcp_value))
+	arr := (*[math.MaxUint32]C.vcp_value)(unsafe.Pointer(p))
+	for i, v := range vals {
+		arr[i] = vcp_value(v)
 	}
+	return p
+}
 
-	C.vcp_commit(p.ptr, (*C.vcp_value)(&valbufs[0]), C.size_t(len(valbufs)), (*C.uchar)(&out[0]))
+func (p *Prover) Commit(vals [][]byte) (out Commitment) {
+	valbufs := vcp_values(vals)
+	defer C.free(unsafe.Pointer(valbufs))
+
+	C.vcp_commit(p.ptr, valbufs, C.size_t(len(vals)), (*C.uchar)(&out[0]))
 	return
 }
 
 func (p *Prover) Prove(vals [][]byte, idx int) (out Proof) {
-	var valbufs []C.vcp_value
-	for _, val := range vals {
-		valbufs = append(valbufs, vcp_value(val))
-	}
+	valbufs := vcp_values(vals)
+	defer C.free(unsafe.Pointer(valbufs))
 
-	C.vcp_prove(p.ptr, (*C.vcp_value)(&valbufs[0]), C.size_t(len(valbufs)), C.size_t(idx), (*C.uchar)(&out.Proof[0]))
+	C.vcp_prove(p.ptr, valbufs, C.size_t(len(vals)), C.size_t(idx), (*C.uchar)(&out.Proof[0]))
 	out.Index = idx
 	return
 }
@@ -76,7 +82,6 @@ func (p *Prover) Prove(vals [][]byte, idx int) (out Proof) {
 func (v *Verifier) Verify(com Commitment, proof Proof, val []byte) bool {
 	r := C.vcp_verify(v.ptr, (*C.uchar)(&com[0]), (*C.uchar)(&proof.Proof[0]),
 		vcp_value(val), C.size_t(proof.Index))
-
 	return bool(r)
 }
 
