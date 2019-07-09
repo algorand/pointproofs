@@ -26,13 +26,13 @@ pub fn run_veccom_merkle() {
         old_values.push(s.into_bytes());
     }
 
-    let old_com = commit(&params, &old_values);
+    let old_com = commit_no_tree(&params, &old_values);
     println!("\nCommitment:  {}", print_bytes(&old_com));
 
     let mut proofs = Vec::with_capacity(n);
     for i in 0..n {
-        proofs.push(prove(&params, &old_values, i));
-        println!("Old Proof {}: {}", i, print_bytes(&proofs[i]));
+        proofs.push(prove_from_scratch(&params, &old_values, i));
+        println!("Proof {}: {}", i, print_bytes(&proofs[i]));
     }
 
     for i in 0..n {
@@ -60,7 +60,7 @@ pub fn run_veccom_merkle() {
         if i!=update_index {
             assert!(!verify(&params, &new_com, &proofs[i], &old_values[i], i));
         }
-        proof_update(&params, &mut proofs[i], i, update_index, &proof_of_updated_value, &new_value);
+        proof_update(&params, &mut proofs[i], i, update_index, &proof_of_updated_value, &new_value, None);
         println!("New Proof {}: {}", i, print_bytes(&proofs[i]));
         if i!=update_index {
             assert!(verify(&params, &new_com, &proofs[i], &old_values[i], i));
