@@ -2,7 +2,7 @@ use pairing::{bls12_381::*, CurveAffine, CurveProjective, EncodedPoint};
 use ff::Field;
 use super::ProverParams;
 
-pub fn prove(prover_params: &ProverParams, values: &[Vec<u8>], index : usize) -> G1 {
+pub fn prove(prover_params: &ProverParams, values: &[&[u8]], index : usize) -> G1 {
     // TODO: error handling if the prover params length is not double values length
     // TODO: figure out if the input for values is the right one to use
     let n = values.len();
@@ -48,6 +48,12 @@ pub fn proof_update(prover_params: &ProverParams, proof : &G1, proof_index : usi
     }
 }
 
+// write a proof (which is a projective G1 element) into a 48-byte slice
+pub fn write_proof_into_slice(proof: &G1, out: &mut [u8]) {
+    let s = pairing::bls12_381::G1Compressed::from_affine(proof.into_affine());
+    out.copy_from_slice(s.as_ref());
+}
+
 // convert a proof (which is a projective G1 element) into a string of 48 bytes
 // Copied from the bls library
 pub fn convert_proof_to_bytes (proof: &G1) -> [u8; 48] {
@@ -59,7 +65,7 @@ pub fn convert_proof_to_bytes (proof: &G1) -> [u8; 48] {
   
 // take an array of 48 bytes and output a proof
 // Copied from the bls library
-pub fn convert_bytes_to_proof (input : &[u8; 48]) -> G1 {
+pub fn convert_bytes_to_proof (input : &[u8]) -> G1 {
     let mut proof_compressed = G1Compressed::empty();
     proof_compressed
         .as_mut()

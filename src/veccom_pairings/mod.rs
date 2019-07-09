@@ -13,6 +13,7 @@ pub mod paramgen;
 pub mod commit;
 pub mod prove;
 pub mod verify;
+pub mod c_api;
 
 #[cfg(test)]
 mod tests {
@@ -67,10 +68,15 @@ mod tests {
         let n = 10usize;
         let (prover_params, verifier_params) = paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n);
 
-        let mut values = Vec::with_capacity(n);
+        let mut init_values = Vec::with_capacity(n);
         for i in 0..n {
             let s = format!("this is message number {}", i);
-            values.push(s.into_bytes());
+            init_values.push(s.into_bytes());
+        }
+
+        let mut values: Vec<&[u8]> = Vec::with_capacity(n);
+        for i in 0..n {
+            values.push(&init_values[i]);
         }
         
         let mut com = commit(&prover_params, &values);
@@ -123,10 +129,15 @@ mod tests {
 
         let prover_params = paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n).0;
 
-        let mut values = Vec::with_capacity(n);
+        let mut init_values = Vec::with_capacity(n);
         for i in 0..n {
             let s = format!("this is message number {}", i);
-            values.push(s.into_bytes());
+            init_values.push(s.into_bytes());
+        }
+
+        let mut values: Vec<&[u8]> = Vec::with_capacity(n);
+        for i in 0..n {
+            values.push(&init_values[i]);
         }
         
         b.iter(|| { 
@@ -142,11 +153,17 @@ mod tests {
 
         let prover_params = paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n).0;
 
-        let mut values = Vec::with_capacity(n);
+        let mut init_values = Vec::with_capacity(n);
         for i in 0..n {
             let s = format!("this is message number {}", i);
-            values.push(s.into_bytes());
-        }        
+            init_values.push(s.into_bytes());
+        }
+
+        let mut values: Vec<&[u8]> = Vec::with_capacity(n);
+        for i in 0..n {
+            values.push(&init_values[i]);
+        }
+
         let mut i : usize = 0;
         b.iter(|| {
             let p = convert_proof_to_bytes(&prove(&prover_params, &values, i));
@@ -162,11 +179,17 @@ mod tests {
 
         let (prover_params, verifier_params) = paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n);
 
-        let mut values = Vec::with_capacity(n);
+        let mut init_values = Vec::with_capacity(n);
         for i in 0..n {
             let s = format!("this is message number {}", i);
-            values.push(s.into_bytes());
+            init_values.push(s.into_bytes());
         }
+
+        let mut values: Vec<&[u8]> = Vec::with_capacity(n);
+        for i in 0..n {
+            values.push(&init_values[i]);
+        }
+
         let com = commit(&prover_params, &values);
         let mut proofs = Vec::with_capacity(n);
         for i in 0..n {
@@ -187,25 +210,28 @@ mod tests {
 
         let prover_params = paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n).0;
 
-        let mut old_values = Vec::with_capacity(n);
-        let mut new_values = Vec::with_capacity(n);
+        let mut init_old_values = Vec::with_capacity(n);
+        let mut init_new_values = Vec::with_capacity(n);
         let mut old_value = Vec::with_capacity(n);
         for i in 0..n {
             let s = format!("this is old message number {}", i);
-            old_values.push(s.into_bytes());
+            init_old_values.push(s.into_bytes());
             let t = format!("this is new message number {}", i);
-            new_values.push(t.into_bytes());
+            init_new_values.push(t.into_bytes());
             old_value.push(true);
         }
+
+        let mut old_values: Vec<&[u8]> = Vec::with_capacity(n);
+        let mut new_values: Vec<&[u8]> = Vec::with_capacity(n);
+        for i in 0..n {
+            old_values.push(&init_old_values[i]);
+            new_values.push(&init_new_values[i]);
+        }
+
         let mut com = commit(&prover_params, &old_values);
         let mut i : usize = 0;
         b.iter(|| {
-            if old_value[i] {
-                com = commit_update(&prover_params, &com, i, &old_values[i], &new_values[i])
-            }
-            else {
-                com = commit_update(&prover_params, &com, i, &new_values[i], &old_values[i])
-            }
+            commit_update(&prover_params, &com, i, &old_values[i], &new_values[i]);
             old_value[i] = !old_value[i];
             i = (i+1)%n;
         });
@@ -220,11 +246,15 @@ mod tests {
 
         let prover_params = paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n).0;
 
-        let mut old_values = Vec::with_capacity(n);
-        
+        let mut init_old_values = Vec::with_capacity(n);
         for i in 0..n {
             let s = format!("this is old message number {}", i);
-            old_values.push(s.into_bytes());
+            init_old_values.push(s.into_bytes());
+        }
+
+        let mut old_values: Vec<&[u8]> = Vec::with_capacity(n);
+        for i in 0..n {
+            old_values.push(&init_old_values[i]);
         }
 
         let mut proofs = Vec::with_capacity(n);
