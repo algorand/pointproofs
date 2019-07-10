@@ -51,6 +51,7 @@ fn prove_rec(params: &Params, values: &[Vec<u8>], height: usize, current_node_in
 // For updating your proof when someone else's value changes
 // Not for updating your own proof when your value changes -- because then the proof does not change!
 // proof_update_helper, if supplied, speeds this up. (It is obtained from commit_update.)
+// TODO: make sure the indices are within bounds? 
 pub fn proof_update(params: &Params, proof : & mut [u8], proof_index : usize, changed_index : usize, changed_index_proof : &[u8], value_after : &[u8], fast_proof_update_info : Option<&[u8]>) {
     if proof_index != changed_index {
         let mut path_diff = (proof_index ^ changed_index)>>1;
