@@ -13,14 +13,6 @@
 [lib]
   crate-type = ["rlib", "staticlib"]
 
-[[bin]]
-  name = "run-pairings"
-  path = "src/run_pairings.rs"
-
-[[bin]]
-  name = "run-merkle"
-  path = "src/run_merkle.rs"
-
 [dependencies]
   rand = "0.4"
   pairing = { path = "../pairing-fork" }
