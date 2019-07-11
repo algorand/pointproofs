@@ -17,9 +17,9 @@
   name = "run-pairings"
   path = "src/run_pairings.rs"
 
-# [[bin]]
-#   name = "run-merkle"
-#   path = "src/run_merkle.rs"
+[[bin]]
+  name = "run-merkle"
+  path = "src/run_merkle.rs"
 
 [dependencies]
   rand = "0.4"
@@ -39,6 +39,6 @@
   name = "pairings"
   harness = false
 
-# [[bench]]
-#   name = "merkle"
-#   harness = false
+[[bench]]
+  name = "merkle"
+  harness = false

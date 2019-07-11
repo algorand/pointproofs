@@ -3,4 +3,4 @@ extern crate pairing;
 extern crate sha2;
 
 pub mod pairings;
-// pub mod merkle;
+pub mod merkle;
