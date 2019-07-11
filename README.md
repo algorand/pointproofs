@@ -10,6 +10,8 @@ __Use this library directly__
 * Install rust and cargo toolchain
 * Build library: `cargo build --release`
 * Run example: `cargo run`
+* Run tests: `cargo test`
+* Benchmark: `cargo bench`
 
 __Go bindings__
-* `go test -v .`
+* `go test -v . -test=. -bench=.`
