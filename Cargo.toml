@@ -14,12 +14,12 @@
   crate-type = ["rlib", "staticlib"]
 
 [[bin]]
-  name = "run-veccom-pairings"
-  path = "src/run_veccom_pairings.rs"
+  name = "run-pairings"
+  path = "src/run_pairings.rs"
 
 # [[bin]]
-#   name = "run-veccom-merkle"
-#   path = "src/run_veccom_merkle.rs"
+#   name = "run-merkle"
+#   path = "src/run_merkle.rs"
 
 [dependencies]
   rand = "0.4"

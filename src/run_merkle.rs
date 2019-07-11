@@ -1,9 +1,9 @@
 extern crate veccom;
 
-use veccom::veccom_merkle::paramgen::*;
-use veccom::veccom_merkle::commit::*;
-use veccom::veccom_merkle::verify::*;
-use veccom::veccom_merkle::prove::*;
+use veccom::merkle::paramgen::*;
+use veccom::merkle::commit::*;
+use veccom::merkle::verify::*;
+use veccom::merkle::prove::*;
 
 fn print_bytes(b : &[u8])->String {
     let mut ret = "".to_string();
