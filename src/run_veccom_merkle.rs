@@ -1,8 +1,9 @@
+extern crate veccom;
 
-use veccom_merkle::paramgen::*;
-use veccom_merkle::commit::*;
-use veccom_merkle::verify::*;
-use veccom_merkle::prove::*;
+use veccom::veccom_merkle::paramgen::*;
+use veccom::veccom_merkle::commit::*;
+use veccom::veccom_merkle::verify::*;
+use veccom::veccom_merkle::prove::*;
 
 fn print_bytes(b : &[u8])->String {
     let mut ret = "".to_string();
@@ -12,7 +13,7 @@ fn print_bytes(b : &[u8])->String {
     ret
 }
 
-pub fn run_veccom_merkle() {
+pub fn main() {
     let n = 10usize;
     let update_index = n/2;
 

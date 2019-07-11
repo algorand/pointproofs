@@ -11,8 +11,15 @@
   version = "0.1.0"
 
 [lib]
-  name = "veccom"
-  crate-type = ["staticlib"]
+  crate-type = ["rlib", "staticlib"]
+
+[[bin]]
+  name = "run-veccom-pairings"
+  path = "src/run_veccom_pairings.rs"
+
+# [[bin]]
+#   name = "run-veccom-merkle"
+#   path = "src/run_veccom_merkle.rs"
 
 [dependencies]
   rand = "0.4"
