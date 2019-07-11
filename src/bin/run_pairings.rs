@@ -1,9 +1,9 @@
+extern crate veccom;
 
-
-use veccom_pairings::paramgen::*;
-use veccom_pairings::commit::*;
-use veccom_pairings::verify::*;
-use veccom_pairings::prove::*;
+use veccom::pairings::paramgen::*;
+use veccom::pairings::commit::*;
+use veccom::pairings::verify::*;
+use veccom::pairings::prove::*;
 
 fn print_48_bytes(b : [u8; 48])->String {
     let mut ret = "".to_string();
@@ -13,7 +13,7 @@ fn print_48_bytes(b : [u8; 48])->String {
     ret
 }
 
-pub fn run_veccom_pairings() {
+pub fn main() {
     let n = 10usize;
     let update_index = n/2;
 
@@ -69,7 +69,4 @@ pub fn run_veccom_pairings() {
             assert!(verify(&verifier_params, &new_com, &proofs[i], &old_values[i], i));
         }
     }
-
 }
-
-

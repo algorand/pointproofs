@@ -8,9 +8,10 @@ __Spec__: to be developed
 
 __Use this library directly__
 * Install rust and cargo toolchain
-** In particular, the test package requires installing nightly: `rustup install nightly` and then pass `+nightly` to `cargo`
 * Build library: `cargo build --release`
 * Run example: `cargo run`
+* Run tests: `cargo test`
+* Benchmark: `cargo bench`
 
 __Go bindings__
-* `GODEBUG=cgocheck=0 go test -v .`
+* `go test -v . -run=. -bench=.`

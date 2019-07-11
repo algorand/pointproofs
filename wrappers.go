@@ -10,12 +10,12 @@ import (
 	"unsafe"
 )
 
-// Prover is veccom_pairings::ProverParams
+// Prover is veccom::pairings::ProverParams
 type Prover struct {
 	ptr unsafe.Pointer
 }
 
-// Verifier is veccom_pairings::VerifierParams
+// Verifier is veccom::pairings::VerifierParams
 type Verifier struct {
 	ptr unsafe.Pointer
 }
