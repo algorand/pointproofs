@@ -110,9 +110,9 @@ pub fn commit_update_helper(params: &Params, changed_index : usize, changed_inde
     hasher.input(value_after);
     let mut new_com = hasher.result().to_vec();
 
-    match &mut fast_proof_update_info {
+    match fast_proof_update_info {
         None => (),
-        Some(g) => g[0*params.hash_len..params.hash_len].copy_from_slice(&new_com)
+        Some(ref mut g) => g[0*params.hash_len..params.hash_len].copy_from_slice(&new_com)
     };
 
     let mut child_index = changed_index;
@@ -133,9 +133,9 @@ pub fn commit_update_helper(params: &Params, changed_index : usize, changed_inde
         child_index >>= 1;
         new_com = hasher.result().to_vec();
         if i<params.max_depth-1 {
-            match &mut fast_proof_update_info {
+            match fast_proof_update_info {
                 None => (),
-                Some(g) => g[(i+1)*params.hash_len..(i+2)*params.hash_len].copy_from_slice(&new_com)
+                Some(ref mut g) => g[(i+1)*params.hash_len..(i+2)*params.hash_len].copy_from_slice(&new_com)
             };
         }
 
