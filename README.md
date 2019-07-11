@@ -14,4 +14,4 @@ __Use this library directly__
 * Benchmark: `cargo bench`
 
 __Go bindings__
-* `go test -v . -test=. -bench=.`
+* `go test -v . -run=. -bench=.`
