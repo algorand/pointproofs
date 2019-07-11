@@ -39,6 +39,6 @@
   name = "pairings"
   harness = false
 
-[[bench]]
-  name = "merkle"
-  harness = false
+# [[bench]]
+#   name = "merkle"
+#   harness = false
