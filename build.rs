@@ -15,8 +15,10 @@ fn main() {
     ..Default::default()
   };
 
-  let hdrgen = cbindgen::generate_with_config(&crate_dir, config).unwrap();
-  hdrgen.write_to_file(&output_file);
+  match cbindgen::generate_with_config(&crate_dir, config) {
+    Err(e) => println!("{}", e),
+    Ok(v) => {v.write_to_file(&output_file);}
+  }
 }
 
 fn get_target_dir(crate_dir: &str) -> PathBuf {
