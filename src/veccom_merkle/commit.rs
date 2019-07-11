@@ -89,7 +89,7 @@ pub fn commit_rec(params: &Params, values: &[Vec<u8>], height: usize, index: usi
     else { // this node has no descendent leaves numbered less than n
         [0u8; 32].to_vec()
     };
-    println!("{} {} {}", height, index, print_bytes(&ret));
+    //println!("{} {} {}", height, index, print_bytes(&ret));
     ret
 }
 
@@ -135,10 +135,12 @@ pub fn commit_update_helper(params: &Params, changed_index : usize, changed_inde
         }
         child_index >>= 1;
         new_com = hasher.result().to_vec();
-        match  &mut f  {
-            None => (),
-            Some(g) => g[(i+1)*params.hash_len..(i+2)*params.hash_len].copy_from_slice(&new_com)
-        };
+        if i<params.max_depth-1 {
+            match  &mut f  {
+                None => (),
+                Some(g) => g[(i+1)*params.hash_len..(i+2)*params.hash_len].copy_from_slice(&new_com)
+            };
+        }
 
     }
     new_com

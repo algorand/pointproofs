@@ -228,7 +228,7 @@ mod tests {
             new_values.push(&init_new_values[i]);
         }
 
-        let mut com = commit(&prover_params, &old_values);
+        let com = commit(&prover_params, &old_values);
         let mut i : usize = 0;
         b.iter(|| {
             commit_update(&prover_params, &com, i, &old_values[i], &new_values[i]);
@@ -274,5 +274,5 @@ mod tests {
             new_proof
         });
     }
-
 }
+

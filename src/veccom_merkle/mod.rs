@@ -24,12 +24,12 @@ mod tests {
 
     
     fn print_bytes(b : &[u8])->String {
-    let mut ret = "".to_string();
-    for i in 0..b.len() {
-        ret = ret + &format!("{:02x}", b[i]);
+        let mut ret = "".to_string();
+        for i in 0..b.len() {
+            ret = ret + &format!("{:02x}", b[i]);
+        }
+        ret
     }
-    ret
-}
 
 
     #[test]
@@ -43,11 +43,11 @@ mod tests {
             values.push(s.into_bytes());
         }
         
-        let mut com = commit(&params, &values);
+        let mut com = commit_no_tree(&params, &values);
         let mut proofs = Vec::with_capacity(n);
 
         for i in 0..n {
-            proofs.push (prove(&params, &values, i));
+            proofs.push (prove_from_scratch(&params, &values, i));
             let wrong_string = format!("wrong string {}", i).into_bytes();
             assert!(verify(&params, &com, &proofs[i], &values[i], i));
             assert!(!verify(&params, &com, &proofs[i], &wrong_string, i));
@@ -75,7 +75,7 @@ mod tests {
                     assert!(!verify(&params, &com, &proofs[j], &values[j], j));
                     assert!(!verify(&params,  &com, &proofs[j], &new_values[j], j));
                 }
-                proof_update(&params, &mut proofs[j], j, i, &proof_of_updated_value, &new_values[i]);
+                proof_update(&params, &mut proofs[j], j, i, &proof_of_updated_value, &new_values[i], None);
                 if j<=i {
                     assert!(verify(&params, &com, &proofs[j], &new_values[j], j));
                     assert!(!verify(&params, &com, &proofs[j], &values[j], j));
@@ -101,7 +101,7 @@ mod tests {
         }
         
         b.iter(|| { 
-            commit(&params, &values)
+            commit_no_tree(&params, &values)
         });
     }
 
@@ -118,7 +118,7 @@ mod tests {
         }        
         let mut i : usize = 0;
         b.iter(|| {
-            let p = prove(&params, &values, i);
+            let p = prove_from_scratch(&params, &values, i);
             i = (i+1)%n;
             p
         });
@@ -135,10 +135,10 @@ mod tests {
             let s = format!("this is message number {}", i);
             values.push(s.into_bytes());
         }
-        let com = commit(&params, &values);
+        let com = commit_no_tree(&params, &values);
         let mut proofs = Vec::with_capacity(n);
         for i in 0..n {
-            proofs.push(prove(&params, &values, i));
+            proofs.push(prove_from_scratch(&params, &values, i));
         }
 
         let mut i : usize = 0;
@@ -165,7 +165,7 @@ mod tests {
         let mut i : usize = 0;
         let mut proofs = Vec::with_capacity(n);
         for i in 0..n {
-            proofs.push (prove(&params, &old_values, i));
+            proofs.push (prove_from_scratch(&params, &old_values, i));
         }
 
         b.iter(|| {
@@ -191,7 +191,7 @@ mod tests {
 
         let mut proofs = Vec::with_capacity(n);
         for i in 0..n {
-            proofs.push(prove(&params, &old_values, i));
+            proofs.push(prove_from_scratch(&params, &old_values, i));
         }
         // Copy over the proof of the updated value in order to avoid mutable borrow isues in the proof_update
         let mut proof_of_updated_value = Vec::new();
@@ -203,7 +203,7 @@ mod tests {
         
         let mut i : usize = 0;
         b.iter(|| {
-            proof_update(&params, &mut proofs[i], i, update_index, &proof_of_updated_value, &new_value);
+            proof_update(&params, &mut proofs[i], i, update_index, &proof_of_updated_value, &new_value, None);
             i = (i+1)%n;
             if i==update_index { // skip update_index
                 i = (i+1)%n;
