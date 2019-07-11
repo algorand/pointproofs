@@ -13,4 +13,4 @@ __Use this library directly__
 * Run example: `cargo run`
 
 __Go bindings__
-* `GODEBUG=cgocheck=0 go test -v .`
+* `go test -v .`
