@@ -1,7 +1,7 @@
 package veccom
 
 // #cgo LDFLAGS: ${SRCDIR}/target/release/libveccom.a -ldl
-// #include "target/veccom.h"
+// #include "target/release/veccom.h"
 import "C"
 
 import (
