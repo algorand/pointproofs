@@ -55,10 +55,14 @@ If enough proofs within the same tree are batched, total length goes down (reali
 
 ### Benchmarking output for the Merkle-based scheme
 ```
-test veccom_merkle::tests::bench_com             ... bench:   1,186,305 ns/iter (+/- 14,333)
-test veccom_merkle::tests::bench_commit_update   ... bench:       7,845 ns/iter (+/- 117)
-test veccom_merkle::tests::bench_proof_update    ... bench:       6,390 ns/iter (+/- 173)
-test veccom_merkle::tests::bench_prove           ... bench:   1,171,829 ns/iter (+/- 30,216)
-test veccom_merkle::tests::bench_verify          ... bench:       7,924 ns/iter (+/- 1,873)
+test bench_com_merkle                      ... bench:   1,171,284 ns/iter (+/- 16,755)
+test bench_commit_update_merkle            ... bench:       7,975 ns/iter (+/- 95)
+test bench_proof_update_no_helper_merkle   ... bench:       6,038 ns/iter (+/- 67)
+test bench_proof_update_with_helper_merkle ... bench:          16 ns/iter (+/- 2)
+test bench_prove_from_scratch_merkle       ... bench:   1,163,089 ns/iter (+/- 9,569)
+test bench_prove_from_tree_merkle          ... bench:         154 ns/iter (+/- 9)
+test bench_tree_building_merkle            ... bench:   1,265,566 ns/iter (+/- 14,839)
+test bench_tree_update_merkle              ... bench:       7,795 ns/iter (+/- 133)
+test bench_verify_merkle                   ... bench:       7,829 ns/iter (+/- 82)
 ```
 
