@@ -16,7 +16,7 @@ pub fn commit_with_tree(params: &Params, values: &[Vec<u8>]) -> (Vec<Vec<u8>>) {
     // node i at depth k is stored in location 2^k+i (like a heap)
     let mut num_nodes_above = 1<<params.max_depth; // number of nodes above the current level, plus 1 (where current level starts at the leaves)
     let num_leaves = ((params.n+1)/2)*2; // round up n to the nearest even number
-    let mut hash_tree = Vec::with_capacity(num_nodes_above+num_leaves);// vec!(Vec::with_capacity(0); num_nodes_above+num_leaves);
+    let mut hash_tree = vec!(Vec::with_capacity(0); num_nodes_above+num_leaves);
 
     for i in 0 .. params.n {
         let mut hasher = sha2::Sha256::new();
@@ -32,9 +32,9 @@ pub fn commit_with_tree(params: &Params, values: &[Vec<u8>]) -> (Vec<Vec<u8>>) {
 
 
     let mut num_occupied = num_leaves;
-    for _height in 1..params.max_depth+1 {
+    for height in 1..params.max_depth+1 {
         num_occupied = (num_occupied+1)/2; // number of nonzero entries in the current level, computed by dividing previous level by 2 with rounding up
-        num_nodes_above /= 1; 
+        num_nodes_above /= 2; 
 
         for i in 0..num_occupied {
             let mut hasher = sha2::Sha256::new();
@@ -46,7 +46,7 @@ pub fn commit_with_tree(params: &Params, values: &[Vec<u8>]) -> (Vec<Vec<u8>>) {
             hasher.input(&hash_tree[2*array_index+1]);
             hash_tree[num_nodes_above+i] = hasher.result().to_vec();
         }
-        if num_occupied & 1 == 1 { // if num_occupied is odd, add a 0 node
+        if height<params.max_depth && num_occupied & 1 == 1 { // if num_occupied is odd and we are not at the root, add a 0 node
             hash_tree[num_nodes_above + num_occupied] = [0u8; 32].to_vec();
 
         }
@@ -96,9 +96,10 @@ pub fn commit_rec(params: &Params, values: &[Vec<u8>], height: usize, index: usi
 
 
 // TODO: ensure the changed_index are within bounds?
-pub fn commit_update(params: &Params, changed_index : usize, changed_index_proof : &[u8], value_after : &[u8]) -> Vec<u8> {
+pub fn commit_update(params: &Params, changed_index : usize, changed_index_proof : &[u8], value_after : &[u8]) -> (Vec<u8>, Vec<u8>) {
     let mut fast_proof_update_info = vec!(0u8; params.max_depth*params.hash_len);
-    commit_update_helper(params, changed_index, changed_index_proof, value_after, params.max_depth, Some(&mut fast_proof_update_info))
+    let res = commit_update_helper(params, changed_index, changed_index_proof, value_after, params.max_depth, Some(&mut fast_proof_update_info));
+    (res, fast_proof_update_info)
 }
 
 // TODO: how to make this not public but visible to update_proof?

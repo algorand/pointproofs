@@ -44,7 +44,7 @@ pub fn main() {
     println!("\nUpdating string {} to {}", update_index, s);
     let new_value = s.into_bytes();
 
-    let new_com = commit_update(&params, update_index, &proofs[update_index], &new_value);
+    let new_com = commit_update(&params, update_index, &proofs[update_index], &new_value).0;
     println!("New Commitment:  {}", print_bytes(&new_com));
 
     assert!(verify(&params, &new_com, &proofs[update_index], &new_value, update_index));

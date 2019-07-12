@@ -8,10 +8,10 @@ use veccom::merkle::commit::*;
 use veccom::merkle::verify::*;
 use veccom::merkle::prove::*;
 
-benchmark_group!(benches, bench_com, bench_prove, bench_verify, bench_commit_update, bench_proof_update);
+benchmark_group!(benches, bench_com_merkle, bench_prove_merkle, bench_verify_merkle, bench_commit_update_merkle, bench_proof_update_merkle);
 benchmark_main!(benches);
 
-fn bench_com(b: &mut Bencher) {
+fn bench_com_merkle(b: &mut Bencher) {
     let n = 1000usize;
 
     let params = paramgen(n);
@@ -27,7 +27,7 @@ fn bench_com(b: &mut Bencher) {
     });
 }
 
-fn bench_prove(b: &mut Bencher) {
+fn bench_prove_merkle(b: &mut Bencher) {
     let n = 1000usize;
 
     let params = paramgen(n);
@@ -45,7 +45,7 @@ fn bench_prove(b: &mut Bencher) {
     });
 }
 
-fn bench_verify(b: &mut Bencher) {
+fn bench_verify_merkle(b: &mut Bencher) {
     let n = 1000usize;
 
     let params =  paramgen(n);
@@ -68,7 +68,7 @@ fn bench_verify(b: &mut Bencher) {
     });
 }
 
-fn bench_commit_update(b: &mut Bencher) {
+fn bench_commit_update_merkle(b: &mut Bencher) {
     let n = 1000usize;
 
     let params = paramgen(n);
@@ -93,7 +93,7 @@ fn bench_commit_update(b: &mut Bencher) {
     });
 }
 
-fn bench_proof_update(b: &mut Bencher) {
+fn bench_proof_update_merkle(b: &mut Bencher) {
     let n = 1000usize;
     let update_index = n/2;  // We will update message number n/2 and then benchmark changing proofs for others
 

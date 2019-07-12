@@ -12,13 +12,13 @@ pub fn prove_from_tree(params: &Params, hash_tree: &[Vec<u8>], index : usize) ->
     // TODO: error handling if the prover params length is not equal to values length
     // TODO: figure out if the input for values is the right one to use
     // TODO: is this the correct output type?
-    let mut proof = Vec::with_capacity(params.max_depth*params.hash_len);
+    let mut proof = vec![0u8; params.max_depth*params.hash_len];
     let mut i = (1<<params.max_depth) | index;
     // node i at depth k is stored in location index = 2^k+i (like a heap); its sibling is at index +/- 1; its parent is at index/2
     let mut slice_start;
     let mut slice_end = 0usize;
     while i>1 {
-        let sibling = i|1;
+        let sibling = i^1;
         slice_start = slice_end;
         slice_end = slice_start+params.hash_len;
         proof[slice_start .. slice_end].copy_from_slice(&hash_tree[sibling]);
