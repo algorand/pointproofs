@@ -53,14 +53,7 @@ pub fn commit_with_tree(params: &Params, values: &[Vec<u8>]) -> (Vec<Vec<u8>>) {
     }
     hash_tree
 }
-/*
-fn print_bytes(b : &[u8])->String {
-    let mut ret = "".to_string();
-    for i in 0..b.len() {
-        ret = ret + &format!("{:02x}", b[i]);
-    }
-    ret
-}*/
+
 
 // TODO: can you make this not public but still accessible by prove?
 pub fn commit_rec(params: &Params, values: &[Vec<u8>], height: usize, index: usize) -> Vec<u8> {
@@ -89,7 +82,6 @@ pub fn commit_rec(params: &Params, values: &[Vec<u8>], height: usize, index: usi
     else { // this node has no descendent leaves numbered less than n
         [0u8; 32].to_vec()
     };
-    //println!("{} {} {}", height, index, print_bytes(&ret));
     ret
 }
 

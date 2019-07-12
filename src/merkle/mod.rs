@@ -21,15 +21,15 @@ mod tests {
     use super::verify::*;
     use super::prove::*;
 
-    
-    fn print_bytes(b : &[u8])->String {
+
+/*    fn print_bytes(b : &[u8])->String {
         let mut ret = "".to_string();
         for i in 0..b.len() {
             ret = ret + &format!("{:02x}", b[i]);
         }
         ret
     }
-
+*/
 
     #[test]
     fn test_com() {
@@ -45,9 +45,6 @@ mod tests {
             let com = commit_no_tree(&params, &values);
             let mut proofs = Vec::with_capacity(n);
             let mut tree = commit_with_tree(&params, &values);
-            for i in 0 ..tree.len() {
-                println!("{:02x} {}", i, print_bytes(&tree[i]));
-            }
             assert_eq!(com, tree[1]);
 
             for i in 0..n {

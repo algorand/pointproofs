@@ -220,6 +220,6 @@ fn bench_proof_update_with_helper_merkle(b: &mut Bencher) {
         if i==update_index { // skip update_index
             i = (i+1)%n;
         }
-        proofs[i].len();
+        proofs[i].len()
     });
 }
