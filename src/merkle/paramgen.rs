@@ -1,5 +1,6 @@
 use super::Params;
 
+// TODO: the current implemenation requires n to be at least 2; we should check this
 pub fn paramgen(n : usize) -> Params {
     let mut max_depth = 0;
     let mut max_n = 1;
