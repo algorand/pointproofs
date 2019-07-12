@@ -81,13 +81,30 @@ mod tests {
         let mut com = commit(&prover_params, &values);
         let mut proofs = Vec::with_capacity(n);
 
+        let mut com_bytes = convert_commitment_to_bytes(&com);
+        assert_eq!(com, convert_bytes_to_commitment(&com_bytes));
+
+        // put garbage into commitment bytes -- it should not crash
+        com_bytes[0]=6u8;
+        com_bytes[1]=17u8;
+        com_bytes[2]=20u8;
+        com_bytes[3]=9u8;
+        assert_ne!(com, convert_bytes_to_commitment(&com_bytes));
+
         // Check all proofs, together with conversion to/from bytes
         for i in 0..n {
             proofs.push (prove(&prover_params, &values, i));
             let wrong_string = format!("wrong string {}", i).into_bytes();
-            let proof_bytes = convert_proof_to_bytes(&proofs[i]);
+            let mut proof_bytes = convert_proof_to_bytes(&proofs[i]);
             assert!(verify(&verifier_params, &com, &convert_bytes_to_proof(&proof_bytes), &values[i], i));
             assert!(!verify(&verifier_params, &com, &convert_bytes_to_proof(&proof_bytes), &wrong_string, i));
+
+            // put garbage into proof bytes -- it should not verify
+            proof_bytes[0]=7u8;
+            proof_bytes[1]=4u8;
+            proof_bytes[2]=17u8;
+            proof_bytes[3]=76u8;
+            assert!(!verify(&verifier_params, &com, &convert_bytes_to_proof(&proof_bytes), &values[i], i));            
         }
 
         // update values

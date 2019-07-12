@@ -39,11 +39,14 @@ pub fn convert_commitment_to_bytes (commitment: &G1) -> [u8; 48] {
   
 // take an array of 48 bytes and output a commitment
 // Copied from the bls library
+// In case bytes don't convert to a meaningful element of G1, defaults to the group generator
 pub fn convert_bytes_to_commitment (input : &[u8; 48]) -> G1 {
     let mut commitment_compressed = G1Compressed::empty();
     commitment_compressed
         .as_mut()
         .copy_from_slice(input);
-    let commitment_affine = commitment_compressed.into_affine().unwrap();
-    commitment_affine.into_projective()
+    match commitment_compressed.into_affine() {
+        Ok(commitment_affine) => commitment_affine.into_projective(),
+        Err(_) => G1::zero()
+    }
 }
