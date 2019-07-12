@@ -29,11 +29,22 @@ pub fn main() {
 
     let old_com = commit_no_tree(&params, &old_values);
     println!("\nCommitment:  {}", print_bytes(&old_com));
+    let mut tree = commit_with_tree(&params, &old_values);
+
+    println!("Tree: ");
+    for i in 0..tree.len() {
+        println!("{:02x} {}", i, print_bytes(&tree[i]));
+    }
+    assert_eq!(old_com, tree[1]);
+    println!("");
+
 
     let mut proofs = Vec::with_capacity(n);
     for i in 0..n {
         proofs.push(prove_from_scratch(&params, &old_values, i));
         println!("Proof {}: {}", i, print_bytes(&proofs[i]));
+        let p = prove_from_tree(&params, &tree, i);
+        assert_eq!(p, proofs[i]);
     }
 
     for i in 0..n {
@@ -44,25 +55,28 @@ pub fn main() {
     println!("\nUpdating string {} to {}", update_index, s);
     let new_value = s.into_bytes();
 
-    let new_com = commit_update(&params, update_index, &proofs[update_index], &new_value).0;
+    let (new_com, helper_info) = commit_update(&params, update_index, &proofs[update_index], &new_value);
     println!("New Commitment:  {}", print_bytes(&new_com));
+
+    tree_update(&params, update_index, &new_value, &mut tree);
+
+    assert_eq!(new_com, tree[1]);
 
     assert!(verify(&params, &new_com, &proofs[update_index], &new_value, update_index));
     assert!(!verify(&params, &new_com, &proofs[update_index], &old_values[update_index], update_index));
 
     // Copy over the proof of the updated value in order to avoid mutable borrow isues in the proof_update
-    let mut proof_of_updated_value = Vec::new();
-    for k in 0..proofs[update_index].len() {
-        proof_of_updated_value.push(proofs[update_index][k]);
-    }
-
+    let mut proof_of_updated_value = vec![0; proofs[update_index].len()];
+    proof_of_updated_value.copy_from_slice(&proofs[update_index]);
 
     for i in 0..n {
         if i!=update_index {
             assert!(!verify(&params, &new_com, &proofs[i], &old_values[i], i));
         }
-        proof_update(&params, &mut proofs[i], i, update_index, &proof_of_updated_value, &new_value, None);
+        proof_update(&params, &mut proofs[i], i, update_index, &proof_of_updated_value, &new_value, Some(&helper_info));
         println!("New Proof {}: {}", i, print_bytes(&proofs[i]));
+        let p = prove_from_tree(&params, &tree, i);
+        assert_eq!(proofs[i], p);
         if i!=update_index {
             assert!(verify(&params, &new_com, &proofs[i], &old_values[i], i));
         }

@@ -146,12 +146,12 @@ fn bench_proof_update_pairings(b: &mut Bencher) {
     let new_value = format!("this is new message number {}", update_index).into_bytes();
     
     let mut i : usize = 0;
-    //b.iter(|| {
+    b.iter(|| {
         let new_proof = proof_update(&prover_params, &proofs[i], i, update_index, &old_values[update_index], &new_value);
         i = (i+1)%n;
         if i==update_index { // skip update_index
             i = (i+1)%n;
         }
-        new_proof;
-    //});
+        new_proof
+    });
 }
