@@ -103,7 +103,7 @@ pub fn commit_update(params: &Params, changed_index : usize, changed_index_proof
 }
 
 // TODO: how to make this not public but visible to update_proof?
-pub fn commit_update_helper(params: &Params, changed_index : usize, changed_index_proof : &[u8], value_after : &[u8], update_height : usize, fast_proof_update_info : Option<& mut [u8]>) -> Vec<u8> {
+pub fn commit_update_helper(params: &Params, changed_index : usize, changed_index_proof : &[u8], value_after : &[u8], update_height : usize, mut fast_proof_update_info : Option<& mut [u8]>) -> Vec<u8> {
     let mut hasher = sha2::Sha256::new();
     let prefix : [u8; 1] = [0u8];
     hasher.input(&prefix);
@@ -111,12 +111,9 @@ pub fn commit_update_helper(params: &Params, changed_index : usize, changed_inde
     hasher.input(value_after);
     let mut new_com = hasher.result().to_vec();
 
-    // f is necessary because we can't match fast_proof_update_info directly, because that causes a move of g
-    // and then it cannot be used later in the loop per compiler complaint
-    let mut f = fast_proof_update_info;
-    match  &mut f  {
+    match fast_proof_update_info {
         None => (),
-        Some(g) => g[0*params.hash_len..params.hash_len].copy_from_slice(&new_com)
+        Some(ref mut g) => g[0*params.hash_len..params.hash_len].copy_from_slice(&new_com)
     };
 
     let mut child_index = changed_index;
@@ -137,9 +134,9 @@ pub fn commit_update_helper(params: &Params, changed_index : usize, changed_inde
         child_index >>= 1;
         new_com = hasher.result().to_vec();
         if i<params.max_depth-1 {
-            match  &mut f  {
+            match fast_proof_update_info {
                 None => (),
-                Some(g) => g[(i+1)*params.hash_len..(i+2)*params.hash_len].copy_from_slice(&new_com)
+                Some(ref mut g) => g[(i+1)*params.hash_len..(i+2)*params.hash_len].copy_from_slice(&new_com)
             };
         }
 

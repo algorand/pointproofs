@@ -19,13 +19,15 @@ func TestCommit(t *testing.T) {
 	}
 
 	com := p.Commit(values)
-	fmt.Printf("Commitment:  %s\n", hex.EncodeToString(com[:]))
+	combuf := com.G1.ToBytes()
+	fmt.Printf("Commitment:  %s\n", hex.EncodeToString(combuf[:]))
 
 	var proofs []Proof
 	for i := 0; i < n; i++ {
 		pf := p.Prove(values, i)
 		proofs = append(proofs, pf)
-		fmt.Printf("Old Proof %d: %s\n", i, hex.EncodeToString(pf.Proof[:]))
+		pfbuf := pf.G1.ToBytes()
+		fmt.Printf("Old Proof %d: %s\n", i, hex.EncodeToString(pfbuf[:]))
 	}
 
 	for i := 0; i < n; i++ {
@@ -41,13 +43,15 @@ func TestCommit(t *testing.T) {
 	fmt.Printf("Updating string %d to \"%s\"\n", update_idx, newmsg)
 
 	newcom := p.CommitUpdate(com, update_idx, values[update_idx], newval)
-	fmt.Printf("New Commitment:  %s\n", hex.EncodeToString(newcom[:]))
+	newcombuf := newcom.G1.ToBytes()
+	fmt.Printf("New Commitment:  %s\n", hex.EncodeToString(newcombuf[:]))
 
 	var newproofs []Proof
 	for i := 0; i < n; i++ {
 		npf := p.ProofUpdate(proofs[i], update_idx, values[update_idx], newval)
 		newproofs = append(newproofs, npf)
-		fmt.Printf("New Proof %d: %s\n", i, hex.EncodeToString(npf.Proof[:]))
+		npfbuf := npf.G1.ToBytes()
+		fmt.Printf("New Proof %d: %s\n", i, hex.EncodeToString(npfbuf[:]))
 	}
 
 	values[update_idx] = newval
@@ -86,18 +90,25 @@ func BenchmarkOps(b *testing.B) {
 	})
 
 	com := p.Commit(values)
+	combuf := com.G1.ToBytes()
+
+	com2 := BytesToG1(combuf)
+	com2buf := com2.ToBytes()
+	if combuf != com2buf {
+		b.Errorf("com2buf mismatch")
+	}
 
 	b.Run("BytesToG1", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			benchBytesToG1(com)
+			BytesToG1(combuf)
 		}
 	})
 
-	b.Run("BytesToG1ToBytes", func(b *testing.B) {
+	b.Run("G1ToBytes", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			com2 := benchBytesToG1ToBytes(com)
-			if com != com2 {
-				b.Errorf("BytesToG1ToBytes mismatch")
+			buf := com.G1.ToBytes()
+			if buf != combuf {
+				b.Errorf("G1ToBytes mismatch")
 			}
 		}
 	})

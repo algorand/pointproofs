@@ -32,5 +32,5 @@
   harness = false
 
 [[bench]]
-   name = "merkle"
-   harness = false
+  name = "merkle"
+  harness = false
