@@ -4,7 +4,7 @@
 
 - committing to an n-vector: 270n microseconds
 - proving a single element in an n-vector: 270n microseconds
-- verifying a single proof: 5400 microseconds (regardless of n)
+- verifying a single proof: 3600 microseconds (regardless of n)
 - updating a proof: 270 microseconds (regardless of n)
 - updating a commitment: 270 microseconds (regardless of n)
 
@@ -23,19 +23,27 @@ commitments and proofs are 48 bytes
 ### Benchmarking output for the pairing-based scheme
 
 ```
-~/RustProjects/veccom-rust/src> cargo bench
-   Compiling veccom v0.1.0 (/Users/reyzin/RustProjects/veccom-rust)
-    Finished release [optimized] target(s) in 2.43s
-     Running /Users/reyzin/RustProjects/veccom-rust/target/release/deps/veccom-c24313e5100a1949
+     Running /Users/reyzin/consulting/algorand/RustProjects/veccom-rust/target/release/deps/pairings-8433c74c2f0d795d
+pairings/commit         time:   [26.800 ms 26.945 ms 27.371 ms]                           
+                        change: [+0.0909% +2.6665% +6.3637%] (p = 0.09 > 0.05)
+                        No change in performance detected.
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high severe
+pairings/prove          time:   [26.530 ms 26.546 ms 26.570 ms]                          
+                        change: [-0.6649% -0.2555% +0.0437%] (p = 0.23 > 0.05)
+                        No change in performance detected.
+pairings/verify         time:   [3.6095 ms 3.6117 ms 3.6133 ms]                          
+                        change: [-0.8096% -0.3158% -0.0028%] (p = 0.19 > 0.05)
+                        No change in performance detected.
+pairings/commit_update  time:   [273.68 us 274.12 us 274.91 us]                                  
+                        change: [-0.1691% +0.1597% +0.4692%] (p = 0.36 > 0.05)
+                        No change in performance detected.
+pairings/proof_update   time:   [270.10 us 271.22 us 273.82 us]                                 
+                        change: [-0.1212% +2.2563% +4.7604%] (p = 0.12 > 0.05)
+                        No change in performance detected.
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high mild
 
-running 7 tests
-test veccom_pairings::tests::test_com ... ignored
-test veccom_pairings::tests::test_paramgen ... ignored
-test veccom_pairings::tests::bench_com           ... bench: 269,474,446 ns/iter (+/- 2,342,450)
-test veccom_pairings::tests::bench_commit_update ... bench:     275,024 ns/iter (+/- 3,721)
-test veccom_pairings::tests::bench_proof_update  ... bench:     271,164 ns/iter (+/- 4,119)
-test veccom_pairings::tests::bench_prove         ... bench: 269,051,170 ns/iter (+/- 2,396,572)
-test veccom_pairings::tests::bench_verify        ... bench:   5,409,661 ns/iter (+/- 38,217)
 ```
 
 ## Merkle-based scheme

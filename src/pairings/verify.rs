@@ -9,11 +9,10 @@ pub fn verify(verifier_params : &VerifierParams, com : &G1, proof : &G1, value :
     let mut com_mut = *com;
     com_mut.mul_assign(hash_inverse);
     let n = verifier_params.generators.len();
-    let lhs = Bls12::pairing(com_mut, verifier_params.generators[n-index-1]);
-    let mut rhs = verifier_params.gt_elt;
     let mut proof_mut = *proof;
     proof_mut.mul_assign(hash_inverse);
-    rhs.mul_assign(&Bls12::pairing(proof_mut, G2::one()));
-    lhs == rhs
+    proof_mut.negate();
+    Bls12::pairing_product(com_mut, verifier_params.generators[n-index-1], proof_mut, G2::one())==verifier_params.gt_elt
+
 }
   
