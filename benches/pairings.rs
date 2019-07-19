@@ -125,7 +125,7 @@ fn bench_pairings(c: &mut Criterion) {
 
     let bench = bench.with_function("proof_update", |b|{
         // Does not include to/from bytes conversion, because this is supposed to be a local operation
-        let n = 10;//100usize;
+        let n = 100usize;
         let update_index = n/2;  // We will update message number n/2 and then benchmark changing proofs for others
 
         let prover_params = paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n).0;

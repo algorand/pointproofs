@@ -2,47 +2,35 @@
 
 ## Pairing-based scheme
 
-- committing to an n-vector: 270n microseconds
-- proving a single element in an n-vector: 270n microseconds
+- committing to an n-vector: 80n microseconds
+- proving a single element in an n-vector: 80n microseconds
 - verifying a single proof: 3600 microseconds (regardless of n)
-- updating a proof: 270 microseconds (regardless of n)
-- updating a commitment: 270 microseconds (regardless of n)
+- updating a proof: 220 microseconds (regardless of n)
+- updating a commitment: 220 microseconds (regardless of n)
 
 commitments and proofs are 48 bytes
 
 ### Room for improvement on individual operations:
-- Using multi-exponentiation and fixed-based precomputation, commit and prove can each be improved by about 5x-10x
-- Using fixed-based precomputation, updating commitments and proofs can be improved by about 2x-4x
-- Verifying cannot be improved much -- I'd be surprised if we could get 1.5x improvement
+- Using fixed-based precomputation, commit, prove, and both update can each be improved by about 2x
+- Verifying cannot be improved much on its own
 
 ### Room for improvement via batching:
 - Proving for multiple values on a single commitment will cost at most 2x proving for a single value (as long as you produce a single combined proof, which will require all the values to which it refers in order to verify)
 - Verifying for multiple values on a single commitment should cost about the same as verifying a single value
 - Proofs for multiple values on the same commitment can be combined very cheaply, and will remain 48 bytes
+- Verifying multiple values on different commitments could save about 2x if we do it in a batch rather that separately
 
 ### Benchmarking output for the pairing-based scheme
 
 ```
-     Running /Users/reyzin/consulting/algorand/RustProjects/veccom-rust/target/release/deps/pairings-8433c74c2f0d795d
-pairings/commit         time:   [26.800 ms 26.945 ms 27.371 ms]                           
-                        change: [+0.0909% +2.6665% +6.3637%] (p = 0.09 > 0.05)
-                        No change in performance detected.
-Found 2 outliers among 10 measurements (20.00%)
-  2 (20.00%) high severe
-pairings/prove          time:   [26.530 ms 26.546 ms 26.570 ms]                          
-                        change: [-0.6649% -0.2555% +0.0437%] (p = 0.23 > 0.05)
-                        No change in performance detected.
-pairings/verify         time:   [3.6095 ms 3.6117 ms 3.6133 ms]                          
-                        change: [-0.8096% -0.3158% -0.0028%] (p = 0.19 > 0.05)
-                        No change in performance detected.
-pairings/commit_update  time:   [273.68 us 274.12 us 274.91 us]                                  
-                        change: [-0.1691% +0.1597% +0.4692%] (p = 0.36 > 0.05)
-                        No change in performance detected.
-pairings/proof_update   time:   [270.10 us 271.22 us 273.82 us]                                 
-                        change: [-0.1212% +2.2563% +4.7604%] (p = 0.12 > 0.05)
-                        No change in performance detected.
-Found 2 outliers among 10 measurements (20.00%)
-  2 (20.00%) high mild
+Running /Users/reyzin/consulting/algorand/RustProjects/veccom-rust/target/release/deps/pairings-92fd9995499da84f
+Benchmarking pairings/commit: Collecting 10 samples in estimated 5.2539 s (275 iteration                                                                                        pairings/commit         time:   [8.1664 ms 8.2280 ms 8.3016 ms]
+Benchmarking pairings/prove: Collecting 10 samples in estimated 5.1990 s (275 iterations                                                                                        pairings/prove          time:   [8.1159 ms 8.1602 ms 8.2839 ms]
+1 (10.00%) high severe
+Benchmarking pairings/verify: Collecting 10 samples in estimated 34.548 s (55 iterations                                                                                        pairings/verify         time:   [3.5142 ms 3.5523 ms 3.5953 ms]
+Benchmarking pairings/commit_update: Collecting 10 samples in estimated 5.0579 s (1265 i                                                                                        pairings/commit_update  time:   [214.95 us 216.72 us 218.16 us]
+1 (10.00%) high severe
+Benchmarking pairings/proof_update: Collecting 10 samples in estimated 33.961 s (55 iter                                                                                        pairings/proof_update   time:   [215.34 us 216.03 us 217.71 us]
 
 ```
 

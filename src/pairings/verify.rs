@@ -7,10 +7,10 @@ pub fn verify(verifier_params : &VerifierParams, com : &G1, proof : &G1, value :
     let n = verifier_params.generators.len();
 
     // verification formula: e(com, param[n-index-1]) = gt_elt ^ hash(value) * e(proof, generator_of_g2)
-    // We modify the formula in order to avoid slow exponentation in gt (which is Fq12)
-    // and perform two exponentiation to 1/hash(value) in G1 instead.
+    // We modify the formula in order to avoid slow exponentation in the target group (which is Fq12)
+    // and perform two scalar multiplication by to 1/hash(value) in G1 instead, which is considerably faster.
     // We also move the pairing from the right-hand-side to the left-hand-side in order
-    // to take advantage of the pairing product computation
+    // to take advantage of the pairing product computation, which is faster than two pairings.
     let hash = Fr::hash_to_fr(value);
     let hash_inverse = hash.inverse();
 

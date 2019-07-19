@@ -1,19 +1,15 @@
 use pairing::{bls12_381::*, CurveAffine, CurveProjective, EncodedPoint};
-use ff::Field;
+use ff::{Field,PrimeField};
 use super::ProverParams;
 
 pub fn commit(prover_params: &ProverParams, values: &[&[u8]]) -> G1 {
     // TODO: error handling if the prover params length is not double values length
-    // TODO: figure out if the input for values is the right one to use
-    let mut com = G1::zero();
     let n = values.len();
-    for i in 0..n {
-        let mut param_i = prover_params.generators[i];
-        param_i.mul_assign(Fr::hash_to_fr(&values[i]));
-        com.add_assign(&param_i);
-    }
-    com
+    let scalars_fr_repr:Vec<FrRepr> = values.iter().map(|s| Fr::hash_to_fr(s).into_repr()).collect();
+    let scalars_u64:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
+    G1::sum_of_products(&prover_params.generators[0..n], &scalars_u64)
 }
+
 
 pub fn commit_update(prover_params: &ProverParams, com : &G1, changed_index : usize, value_before : &[u8], value_after : &[u8]) -> G1 {
     let mut multiplier = Fr::hash_to_fr(&value_before);

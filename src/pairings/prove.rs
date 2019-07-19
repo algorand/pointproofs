@@ -1,28 +1,15 @@
 use pairing::{bls12_381::*, CurveAffine, CurveProjective, EncodedPoint};
-use ff::Field;
+use ff::{Field,PrimeField};
 use super::ProverParams;
 
 pub fn prove(prover_params: &ProverParams, values: &[&[u8]], index : usize) -> G1 {
     // TODO: error handling if the prover params length is not double values length
-    // TODO: figure out if the input for values is the right one to use
     let n = values.len();
-    let mut proof = G1::zero();
-
-    // prover_params[n] is useless and we should never index it
-    for i in 0..index {
-        let mut param_i = prover_params.generators[i+n-index]; // note that i+n-index < n
-        param_i.mul_assign(Fr::hash_to_fr(&values[i]));
-        proof.add_assign(&param_i);
-    }
-    for i in index+1..n {
-        let mut param_i = prover_params.generators[i+n-index]; // note that i+n-index > n
-        param_i.mul_assign(Fr::hash_to_fr(&values[i]));
-        proof.add_assign(&param_i);
-    }
-    proof
+    let scalars_fr_repr:Vec<FrRepr> = values.iter().map(|s| Fr::hash_to_fr(s).into_repr()).collect();
+    let scalars_u64:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
+    G1::sum_of_products(&prover_params.generators[n-index..2*n-index], &scalars_u64)
 }
   
-
 // For updating your proof when someone else's value changes
 // Not for updating your own proof when your value changes -- because then the proof does not change!
 pub fn proof_update(prover_params: &ProverParams, proof : &G1, proof_index : usize, changed_index : usize, value_before : &[u8], value_after : &[u8]) -> G1 {

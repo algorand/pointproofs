@@ -27,7 +27,7 @@ pub fn paramgen_from_alpha(alpha: &Fr, n : usize) -> (ProverParams, VerifierPara
     
     // skip g1^{alpha^{n+1}}
     alpha_power.mul_assign(&alpha);
-    g1_vec.push(G1::one());
+    g1_vec.push(G1::zero()); // this 0 is important -- without it, prove will not work correctly
 
     // Now do the rest of the prover
     for _ in n..2*n {
