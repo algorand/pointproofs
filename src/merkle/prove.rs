@@ -1,33 +1,35 @@
 use super::{Params, commit};
 
 
-pub fn prove_from_scratch(params: &Params, values: &[Vec<u8>], index : usize) -> Vec<u8> {
+pub fn prove_from_scratch(params: &Params, values: &[&[u8]], index : usize) -> Vec<u8> {
     // TODO: error handling if the prover params length is not equal to values length
     // TODO: figure out if the input for values is the right one to use
     // TODO: is this the correct output type?
     prove_rec(params, values, params.max_depth, 0, index)
 }
 
-pub fn prove_from_tree(params: &Params, hash_tree: &[Vec<u8>], index : usize) -> Vec<u8> {
+pub fn prove_from_tree(params: &Params, hash_tree: &[u8], index : usize) -> Vec<u8> {
     // TODO: error handling if the prover params length is not equal to values length
     // TODO: figure out if the input for values is the right one to use
     // TODO: is this the correct output type?
     let mut proof = vec![0u8; params.max_depth*params.hash_len];
     let mut i = (1<<params.max_depth) | index;
-    // node i at depth k is stored in location index = 2^k+i (like a heap); its sibling is at index +/- 1; its parent is at index/2
+    // node i at depth k is stored starting in location index = (2^k+i)*hash_len (like a heap, except at hash_len per item)
+    // its sibling is at index +/- hash_len; its parent is at index/2
     let mut slice_start;
     let mut slice_end = 0usize;
     while i>1 {
         let sibling = i^1;
         slice_start = slice_end;
         slice_end = slice_start+params.hash_len;
-        proof[slice_start .. slice_end].copy_from_slice(&hash_tree[sibling]);
+        let tree_location = sibling*params.hash_len;
+        proof[slice_start .. slice_end].copy_from_slice(&hash_tree[tree_location..tree_location+params.hash_len]);
         i/=2;
     }
     proof
 }
 
-fn prove_rec(params: &Params, values: &[Vec<u8>], height: usize, current_node_index: usize, index_being_proven: usize) -> Vec<u8> {
+fn prove_rec(params: &Params, values: &[&[u8]], height: usize, current_node_index: usize, index_being_proven: usize) -> Vec<u8> {
     if height>0{ // internal node
         let (next_step_index, next_sibling_index) = if (index_being_proven >> (height-1))&1 == 0 { // next step is to the left, so push right child onto the proof
             (current_node_index*2, current_node_index*2+1)

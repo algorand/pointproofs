@@ -19,23 +19,29 @@ pub fn main() {
 
     let params = paramgen(n);
 
-    let mut old_values = Vec::with_capacity(n);
+    let mut init_values = Vec::with_capacity(n);
     println!("Commiting to the following {} strings", n);
     for i in 0..n {
         let s = format!("this is message number {}", i);
         println!("{}", s);
-        old_values.push(s.into_bytes());
+        init_values.push(s.into_bytes());
     }
+
+    let mut old_values: Vec<&[u8]> = Vec::with_capacity(n);
+    for i in 0..n {
+        old_values.push(&init_values[i]);
+    }
+
 
     let old_com = commit_no_tree(&params, &old_values);
     println!("\nCommitment:  {}", print_bytes(&old_com));
     let mut tree = commit_with_tree(&params, &old_values);
 
     println!("Tree: ");
-    for i in 0..tree.len() {
-        println!("{:02x} {}", i, print_bytes(&tree[i]));
+    for i in 0..tree.len()/32 {
+        println!("{:02x} {}", i, print_bytes(&tree[i*32..(i+1)*32]));
     }
-    assert_eq!(old_com, tree[1]);
+    assert_eq!(old_com, tree[32..64].to_vec());
     println!("");
 
 
@@ -60,7 +66,7 @@ pub fn main() {
 
     tree_update(&params, update_index, &new_value, &mut tree);
 
-    assert_eq!(new_com, tree[1]);
+    assert_eq!(new_com, tree[32..64].to_vec());
 
     assert!(verify(&params, &new_com, &proofs[update_index], &new_value, update_index));
     assert!(!verify(&params, &new_com, &proofs[update_index], &old_values[update_index], update_index));

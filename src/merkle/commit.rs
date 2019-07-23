@@ -1,22 +1,20 @@
 use super::Params;
 use sha2::Digest;
 
-pub fn commit_no_tree(params: &Params, values: &[Vec<u8>]) -> Vec<u8> {
+pub fn commit_no_tree(params: &Params, values: &[&[u8]]) -> Vec<u8> {
     // TODO: error handling if the prover params.n is not equal to values length
-    // TODO: figure out if the input for values is the right one to use
-    // TODO: is this the correct output type?
     commit_rec(params, values, params.max_depth, 0)
 }
 
 // TODO: error handling if the prover params.n is not equal to values length
-// TODO: figure out if the input for values is the right one to use
-// TODO: is this the correct return type?
 // TODO: there's got to be a better way than all these to_vec conversions
-pub fn commit_with_tree(params: &Params, values: &[Vec<u8>]) -> (Vec<Vec<u8>>) {
-    // node i at depth k is stored in location 2^k+i (like a heap)
+// TODO: there may be a nicer / simpler way to handle all the index arithmetic
+pub fn commit_with_tree(params: &Params, values: &[&[u8]]) -> Vec<u8> {
+    // node i at depth k is stored starting in location (2^k+i)*hash_len (like a heap, except at hash_len per item)
     let mut num_nodes_above = 1<<params.max_depth; // number of nodes above the current level, plus 1 (where current level starts at the leaves)
     let num_leaves = ((params.n+1)/2)*2; // round up n to the nearest even number
-    let mut hash_tree = vec!(Vec::with_capacity(0); num_nodes_above+num_leaves);
+    // TODO: initialize to 0s or only put 0s where we don't put other values?
+    let mut hash_tree = vec!(0u8; (num_nodes_above+num_leaves)*params.hash_len);
 
     for i in 0 .. params.n {
         let mut hasher = sha2::Sha256::new();
@@ -24,15 +22,12 @@ pub fn commit_with_tree(params: &Params, values: &[Vec<u8>]) -> (Vec<Vec<u8>>) {
         hasher.input(&prefix);
         hasher.input(&params.n_bytes);
         hasher.input(&values[i]);
-        hash_tree[num_nodes_above+i] = hasher.result().to_vec();
+        let tree_location = (num_nodes_above+i)*params.hash_len;
+        hash_tree[tree_location..tree_location+params.hash_len].copy_from_slice(&hasher.result());
     }
-    if params.n & 1 == 1 { // if n is odd, add a 0 leaf
-        hash_tree[num_nodes_above + params.n] = [0u8; 32].to_vec();
-    }
-
 
     let mut num_occupied = num_leaves;
-    for height in 1..params.max_depth+1 {
+    for _height in 1..params.max_depth+1 {
         num_occupied = (num_occupied+1)/2; // number of nonzero entries in the current level, computed by dividing previous level by 2 with rounding up
         num_nodes_above /= 2; 
 
@@ -41,14 +36,10 @@ pub fn commit_with_tree(params: &Params, values: &[Vec<u8>]) -> (Vec<Vec<u8>>) {
             let prefix : [u8; 1] = [1u8];
             hasher.input(&prefix);
             hasher.input(&params.n_bytes);
-            let array_index = num_nodes_above + i;
-            hasher.input(&hash_tree[2*array_index]);
-            hasher.input(&hash_tree[2*array_index+1]);
-            hash_tree[num_nodes_above+i] = hasher.result().to_vec();
-        }
-        if height<params.max_depth && num_occupied & 1 == 1 { // if num_occupied is odd and we are not at the root, add a 0 node
-            hash_tree[num_nodes_above + num_occupied] = [0u8; 32].to_vec();
-
+            let tree_location = (num_nodes_above + i)*params.hash_len;
+            hasher.input(&hash_tree[2*tree_location..2*(tree_location+params.hash_len)]);
+            // TODO: is this the optimal way to get the hash result into the hash tree
+            hash_tree[tree_location..tree_location+params.hash_len].copy_from_slice(&hasher.result());
         }
     }
     hash_tree
@@ -56,11 +47,11 @@ pub fn commit_with_tree(params: &Params, values: &[Vec<u8>]) -> (Vec<Vec<u8>>) {
 
 
 // TODO: can you make this not public but still accessible by prove?
-pub fn commit_rec(params: &Params, values: &[Vec<u8>], height: usize, index: usize) -> Vec<u8> {
+pub fn commit_rec(params: &Params, values: &[&[u8]], height: usize, index: usize) -> Vec<u8> {
     // We number levels from 0 at the root to params.max_depth at the leaves
     // We number nodes at each level from 0 to 2^level - 1
     // height = params.max_depth - level -- i.e., 0 at the leaves, params.max_depth at the root
-    // Any node that is not an ancestor of a leaf numbered less than n has value 0 (that is, [0u8; 32])
+    // Any node that is not an ancestor of a leaf numbered less than n has value 0 (that is, [0u8; params.hash_len])
     let num_occupied = (params.n+(1<<height)-1)>>height; // divide params.itn by 2^height with rouding up to get number of occupied tree cells in this level
     let ret = if index < num_occupied { // this node has a descendent leaf numbered less than n
         let mut hasher = sha2::Sha256::new();
@@ -80,14 +71,14 @@ pub fn commit_rec(params: &Params, values: &[Vec<u8>], height: usize, index: usi
         hasher.result().to_vec() // TODO: is this the best way to obtain the output and is this the output type we want?
     }
     else { // this node has no descendent leaves numbered less than n
-        [0u8; 32].to_vec()
+        vec![0u8; params.hash_len]
     };
     ret
 }
 
 
 
-// TODO: ensure the changed_index are within bounds?
+// TODO: ensure the changed_index is within bounds?
 pub fn commit_update(params: &Params, changed_index : usize, changed_index_proof : &[u8], value_after : &[u8]) -> (Vec<u8>, Vec<u8>) {
     let mut fast_proof_update_info = vec!(0u8; params.max_depth*params.hash_len);
     let res = commit_update_helper(params, changed_index, changed_index_proof, value_after, params.max_depth, Some(&mut fast_proof_update_info));
@@ -136,7 +127,8 @@ pub fn commit_update_helper(params: &Params, changed_index : usize, changed_inde
     new_com
 }
 
-pub fn tree_update(params: &Params, changed_index : usize, value_after : &[u8], tree : &mut Vec<Vec<u8>>) {
+// TODO: there may be a nicer / simpler way to handle all the index arithmetic
+pub fn tree_update(params: &Params, changed_index : usize, value_after : &[u8], tree : &mut [u8]) {
     let mut hasher = sha2::Sha256::new();
     let prefix : [u8; 1] = [0u8];
     hasher.input(&prefix);
@@ -145,7 +137,8 @@ pub fn tree_update(params: &Params, changed_index : usize, value_after : &[u8], 
 
     let mut ancestor_index = (1<<params.max_depth) | changed_index;
 
-    tree[ancestor_index] = hasher.result().to_vec();
+    let tree_index = ancestor_index*params.hash_len;
+    tree[tree_index..tree_index+params.hash_len].copy_from_slice(&hasher.result());
 
     while ancestor_index>1 {
         ancestor_index /=2;
@@ -153,9 +146,8 @@ pub fn tree_update(params: &Params, changed_index : usize, value_after : &[u8], 
         let prefix : [u8; 1] = [1u8];
         hasher.input(&prefix);
         hasher.input(&params.n_bytes);
-        hasher.input(&tree[ancestor_index*2]);
-        hasher.input(&tree[ancestor_index*2+1]);
-
-        tree[ancestor_index] = hasher.result().to_vec();
+        let tree_location = ancestor_index * params.hash_len;
+        hasher.input(&tree[2*tree_location..2*(tree_location+params.hash_len)]);
+        tree[tree_location..tree_location+params.hash_len].copy_from_slice(&hasher.result());
     }
 }

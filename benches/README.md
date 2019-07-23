@@ -1,4 +1,4 @@
-# Benchmarks on 3.1GHz Intel Core i5 (macOS Mojave 10.14.5)
+ # Benchmarks on 3.1GHz Intel Core i5 (macOS Mojave 10.14.5)
 
 ## Pairing-based scheme
 

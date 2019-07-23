@@ -36,16 +36,21 @@ mod tests {
         for n in 2..18 {
             let params = paramgen(n);
 
-            let mut values = Vec::with_capacity(n);
+            let mut init_values = Vec::with_capacity(n);
             for i in 0..n {
                 let s = format!("this is message number {}", i);
-                values.push(s.into_bytes());
+                init_values.push(s.into_bytes());
             }
-            
+
+            let mut values: Vec<&[u8]> = Vec::with_capacity(n);
+            for i in 0..n {
+                values.push(&init_values[i]);
+            }            
+
             let com = commit_no_tree(&params, &values);
             let mut proofs = Vec::with_capacity(n);
             let mut tree = commit_with_tree(&params, &values);
-            assert_eq!(com, tree[1]);
+            assert_eq!(com, tree[32..64].to_vec());
 
             for i in 0..n {
                 proofs.push (prove_from_scratch(&params, &values, i));
@@ -64,7 +69,7 @@ mod tests {
             for i in 0..n {
                 let (com, fast_update_info) = commit_update(&params, i, &proofs[i], &new_values[i]);
                 tree_update(&params, i, &new_values[i], &mut tree);
-                assert_eq!(com, tree[1]);
+                assert_eq!(com, tree[32..64].to_vec());
                 // Old value should not verify, but new one should
                 assert!(!verify(&params, &com, &proofs[i], &values[i], i));
                 assert!(verify(&params, &com, &proofs[i], &new_values[i], i));
