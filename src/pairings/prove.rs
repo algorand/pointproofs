@@ -28,7 +28,10 @@ pub fn proof_update(prover_params: &ProverParams, proof : &G1, proof_index : usi
         multiplier.add_assign(&Fr::hash_to_fr(&value_after));
 
         let mut changed_param = prover_params.generators[changed_index+n-proof_index];
-        changed_param.mul_assign(multiplier);
+        match &prover_params.precomp {
+            None => changed_param.mul_assign(multiplier),
+            Some(p) => changed_param.mul_assign_precomp_4(multiplier, &p[changed_index+n-proof_index])
+        };
 
         new_proof.add_assign(&changed_param);
         new_proof

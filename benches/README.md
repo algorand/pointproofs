@@ -5,33 +5,32 @@
 - committing to an n-vector: 80n microseconds
 - proving a single element in an n-vector: 80n microseconds
 - verifying a single proof: 3600 microseconds (regardless of n)
-- updating a proof: 220 microseconds (regardless of n)
-- updating a commitment: 220 microseconds (regardless of n)
+- updating a proof or a commitment: 220 microseconds no pecomp; 120 microseconds with precomp (regardless of n)
 
 commitments and proofs are 48 bytes
 
 ### Room for improvement on individual operations:
-- Using fixed-based precomputation, commit, prove, and both update can each be improved by about 2x
+- Using a lot more fixed-based precomputation, commit, prove, and both update can each be improved by about 2x
 - Verifying cannot be improved much on its own
 
 ### Room for improvement via batching:
 - Proving for multiple values on a single commitment will cost at most 2x proving for a single value (as long as you produce a single combined proof, which will require all the values to which it refers in order to verify)
 - Verifying for multiple values on a single commitment should cost about the same as verifying a single value
 - Proofs for multiple values on the same commitment can be combined very cheaply, and will remain 48 bytes
-- Verifying multiple values on different commitments could save about 2x if we do it in a batch rather that separately
+- Proofs for multiple values on different commitments may also be combinable the same way -- need to verify security
+- Verifying multiple values on different commitments could save about 2-4x if we do it in a batch rather that separately
 
 ### Benchmarking output for the pairing-based scheme
 
 ```
 Running /Users/reyzin/consulting/algorand/RustProjects/veccom-rust/target/release/deps/pairings-92fd9995499da84f
-Benchmarking pairings/commit: Collecting 10 samples in estimated 5.2539 s (275 iteration                                                                                        pairings/commit         time:   [8.1664 ms 8.2280 ms 8.3016 ms]
-Benchmarking pairings/prove: Collecting 10 samples in estimated 5.1990 s (275 iterations                                                                                        pairings/prove          time:   [8.1159 ms 8.1602 ms 8.2839 ms]
-1 (10.00%) high severe
-Benchmarking pairings/verify: Collecting 10 samples in estimated 34.548 s (55 iterations                                                                                        pairings/verify         time:   [3.5142 ms 3.5523 ms 3.5953 ms]
-Benchmarking pairings/commit_update: Collecting 10 samples in estimated 5.0579 s (1265 i                                                                                        pairings/commit_update  time:   [214.95 us 216.72 us 218.16 us]
-1 (10.00%) high severe
-Benchmarking pairings/proof_update: Collecting 10 samples in estimated 33.961 s (55 iter                                                                                        pairings/proof_update   time:   [215.34 us 216.03 us 217.71 us]
-
+pairings/commit                            time:   [8.0462 ms 8.0529 ms 8.0611 ms]                           
+pairings/prove                             time:   [7.9843 ms 7.9999 ms 8.0257 ms]                          
+pairings/verify                            time:   [3.4991 ms 3.7608 ms 4.3201 ms]                          
+pairings/commit_update_no_precomp          time:   [213.62 us 214.00 us 214.82 us]
+pairings/commit_update_with_precomp        time:   [117.44 us 119.33 us 123.77 us]
+pairings/proof_update_no_precomp           time:   [214.27 us 214.60 us 215.24 us]
+pairings/proof_update_with_precomp         time:   [118.20 us 118.61 us 119.16 us]
 ```
 
 ## Merkle-based scheme

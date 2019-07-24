@@ -17,7 +17,10 @@ pub fn commit_update(prover_params: &ProverParams, com : &G1, changed_index : us
     multiplier.add_assign(&Fr::hash_to_fr(&value_after));
 
     let mut param_i = prover_params.generators[changed_index];
-    param_i.mul_assign(multiplier);
+    match &prover_params.precomp {
+        None => param_i.mul_assign(multiplier),
+        Some(p) => param_i.mul_assign_precomp_4(multiplier, &p[changed_index])
+    };
 
     let mut new_com = *com;
     new_com.add_assign(&param_i);

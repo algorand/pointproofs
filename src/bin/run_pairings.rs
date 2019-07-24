@@ -17,7 +17,8 @@ pub fn main() {
     let n = 10usize;
     let update_index = n/2;
 
-    let (prover_params, verifier_params) = paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n);
+    let (mut prover_params, verifier_params) = paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n);
+    prover_params.precomp();
 
     let mut init_values: Vec<Vec<u8>> = Vec::with_capacity(n);
     println!("Commiting to the following {} strings", n);
