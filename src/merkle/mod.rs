@@ -32,7 +32,7 @@ mod tests {
 */
 
     #[test]
-    fn test_com() {
+    fn test_com_merkle() {
         for n in 2..18 {
             let params = paramgen(n);
 

@@ -1,8 +1,9 @@
 use pairing::{bls12_381::*};
 
+#[derive(Clone)]
 pub struct ProverParams {
     generators : Vec<G1>,
-    precomp : Option<Vec<[G1; 3]>>
+    precomp : Vec<G1>
 }
 
 
@@ -65,9 +66,13 @@ mod tests {
     }
 
     #[test]
-    fn test_com_no_precomp() {
+    fn test_com_pairings() {
         let n = 10usize;
         let (prover_params, verifier_params) = paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n);
+        let mut prover_params3 = prover_params.clone();
+        prover_params3.precomp_3();
+        let mut prover_params256 = prover_params.clone();
+        prover_params256.precomp_256();
 
         let mut init_values = Vec::with_capacity(n);
         for i in 0..n {
@@ -81,6 +86,8 @@ mod tests {
         }
         
         let mut com = commit(&prover_params, &values);
+        assert_eq!(com, commit(&prover_params3, &values));
+        assert_eq!(com, commit(&prover_params256, &values));
         let mut proofs = Vec::with_capacity(n);
 
         let mut com_bytes = convert_commitment_to_bytes(&com);
@@ -96,6 +103,8 @@ mod tests {
         // Check all proofs, together with conversion to/from bytes
         for i in 0..n {
             proofs.push (prove(&prover_params, &values, i));
+            assert_eq!(proofs[i], prove(&prover_params3, &values, i));
+            assert_eq!(proofs[i], prove(&prover_params256, &values, i));
             let wrong_string = format!("wrong string {}", i).into_bytes();
             let mut proof_bytes = convert_proof_to_bytes(&proofs[i]);
             assert!(verify(&verifier_params, &com, &convert_bytes_to_proof(&proof_bytes), &values[i], i));
@@ -115,7 +124,11 @@ mod tests {
             new_values.push (format!("new string {}", i).into_bytes());
         }
         for i in 0..n {
+            let old_com = com;
             com = commit_update(&prover_params, &com, i, &values[i], &new_values[i]);
+            assert_eq!(com, commit_update(&prover_params3, &old_com, i, &values[i], &new_values[i]));
+            assert_eq!(com, commit_update(&prover_params256, &old_com, i, &values[i], &new_values[i]));
+
             // Old value should not verify, but new one should
             assert!(!verify(&verifier_params, &com, &proofs[i], &values[i], i));
             assert!(verify(&verifier_params, &com, &proofs[i], &new_values[i], i));
@@ -126,82 +139,10 @@ mod tests {
                     assert!(!verify(&verifier_params, &com, &proofs[j], &values[j], j));
                     assert!(!verify(&verifier_params, &com, &proofs[j], &new_values[j], j));
                 }
+                let old_proof = proofs[j];
                 proofs[j] = proof_update(&prover_params, &proofs[j], j, i, &values[i], &new_values[i]);
-                if j<=i {
-                    assert!(verify(&verifier_params, &com, &proofs[j], &new_values[j], j));
-                    assert!(!verify(&verifier_params, &com, &proofs[j], &values[j], j));
-                } else {
-                    assert!(!verify(&verifier_params, &com, &proofs[j], &new_values[j], j));
-                    assert!(verify(&verifier_params, &com, &proofs[j], &values[j], j));
-                }
-            }
-        }
-    }
-
-    #[test]
-    fn test_com_precomp() {
-        let n = 10usize;
-        let (mut prover_params, verifier_params) = paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n);
-        prover_params.precomp();
-
-        let mut init_values = Vec::with_capacity(n);
-        for i in 0..n {
-            let s = format!("this is message number {}", i);
-            init_values.push(s.into_bytes());
-        }
-
-        let mut values: Vec<&[u8]> = Vec::with_capacity(n);
-        for i in 0..n {
-            values.push(&init_values[i]);
-        }
-        
-        let mut com = commit(&prover_params, &values);
-        let mut proofs = Vec::with_capacity(n);
-
-        let mut com_bytes = convert_commitment_to_bytes(&com);
-        assert_eq!(com, convert_bytes_to_commitment(&com_bytes));
-
-        // put garbage into commitment bytes -- it should not crash
-        com_bytes[0]=6u8;
-        com_bytes[1]=17u8;
-        com_bytes[2]=20u8;
-        com_bytes[3]=9u8;
-        assert_ne!(com, convert_bytes_to_commitment(&com_bytes));
-
-        // Check all proofs, together with conversion to/from bytes
-        for i in 0..n {
-            proofs.push (prove(&prover_params, &values, i));
-            let wrong_string = format!("wrong string {}", i).into_bytes();
-            let mut proof_bytes = convert_proof_to_bytes(&proofs[i]);
-            assert!(verify(&verifier_params, &com, &convert_bytes_to_proof(&proof_bytes), &values[i], i));
-            assert!(!verify(&verifier_params, &com, &convert_bytes_to_proof(&proof_bytes), &wrong_string, i));
-
-            // put garbage into proof bytes -- it should not verify
-            proof_bytes[0]=7u8;
-            proof_bytes[1]=4u8;
-            proof_bytes[2]=17u8;
-            proof_bytes[3]=76u8;
-            assert!(!verify(&verifier_params, &com, &convert_bytes_to_proof(&proof_bytes), &values[i], i));            
-        }
-
-        // update values
-        let mut new_values = Vec::with_capacity(n);
-        for i in 0..n {
-            new_values.push (format!("new string {}", i).into_bytes());
-        }
-        for i in 0..n {
-            com = commit_update(&prover_params, &com, i, &values[i], &new_values[i]);
-            // Old value should not verify, but new one should
-            assert!(!verify(&verifier_params, &com, &proofs[i], &values[i], i));
-            assert!(verify(&verifier_params, &com, &proofs[i], &new_values[i], i));
-            // update proofs of other values
-            for j in 0..n {
-                // Old proofs should not verify for i!=j regardless of whether they are for the old or the new value
-                if i!=j {
-                    assert!(!verify(&verifier_params, &com, &proofs[j], &values[j], j));
-                    assert!(!verify(&verifier_params, &com, &proofs[j], &new_values[j], j));
-                }
-                proofs[j] = proof_update(&prover_params, &proofs[j], j, i, &values[i], &new_values[i]);
+                assert_eq!(proofs[j], proof_update(&prover_params3, &old_proof, j, i, &values[i], &new_values[i]));
+                assert_eq!(proofs[j], proof_update(&prover_params256, &old_proof, j, i, &values[i], &new_values[i]));
                 if j<=i {
                     assert!(verify(&verifier_params, &com, &proofs[j], &new_values[j], j));
                     assert!(!verify(&verifier_params, &com, &proofs[j], &values[j], j));

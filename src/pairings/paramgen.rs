@@ -30,7 +30,7 @@ pub fn paramgen_from_alpha(alpha: &Fr, n : usize) -> (ProverParams, VerifierPara
     g1_vec.push(G1::zero()); // this 0 is important -- without it, prove will not work correctly
 
     // Now do the rest of the prover
-    for _ in n..2*n {
+    for _ in n..2*n-1 {
         let mut g1 = G1::one();
         alpha_power.mul_assign(&alpha);
         g1.mul_assign(alpha_power);
@@ -40,28 +40,22 @@ pub fn paramgen_from_alpha(alpha: &Fr, n : usize) -> (ProverParams, VerifierPara
     // verifier also gets gt^{alpha^{n+1}} in the target group
     let gt = Bls12::pairing(g1_vec[0], g2_vec[n-1]);
 
-    (ProverParams{generators : g1_vec, precomp : None}, VerifierParams{generators : g2_vec, gt_elt : gt})
+    (ProverParams{generators : g1_vec, precomp : Vec::with_capacity(0)}, VerifierParams{generators : g2_vec, gt_elt : gt})
 }
 
 impl ProverParams {
-    pub fn precomp (&mut self)  {
-        let mut v:Vec<[G1;3]> = Vec::with_capacity(self.generators.len());
-        // compute 2^64 * self.generators[i], 2^128 * self.generators[i], and 2^192 * self.generators[i]
-        for i in 0..self.generators.len() {
-            let mut pre1 = self.generators[i];
-            for _ in 0..64 {
-                pre1.double();
-            }
-            let mut pre2 = pre1;
-            for _ in 0..64 {
-                pre2.double();
-            }
-            let mut pre3 = pre2;
-            for _ in 0..64 {
-                pre3.double();
-            }
-            v.push([pre1, pre2, pre3]);    
+    pub fn precomp_3 (&mut self)  {
+        let twice_n = self.generators.len();
+        self.precomp = vec![G1::zero(); 3*twice_n];  // TODO: is there a better way to inialize this?
+        for i in 0..twice_n {
+            self.generators[i].precomp_3(&mut self.precomp[i*3..(i+1)*3]);
         }
-        self.precomp = Some(v);
+    }
+    pub fn precomp_256 (&mut self)  {
+        let twice_n = self.generators.len();
+        self.precomp = vec![G1::zero(); 256*twice_n]; // TODO: is there a better way to inialize this?
+        for i in 0..twice_n {
+            self.generators[i].precomp_256(&mut self.precomp[i*256..(i+1)*256]);
+        }
     }
 }
