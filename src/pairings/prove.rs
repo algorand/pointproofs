@@ -8,10 +8,10 @@ pub fn prove(prover_params: &ProverParams, values: &[&[u8]], index : usize) -> G
     let scalars_fr_repr:Vec<FrRepr> = values.iter().map(|s| Fr::hash_to_fr(s).into_repr()).collect();
     let scalars_u64:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
     if prover_params.precomp.len() == 512*n {
-        G1::sum_of_products_precomp_256(&prover_params.generators[n-index..2*n-index], &scalars_u64, &prover_params.precomp[(n-index)*256..(2*n-index)*256])
+        G1Affine::sum_of_products_precomp_256(&prover_params.generators[n-index..2*n-index], &scalars_u64, &prover_params.precomp[(n-index)*256..(2*n-index)*256])
     }
     else {
-        G1::sum_of_products(&prover_params.generators[n-index..2*n-index], &scalars_u64)
+        G1Affine::sum_of_products(&prover_params.generators[n-index..2*n-index], &scalars_u64)
     }
 }
   
@@ -34,18 +34,18 @@ pub fn proof_update(prover_params: &ProverParams, proof : &G1, proof_index : usi
 
         let param_index = changed_index+n-proof_index;
 
-        let mut changed_param = prover_params.generators[param_index];
+        let res = 
         if prover_params.precomp.len() == 6*n {
-            changed_param.mul_assign_precomp_3(multiplier, &prover_params.precomp[param_index*3..(param_index+1)*3]); 
+            prover_params.generators[param_index].mul_precomp_3(multiplier, &prover_params.precomp[param_index*3..(param_index+1)*3])
         }
         else if prover_params.precomp.len() == 512*n {
-            changed_param.mul_assign_precomp_256(multiplier, &prover_params.precomp[param_index*256..(param_index+1)*256]); 
+            prover_params.generators[param_index].mul_precomp_256(multiplier, &prover_params.precomp[param_index*256..(param_index+1)*256])
         }
         else {
-            changed_param.mul_assign(multiplier);
-        }
+            prover_params.generators[param_index].mul(multiplier)
+        };
 
-        new_proof.add_assign(&changed_param);
+        new_proof.add_assign(&res);
         new_proof
     }
 }

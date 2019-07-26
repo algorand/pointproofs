@@ -2,10 +2,10 @@
 
 ## Pairing-based scheme
 
-- committing to an n-vector: 80n microseconds without precomputation, 40n microseconds with precomputation (256n EC points stored)
-- proving a single element in an n-vector: 80n microseconds without precomputation, 40n microseconds with precomputation (512n EC points stored)
-- verifying a single proof (regardless of n): 3600 microseconds
-- updating a proof or a commitment (regardless of n): 214 microseconds no pecomp; 118 microseconds with small precomp (6n EC points stored); 63 microseconds with large precomp (512n EC points stored)
+- committing to an n-vector: 80n microseconds without precomputation, 32n microseconds with precomputation ((256)x(96 n) bytes stored)
+- proving a single element in an n-vector: 80n microseconds without precomputation, 33n microseconds with precomputation ((512)x(96 n) bytes stored)
+- verifying a single proof (regardless of n): 3450 microseconds
+- updating a proof or a commitment (regardless of n): 213 microseconds no pecomp; 116 microseconds with small precomp (6 x (96 n) bytes stored); 55 microseconds with large precomp ((512)x(96 n) bytes stored)
 
 commitments and proofs are 48 bytes
 
@@ -23,17 +23,17 @@ commitments and proofs are 48 bytes
 
 ```
 Running /Users/reyzin/consulting/algorand/RustProjects/veccom-rust/target/release/deps/pairings-92fd9995499da84f
-pairings/commit_no_precomp         time:   [8.0807 ms 8.0949 ms 8.1217 ms]
-pairings/commit_precomp_256        time:   [3.9797 ms 3.9912 ms 4.0049 ms]
-pairings/prove_no_precomp          time:   [8.0212 ms 8.0332 ms 8.0556 ms]
-pairings/prove_precomp_256         time:   [4.1441 ms 4.1553 ms 4.1771 ms]
-pairings/verify                    time:   [3.5095 ms 3.5198 ms 3.5347 ms]                          
-pairings/commit_update_no_precomp  time:   [213.66 us 214.10 us 214.78 us]
-pairings/commit_update_precomp_3   time:   [117.41 us 117.69 us 118.12 us]
-pairings/commit_update_precomp_256 time:   [63.899 us 64.032 us 64.253 us]
-pairings/proof_update_no_precomp   time:   [214.39 us 214.80 us 215.59 us]
-pairings/proof_update_precomp_3    time:   [118.36 us 118.78 us 119.54 us]
-pairings/proof_update_precomp_256  time:   [61.920 us 62.750 us 64.274 us]
+pairings/commit_no_precomp         time:   [7.9110 ms 7.9502 ms 8.0277 ms]
+pairings/commit_precomp_256        time:   [3.1413 ms 3.1602 ms 3.1954 ms]
+pairings/prove_no_precomp          time:   [7.8364 ms 7.8440 ms 7.8535 ms]
+pairings/prove_precomp_256         time:   [3.2569 ms 3.2793 ms 3.3192 ms]
+pairings/verify                    time:   [3.4472 ms 3.4492 ms 3.4515 ms]                        
+pairings/commit_update_no_precomp  time:   [211.73 us 212.40 us 213.16 us]
+pairings/commit_update_precomp_3   time:   [114.77 us 115.01 us 115.52 us]
+pairings/commit_update_precomp_256 time:   [55.347 us 56.253 us 57.737 us]
+pairings/proof_update_no_precomp   time:   [212.46 us 213.58 us 216.69 us]
+pairings/proof_update_precomp_3    time:   [115.80 us 116.18 us 116.95 us]
+pairings/proof_update_precomp_256  time:   [52.763 us 53.511 us 55.652 us]
 ```
 
 ## Merkle-based scheme

@@ -2,13 +2,13 @@ use pairing::{bls12_381::*};
 
 #[derive(Clone)]
 pub struct ProverParams {
-    generators : Vec<G1>,
-    precomp : Vec<G1>
+    generators : Vec<G1Affine>,
+    precomp : Vec<G1Affine>
 }
 
 
 pub struct VerifierParams {
-    generators: Vec<G2>,
+    generators: Vec<G2Affine>,
     gt_elt: Fq12
 }
 

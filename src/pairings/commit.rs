@@ -8,10 +8,10 @@ pub fn commit(prover_params: &ProverParams, values: &[&[u8]]) -> G1 {
     let scalars_fr_repr:Vec<FrRepr> = values.iter().map(|s| Fr::hash_to_fr(s).into_repr()).collect();
     let scalars_u64:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
     if prover_params.precomp.len() == 512*n {
-        G1::sum_of_products_precomp_256(&prover_params.generators[0..n], &scalars_u64, &prover_params.precomp)
+        G1Affine::sum_of_products_precomp_256(&prover_params.generators[0..n], &scalars_u64, &prover_params.precomp)
     }
     else {
-        G1::sum_of_products(&prover_params.generators[0..n], &scalars_u64)
+        G1Affine::sum_of_products(&prover_params.generators[0..n], &scalars_u64)
     }
 }
 
@@ -21,19 +21,19 @@ pub fn commit_update(prover_params: &ProverParams, com : &G1, changed_index : us
     multiplier.negate();
     multiplier.add_assign(&Fr::hash_to_fr(&value_after));
 
-    let mut param_i = prover_params.generators[changed_index];
+    let res = 
     if prover_params.precomp.len() == 3*prover_params.generators.len() {
-        param_i.mul_assign_precomp_3(multiplier, &prover_params.precomp[changed_index*3..(changed_index+1)*3]);
+        prover_params.generators[changed_index].mul_precomp_3(multiplier, &prover_params.precomp[changed_index*3..(changed_index+1)*3])
     }
     else if prover_params.precomp.len() == 256*prover_params.generators.len() {
-        param_i.mul_assign_precomp_256(multiplier, &prover_params.precomp[changed_index*256..(changed_index+1)*256]);
+         prover_params.generators[changed_index].mul_precomp_256(multiplier, &prover_params.precomp[changed_index*256..(changed_index+1)*256])
     }
     else {
-        param_i.mul_assign(multiplier);
-    }
+        prover_params.generators[changed_index].mul(multiplier)
+    };
 
     let mut new_com = *com;
-    new_com.add_assign(&param_i);
+    new_com.add_assign(&res);
     new_com
 }
 

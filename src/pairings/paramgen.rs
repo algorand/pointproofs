@@ -1,4 +1,4 @@
-use pairing::{bls12_381::*, CurveProjective, Engine};
+use pairing::{bls12_381::*, CurveProjective, CurveAffine, Engine};
 use ff::Field;
 use super::{ProverParams, VerifierParams};
 
@@ -16,25 +16,19 @@ pub fn paramgen_from_alpha(alpha: &Fr, n : usize) -> (ProverParams, VerifierPara
     // verifier vector at index i-1 contains g2^{alpha^i} for i ranging from 1 to n
     let mut alpha_power = Fr::one();
     for _ in 0..n {
-        let mut g1 = G1::one();
-        let mut g2 = G2::one();
         alpha_power.mul_assign(&alpha); // compute alpha^i
-        g1.mul_assign(alpha_power);
-        g2.mul_assign(alpha_power);
-        g1_vec.push(g1);
-        g2_vec.push(g2);
+        g1_vec.push(G1Affine::one().mul(alpha_power).into_affine());
+        g2_vec.push(G2Affine::one().mul(alpha_power).into_affine());
     }
     
     // skip g1^{alpha^{n+1}}
     alpha_power.mul_assign(&alpha);
-    g1_vec.push(G1::zero()); // this 0 is important -- without it, prove will not work correctly
+    g1_vec.push(G1::zero().into_affine()); // this 0 is important -- without it, prove will not work correctly
 
     // Now do the rest of the prover
     for _ in n..2*n-1 {
-        let mut g1 = G1::one();
-        alpha_power.mul_assign(&alpha);
-        g1.mul_assign(alpha_power);
-        g1_vec.push(g1);
+        alpha_power.mul_assign(&alpha); // compute alpha^i
+        g1_vec.push(G1Affine::one().mul(alpha_power).into_affine());
     }
 
     // verifier also gets gt^{alpha^{n+1}} in the target group
@@ -46,14 +40,14 @@ pub fn paramgen_from_alpha(alpha: &Fr, n : usize) -> (ProverParams, VerifierPara
 impl ProverParams {
     pub fn precomp_3 (&mut self)  {
         let twice_n = self.generators.len();
-        self.precomp = vec![G1::zero(); 3*twice_n];  // TODO: is there a better way to inialize this?
+        self.precomp = vec![G1Affine::zero(); 3*twice_n];  // TODO: is there a better way to inialize this?
         for i in 0..twice_n {
             self.generators[i].precomp_3(&mut self.precomp[i*3..(i+1)*3]);
         }
     }
     pub fn precomp_256 (&mut self)  {
         let twice_n = self.generators.len();
-        self.precomp = vec![G1::zero(); 256*twice_n]; // TODO: is there a better way to inialize this?
+        self.precomp = vec![G1Affine::zero(); 256*twice_n]; // TODO: is there a better way to inialize this?
         for i in 0..twice_n {
             self.generators[i].precomp_256(&mut self.precomp[i*256..(i+1)*256]);
         }
