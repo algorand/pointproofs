@@ -40,14 +40,14 @@ pub fn paramgen_from_alpha(alpha: &Fr, n : usize) -> (ProverParams, VerifierPara
 impl ProverParams {
     pub fn precomp_3 (&mut self)  {
         let twice_n = self.generators.len();
-        self.precomp = vec![G1Affine::zero(); 3*twice_n];  // TODO: is there a better way to inialize this?
+        self.precomp = vec![G1Affine::zero(); 3*twice_n];  // TODO: is there a better way to inialize this? We need merely to allocate space, not to set it to 0
         for i in 0..twice_n {
             self.generators[i].precomp_3(&mut self.precomp[i*3..(i+1)*3]);
         }
     }
     pub fn precomp_256 (&mut self)  {
         let twice_n = self.generators.len();
-        self.precomp = vec![G1Affine::zero(); 256*twice_n]; // TODO: is there a better way to inialize this?
+        self.precomp = vec![G1Affine::zero(); 256*twice_n]; // TODO: is there a better way to inialize this? We need merely to allocate space, not to set it to 0
         for i in 0..twice_n {
             self.generators[i].precomp_256(&mut self.precomp[i*256..(i+1)*256]);
         }

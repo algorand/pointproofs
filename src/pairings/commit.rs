@@ -16,6 +16,7 @@ pub fn commit(prover_params: &ProverParams, values: &[&[u8]]) -> G1 {
 }
 
 
+// TODO: error handling if index is out of bounds?
 pub fn commit_update(prover_params: &ProverParams, com : &G1, changed_index : usize, value_before : &[u8], value_after : &[u8]) -> G1 {
     let mut multiplier = Fr::hash_to_fr(&value_before);
     multiplier.negate();

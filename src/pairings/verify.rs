@@ -3,6 +3,7 @@ use ff::Field;
 use super::VerifierParams;
 
 
+// TODO: error handling if index is out of bounds?
 pub fn verify(verifier_params : &VerifierParams, com : &G1, proof : &G1, value : &[u8], index : usize) -> bool {
     let n = verifier_params.generators.len();
 
@@ -28,7 +29,7 @@ pub fn verify(verifier_params : &VerifierParams, com : &G1, proof : &G1, value :
         None => { 
             // This branch will get exercised only with probability 1/r, i.e., never,
             // because the hash to Fr would have to produce a 0 in order for it to get invoked
-            // TODO: write a test that automatically exercises this branch (it was tested only manually)
+            // TODO: how to write a test that automatically exercises this branch? (it was tested only manually)
             Bls12::pairing_product(com_mut, verifier_params.generators[n-index-1], proof_mut, G2Affine::one())
                 == Fq12::one()
         }

@@ -14,7 +14,7 @@ fn print_48_bytes(b : [u8; 48])->String {
 }
 
 pub fn main() {
-    let n = 10usize;
+    let n = 1000usize;
     let update_index = n/2;
 
     let (mut prover_params, verifier_params) = paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n);

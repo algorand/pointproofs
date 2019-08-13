@@ -3,7 +3,7 @@ use ff::{Field,PrimeField};
 use super::ProverParams;
 
 pub fn prove(prover_params: &ProverParams, values: &[&[u8]], index : usize) -> G1 {
-    // TODO: error handling if the prover params length is not double values length
+    // TODO: error handling if the prover params length is not double values length or if index is out of bounds
     let n = values.len();
     let scalars_fr_repr:Vec<FrRepr> = values.iter().map(|s| Fr::hash_to_fr(s).into_repr()).collect();
     let scalars_u64:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
@@ -17,6 +17,7 @@ pub fn prove(prover_params: &ProverParams, values: &[&[u8]], index : usize) -> G
   
 // For updating your proof when someone else's value changes
 // Not for updating your own proof when your value changes -- because then the proof does not change!
+// TODO: Error handling if indices are out of bounds?
 pub fn proof_update(prover_params: &ProverParams, proof : &G1, proof_index : usize, changed_index : usize, value_before : &[u8], value_after : &[u8]) -> G1 {
   
     let mut new_proof = *proof;

@@ -2,10 +2,10 @@
 
 ## Pairing-based scheme
 
-- committing to an n-vector: 80n microseconds without precomputation, 32n microseconds with precomputation ((256)x(96 n) bytes stored)
-- proving a single element in an n-vector: 80n microseconds without precomputation, 33n microseconds with precomputation ((512)x(96 n) bytes stored)
+- committing to an n-vector: 80n microseconds without precomputation, 32n microseconds with precomputation ((256)x(48 n) bytes stored)
+- proving a single element in an n-vector: 80n microseconds without precomputation, 33n microseconds with precomputation ((512)x(48 n) bytes stored)
 - verifying a single proof (regardless of n): 3450 microseconds
-- updating a proof or a commitment (regardless of n): 213 microseconds no pecomp; 116 microseconds with small precomp (6 x (96 n) bytes stored); 55 microseconds with large precomp ((512)x(96 n) bytes stored)
+- updating a proof or a commitment (regardless of n): 213 microseconds no pecomp; 116 microseconds with small precomp (6 x (48 n) bytes stored); 55 microseconds with large precomp ((512)x(48 n) bytes stored)
 
 commitments and proofs are 48 bytes
 
