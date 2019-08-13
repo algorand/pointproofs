@@ -4,7 +4,7 @@ pub struct Params {
     n : usize,
     n_bytes : [u8; 8],
     max_depth : usize,
-    hash_len : usize
+    hash_len : usize // TODO: hash_len should probably be a constant
 }
 
 

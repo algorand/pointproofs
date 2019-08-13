@@ -7,6 +7,7 @@ pub fn paramgen_from_seed(seed: &[u8], n: usize) -> (ProverParams, VerifierParam
     paramgen_from_alpha(&Fr::hash_to_fr(seed), n)
 }
 
+// TODO: error check for n==0 and/or handle the n==0 case?
 pub fn paramgen_from_alpha(alpha: &Fr, n : usize) -> (ProverParams, VerifierParams) {
     let mut g1_vec = Vec::with_capacity(2*n);
     // prover vector at index i-1 contains g1^{alpha^i} for i ranging from 1 to 2n 

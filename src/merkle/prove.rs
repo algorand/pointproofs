@@ -2,16 +2,12 @@ use super::{Params, commit};
 
 
 pub fn prove_from_scratch(params: &Params, values: &[&[u8]], index : usize) -> Vec<u8> {
-    // TODO: error handling if the prover params length is not equal to values length
-    // TODO: figure out if the input for values is the right one to use
-    // TODO: is this the correct output type?
+    // TODO: error handling if the prover params length is not equal to values length or if index is out of bounds
     prove_rec(params, values, params.max_depth, 0, index)
 }
 
 pub fn prove_from_tree(params: &Params, hash_tree: &[u8], index : usize) -> Vec<u8> {
-    // TODO: error handling if the prover params length is not equal to values length
-    // TODO: figure out if the input for values is the right one to use
-    // TODO: is this the correct output type?
+    // TODO: error handling if index is out of bounds?
     let mut proof = vec![0u8; params.max_depth*params.hash_len];
     let mut i = (1<<params.max_depth) | index;
     // node i at depth k is stored starting in location index = (2^k+i)*hash_len (like a heap, except at hash_len per item)
@@ -42,9 +38,8 @@ fn prove_rec(params: &Params, values: &[&[u8]], height: usize, current_node_inde
         ret[start_index .. start_index+params.hash_len].copy_from_slice(&com);
         ret
 
-    } else { // leaf level, so empty proof
-        vec![0u8; params.max_depth*params.hash_len]
-        //Vec::with_capacity(params.max_depth*params.hash_len)
+    } else { // leaf level, it doesn't matter what the proof is, because it will get filled in by recursive levels above
+        vec![0u8; params.max_depth*params.hash_len] // TODO: this doesn't need to be initialized to 0 -- just allocated
     }
 }
   

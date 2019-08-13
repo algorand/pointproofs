@@ -2,8 +2,11 @@ use pairing::{bls12_381::*, CurveAffine, CurveProjective, EncodedPoint};
 use ff::{Field,PrimeField};
 use super::ProverParams;
 
+// Global TODO: when to assume inputs are correct -- lengths, curve points, generated params, etc; when, instead, to check
+// and how to handle errors.
+
 pub fn commit(prover_params: &ProverParams, values: &[&[u8]]) -> G1 {
-    // TODO: error handling if the prover params length is not double values length
+    // TODO: error handling if the prover params length is not double values length?
     let n = values.len();
     let scalars_fr_repr:Vec<FrRepr> = values.iter().map(|s| Fr::hash_to_fr(s).into_repr()).collect();
     let scalars_u64:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
