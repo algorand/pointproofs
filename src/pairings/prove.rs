@@ -2,8 +2,10 @@ use pairing::{bls12_381::*, CurveAffine, CurveProjective, EncodedPoint};
 use ff::{Field,PrimeField};
 use super::ProverParams;
 
+/**
+ * Assumes prover_params are correctly generated for n = values.len and that index<n
+ */
 pub fn prove(prover_params: &ProverParams, values: &[&[u8]], index : usize) -> G1 {
-    // TODO: error handling if the prover params length is not double values length or if index is out of bounds
     let n = values.len();
     let scalars_fr_repr:Vec<FrRepr> = values.iter().map(|s| Fr::hash_to_fr(s).into_repr()).collect();
     let scalars_u64:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
@@ -15,9 +17,12 @@ pub fn prove(prover_params: &ProverParams, values: &[&[u8]], index : usize) -> G
     }
 }
   
-// For updating your proof when someone else's value changes
-// Not for updating your own proof when your value changes -- because then the proof does not change!
-// TODO: Error handling if indices are out of bounds?
+
+/**
+ * For updating your proof when someone else's value changes
+ * Not for updating your own proof when your value changes -- because then the proof does not change!
+ * Assumes prover_params are correctly generated for n such that changed_index<n and proof_index<n
+ */  
 pub fn proof_update(prover_params: &ProverParams, proof : &G1, proof_index : usize, changed_index : usize, value_before : &[u8], value_after : &[u8]) -> G1 {
   
     let mut new_proof = *proof;
@@ -51,14 +56,18 @@ pub fn proof_update(prover_params: &ProverParams, proof : &G1, proof_index : usi
     }
 }
 
-// write a proof (which is a projective G1 element) into a 48-byte slice
+/**
+ *  write a proof (which is a projective G1 element) into a 48-byte slice
+ */
 pub fn write_proof_into_slice(proof: &G1, out: &mut [u8]) {
     let s = pairing::bls12_381::G1Compressed::from_affine(proof.into_affine());
     out.copy_from_slice(s.as_ref());
 }
 
-// convert a proof (which is a projective G1 element) into a string of 48 bytes
-// Copied from the bls library
+/**
+ * Write a proof (which is a projective G1 element) into a 48-byte slice
+ * Copied from the bls library
+ */
 pub fn convert_proof_to_bytes (proof: &G1) -> [u8; 48] {
     let s = pairing::bls12_381::G1Compressed::from_affine(proof.into_affine());
     let mut out: [u8; 48] = [0; 48];
@@ -66,9 +75,11 @@ pub fn convert_proof_to_bytes (proof: &G1) -> [u8; 48] {
     out
 }
   
-// take an array of 48 bytes and output a proof
-// Copied from the bls library
-// In case bytes don't convert to a meaningful element of G1, defaults to the group generator
+/**
+ * take an array of 48 bytes and output a proof
+ * Copied from the bls library
+ * In case bytes don't convert to a meaningful element of G1, defaults to the group generator
+ */
 pub fn convert_bytes_to_proof (input : &[u8]) -> G1 {
     let mut proof_compressed = G1Compressed::empty();
     proof_compressed

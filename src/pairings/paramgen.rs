@@ -7,7 +7,7 @@ pub fn paramgen_from_seed(seed: &[u8], n: usize) -> (ProverParams, VerifierParam
     paramgen_from_alpha(&Fr::hash_to_fr(seed), n)
 }
 
-// TODO: error check for n==0 and/or handle the n==0 case?
+// TODO: panic if n == 0
 pub fn paramgen_from_alpha(alpha: &Fr, n : usize) -> (ProverParams, VerifierParams) {
     let mut g1_vec = Vec::with_capacity(2*n);
     // prover vector at index i-1 contains g1^{alpha^i} for i ranging from 1 to 2n 
@@ -41,14 +41,14 @@ pub fn paramgen_from_alpha(alpha: &Fr, n : usize) -> (ProverParams, VerifierPara
 impl ProverParams {
     pub fn precomp_3 (&mut self)  {
         let twice_n = self.generators.len();
-        self.precomp = vec![G1Affine::zero(); 3*twice_n];  // TODO: is there a better way to inialize this? We need merely to allocate space, not to set it to 0
+        self.precomp = vec![G1Affine::zero(); 3*twice_n];
         for i in 0..twice_n {
             self.generators[i].precomp_3(&mut self.precomp[i*3..(i+1)*3]);
         }
     }
     pub fn precomp_256 (&mut self)  {
         let twice_n = self.generators.len();
-        self.precomp = vec![G1Affine::zero(); 256*twice_n]; // TODO: is there a better way to inialize this? We need merely to allocate space, not to set it to 0
+        self.precomp = vec![G1Affine::zero(); 256*twice_n];
         for i in 0..twice_n {
             self.generators[i].precomp_256(&mut self.precomp[i*256..(i+1)*256]);
         }

@@ -25,6 +25,7 @@ mod tests {
     use super::commit::*;
     use super::verify::*;
     use super::prove::*;
+    use ff::Field;
 
     #[test]
     fn test_paramgen() {
@@ -151,6 +152,20 @@ mod tests {
                     assert!(verify(&verifier_params, &com, &proofs[j], &values[j], j));
                 }
             }
+            // update commitment to a value whose hash is 0 and see if correct proof verifies while wrong proof doesn't
+            // this is done separately to test verification, because verification includes inverting the hash
+            let temp_com = update_to_zero_hash(&prover_params, &com, i, &new_values[i]);
+            // The old proof should verify
+            assert!(verify_hash_inverse(&verifier_params, &temp_com, &proofs[i], None, i));
+            // put garbage into proof bytes -- it should not verify
+            let mut proof_bytes = convert_proof_to_bytes(&proofs[i]);
+            proof_bytes[0]=8u8;
+            proof_bytes[1]=14u8;
+            proof_bytes[2]=20u8;
+            proof_bytes[3]=19u8;
+            assert!(!verify_hash_inverse(&verifier_params, &temp_com, &convert_bytes_to_proof(&proof_bytes), None, i));
+            // put some into hash_inverse -- it should not verify
+            assert!(!verify_hash_inverse(&verifier_params, &temp_com, &proofs[i], Some(Fr::one()), i));
         }
     }
 }
