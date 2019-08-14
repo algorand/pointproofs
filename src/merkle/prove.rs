@@ -1,25 +1,28 @@
-use super::{Params, commit};
+use super::{Params, commit, HASH_LEN};
 
 
+/**
+ * Assumes params are properly generated, params.n == values.len() and index<params.n
+ */
 pub fn prove_from_scratch(params: &Params, values: &[&[u8]], index : usize) -> Vec<u8> {
-    // TODO: error handling if the prover params length is not equal to values length or if index is out of bounds
     prove_rec(params, values, params.max_depth, 0, index)
 }
-
+/**
+ * Assumes params and tree are properly generated and index<params.n
+ */
 pub fn prove_from_tree(params: &Params, hash_tree: &[u8], index : usize) -> Vec<u8> {
-    // TODO: error handling if index is out of bounds?
-    let mut proof = vec![0u8; params.max_depth*params.hash_len];
+    let mut proof = vec![0u8; params.max_depth*HASH_LEN];
     let mut i = (1<<params.max_depth) | index;
-    // node i at depth k is stored starting in location index = (2^k+i)*hash_len (like a heap, except at hash_len per item)
-    // its sibling is at index +/- hash_len; its parent is at index/2
+    // node i at depth k is stored starting in location index = (2^k+i)*HASH_LEN (like a heap, except at HASH_LEN per item)
+    // its sibling is at index +/- HASH_LEN; its parent is at index/2
     let mut slice_start;
     let mut slice_end = 0usize;
     while i>1 {
         let sibling = i^1;
         slice_start = slice_end;
-        slice_end = slice_start+params.hash_len;
-        let tree_location = sibling*params.hash_len;
-        proof[slice_start .. slice_end].copy_from_slice(&hash_tree[tree_location..tree_location+params.hash_len]);
+        slice_end = slice_start+HASH_LEN;
+        let tree_location = sibling*HASH_LEN;
+        proof[slice_start .. slice_end].copy_from_slice(&hash_tree[tree_location..tree_location+HASH_LEN]);
         i/=2;
     }
     proof
@@ -34,21 +37,26 @@ fn prove_rec(params: &Params, values: &[&[u8]], height: usize, current_node_inde
         };
         let mut ret = prove_rec(params, values, height-1, next_step_index, index_being_proven);
         let com = commit::commit_rec(params, values, height-1, next_sibling_index);
-        let start_index = (height-1)*params.hash_len;
-        ret[start_index .. start_index+params.hash_len].copy_from_slice(&com);
+        let start_index = (height-1)*HASH_LEN;
+        ret[start_index .. start_index+HASH_LEN].copy_from_slice(&com);
         ret
 
     } else { // leaf level, it doesn't matter what the proof is, because it will get filled in by recursive levels above
-        vec![0u8; params.max_depth*params.hash_len] // TODO: this doesn't need to be initialized to 0 -- just allocated
+        vec![0u8; params.max_depth*HASH_LEN]
     }
 }
   
 
 
-// For updating your proof when someone else's value changes
-// Not for updating your own proof when your value changes -- because then the proof does not change!
-// proof_update_helper, if supplied, speeds this up. (It is obtained from commit_update.)
-// TODO: make sure the indices are within bounds? 
+/**
+ * For updating your proof when someone else's value changes
+ * Not for updating your own proof when your value changes -- because then the proof does not change!
+ * fast_proof_update_info, if supplied, speeds this up. (It is obtained from commit_update.)
+
+ * Assumes params, proof, changed_index_proof, fast_proof_update_info (unless None) and are properly generated.
+ * Assumes proof_index<params.n and changed_index<params.n
+ */
+
 pub fn proof_update(params: &Params, proof : & mut [u8], proof_index : usize, changed_index : usize, changed_index_proof : &[u8], value_after : &[u8], fast_proof_update_info : Option<&[u8]>) {
     if proof_index != changed_index {
         let mut path_diff = (proof_index ^ changed_index)>>1;
@@ -57,8 +65,8 @@ pub fn proof_update(params: &Params, proof : & mut [u8], proof_index : usize, ch
             update_height+=1;
             path_diff >>= 1;
         }
-        let slice_start = update_height*params.hash_len;
-        let slice_end = slice_start+params.hash_len;
+        let slice_start = update_height*HASH_LEN;
+        let slice_end = slice_start+HASH_LEN;
         match fast_proof_update_info {
             None => {
                 proof[slice_start .. slice_end].

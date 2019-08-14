@@ -1,6 +1,6 @@
 use super::Params;
 
-// TODO: the current implemenation requires n to be at least 2; should we handle this error here and how?
+// TODO: add a panic for n<2
 pub fn paramgen(n : usize) -> Params {
     let mut max_depth = 0;
     let mut max_n = 1;
@@ -12,6 +12,5 @@ pub fn paramgen(n : usize) -> Params {
     for i in 0..8 {
         n_bytes[i] = ((n>>(i*8)) & 0xff) as u8;
     }
-    let hash_len = 32;
-    Params {n, n_bytes, max_depth, hash_len}
+    Params {n, n_bytes, max_depth}
 }
