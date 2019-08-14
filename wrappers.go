@@ -129,13 +129,13 @@ func (p *Prover) CommitUpdate(com Commitment, changedidx int, oldval []byte, new
 }
 
 func BytesToG1(buf [48]byte) *G1 {
-	res := C.vcp_g1_from_bytes((*C.u_char)(&buf[0]))
+	res := C.vcp_g1_from_bytes((*C.uchar)(&buf[0]))
 	g1 := &G1{ptr: res}
 	runtime.SetFinalizer(g1, release_g1)
 	return g1
 }
 
 func (g1 *G1) ToBytes() (out [48]byte) {
-	C.vcp_g1_to_bytes(g1.ptr, (*C.u_char)(&out[0]))
+	C.vcp_g1_to_bytes(g1.ptr, (*C.uchar)(&out[0]))
 	return
 }
