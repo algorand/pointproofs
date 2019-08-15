@@ -57,7 +57,7 @@ mod tests {
             let com = commit_no_tree(&params, &values);
             let mut proofs = Vec::with_capacity(n);
             let mut tree = commit_with_tree(&params, &values);
-            assert_eq!(com, tree[32..64].to_vec());
+            assert_eq!(com[..], tree[32..64]);
 
             for i in 0..n {
                 proofs.push (prove_from_scratch(&params, &values, i));
@@ -76,7 +76,7 @@ mod tests {
             for i in 0..n {
                 let (com, fast_update_info) = commit_update(&params, i, &proofs[i], &new_values[i]);
                 tree_update(&params, i, &new_values[i], &mut tree);
-                assert_eq!(com, tree[32..64].to_vec());
+                assert_eq!(com[..], tree[32..64]);
                 // Old value should not verify, but new one should
                 assert!(!verify(&params, &com, &proofs[i], &values[i], i));
                 assert!(verify(&params, &com, &proofs[i], &new_values[i], i));
