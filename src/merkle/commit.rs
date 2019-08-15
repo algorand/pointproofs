@@ -49,7 +49,6 @@ pub fn commit_with_tree(params: &Params, values: &[&[u8]]) -> Vec<u8> {
 }
 
 
-// TODO: can you make this not public but still accessible by prove?
 // TODO: maybe the output type should be GenericArray rather than Vec. 
 pub fn commit_rec(params: &Params, values: &[&[u8]], height: usize, index: usize) -> Vec<u8> {
     // We number levels from 0 at the root to params.max_depth at the leaves
@@ -91,7 +90,6 @@ pub fn commit_update(params: &Params, changed_index : usize, changed_index_proof
     (res, fast_proof_update_info)
 }
 
-// TODO: how to make this not public but visible to update_proof?
 // TODO: maybe the output type should be GenericArray rather than Vec. 
 pub fn commit_update_helper(params: &Params, changed_index : usize, changed_index_proof : &[u8], value_after : &[u8], update_height : usize, mut fast_proof_update_info : Option<& mut [u8]>) -> Vec<u8> {
     let mut hasher = sha2::Sha256::new();

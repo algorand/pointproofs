@@ -1,7 +1,9 @@
 use super::Params;
 
-// TODO: add a panic for n<2
 pub fn paramgen(n : usize) -> Params {
+    if n<2 {
+        panic!("n of {} is less than minimum of 2", n);
+    }
     let mut max_depth = 0;
     let mut max_n = 1;
     while max_n < n {

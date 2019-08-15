@@ -9,11 +9,10 @@ pub struct Params {
 }
 
 
-// TODO: refactor what's public and what's not
-pub mod paramgen;
-pub mod commit;
-pub mod prove;
-pub mod verify;
+mod paramgen;
+mod commit;
+mod prove;
+mod verify;
 
 #[cfg(test)]
 mod tests {

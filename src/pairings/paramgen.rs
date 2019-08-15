@@ -7,8 +7,10 @@ pub fn paramgen_from_seed(seed: &[u8], n: usize) -> (ProverParams, VerifierParam
     paramgen_from_alpha(&Fr::hash_to_fr(seed), n)
 }
 
-// TODO: panic if n == 0
 pub fn paramgen_from_alpha(alpha: &Fr, n : usize) -> (ProverParams, VerifierParams) {
+    if n == 0 {
+        panic!("n should be at least 1");
+    }
     let mut g1_vec = Vec::with_capacity(2*n);
     // prover vector at index i-1 contains g1^{alpha^i} for i ranging from 1 to 2n 
     // except that at index i, prover vector contains nothing useful
