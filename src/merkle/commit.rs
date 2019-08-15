@@ -17,15 +17,15 @@ pub fn commit_with_tree(params: &Params, values: &[&[u8]]) -> Vec<u8> {
     let mut num_nodes_above = 1<<params.max_depth; // number of nodes above the current level, plus 1 (where current level starts at the leaves)
     let num_leaves = ((params.n+1)/2)*2; // round up n to the nearest even number
     let mut hash_tree = vec!(0u8; (num_nodes_above+num_leaves)*HASH_LEN);
-    let mut hasher = sha2::Sha256::new(); // TODO: is it better to have a single hasher with result_reset or create a new one each time and use .result?
 
     for i in 0 .. params.n {
         let prefix : [u8; 1] = [0u8];
+        let mut hasher = sha2::Sha256::new(); 
         hasher.input(&prefix);
         hasher.input(&params.n_bytes);
         hasher.input(&values[i]);
         let tree_location = (num_nodes_above+i)*HASH_LEN;
-        hash_tree[tree_location..tree_location+HASH_LEN].copy_from_slice(&hasher.result_reset());
+        hash_tree[tree_location..tree_location+HASH_LEN].copy_from_slice(&hasher.result());
     }
 
     let mut num_occupied = num_leaves;
@@ -36,12 +36,13 @@ pub fn commit_with_tree(params: &Params, values: &[&[u8]]) -> Vec<u8> {
 
         for i in num_nodes_above..num_nodes_above+num_occupied {
             let prefix : [u8; 1] = [1u8];
+            let mut hasher = sha2::Sha256::new();
             hasher.input(&prefix);
             hasher.input(&params.n_bytes);
             let tree_location = i*HASH_LEN;
             let children_start = 2*tree_location;
             hasher.input(&hash_tree[children_start..children_start+double_hash_len]);
-            hash_tree[tree_location..tree_location+HASH_LEN].copy_from_slice(&hasher.result_reset());
+            hash_tree[tree_location..tree_location+HASH_LEN].copy_from_slice(&hasher.result());
         }
     }
     hash_tree
@@ -93,12 +94,12 @@ pub fn commit_update(params: &Params, changed_index : usize, changed_index_proof
 // TODO: how to make this not public but visible to update_proof?
 // TODO: maybe the output type should be GenericArray rather than Vec. 
 pub fn commit_update_helper(params: &Params, changed_index : usize, changed_index_proof : &[u8], value_after : &[u8], update_height : usize, mut fast_proof_update_info : Option<& mut [u8]>) -> Vec<u8> {
-    let mut hasher = sha2::Sha256::new(); // TODO: is it better to have a single hasher with result_reset or create a new one each time and use .result?
+    let mut hasher = sha2::Sha256::new();
     let prefix : [u8; 1] = [0u8];
     hasher.input(&prefix);
     hasher.input(&params.n_bytes);
     hasher.input(value_after);
-    let mut new_com = hasher.result_reset(); 
+    let mut new_com = hasher.result(); 
 
     match fast_proof_update_info {
         None => (),
@@ -108,6 +109,7 @@ pub fn commit_update_helper(params: &Params, changed_index : usize, changed_inde
     let mut child_index = changed_index;
 
     for i in 0..update_height {
+        let mut hasher = sha2::Sha256::new();
         let prefix : [u8; 1] = [1u8];
         hasher.input(&prefix);
         hasher.input(&params.n_bytes);
@@ -120,7 +122,7 @@ pub fn commit_update_helper(params: &Params, changed_index : usize, changed_inde
             hasher.input(new_com);
         }
         child_index >>= 1;
-        new_com = hasher.result_reset();
+        new_com = hasher.result();
         if i<params.max_depth-1 {
             match fast_proof_update_info {
                 None => (),
@@ -136,7 +138,7 @@ pub fn commit_update_helper(params: &Params, changed_index : usize, changed_inde
  * Assumes changed_index<params.n, and params and tree were properly generated.
  */
 pub fn tree_update(params: &Params, changed_index : usize, value_after : &[u8], tree : &mut [u8]) {
-    let mut hasher = sha2::Sha256::new(); // TODO: is it better to have a single hasher with result_reset or create a new one each time and use .result?
+    let mut hasher = sha2::Sha256::new();
     let prefix : [u8; 1] = [0u8];
     hasher.input(&prefix);
     hasher.input(&params.n_bytes);
@@ -145,10 +147,11 @@ pub fn tree_update(params: &Params, changed_index : usize, value_after : &[u8], 
     let mut ancestor_index = (1<<params.max_depth) | changed_index;
 
     let tree_index = ancestor_index*HASH_LEN;
-    tree[tree_index..tree_index+HASH_LEN].copy_from_slice(&hasher.result_reset());
+    tree[tree_index..tree_index+HASH_LEN].copy_from_slice(&hasher.result());
 
     let double_hash_len = 2*HASH_LEN;
     while ancestor_index>1 {
+        let mut hasher = sha2::Sha256::new();
         ancestor_index /= 2;
         let prefix : [u8; 1] = [1u8];
         hasher.input(&prefix);
@@ -156,6 +159,6 @@ pub fn tree_update(params: &Params, changed_index : usize, value_after : &[u8], 
         let tree_location = ancestor_index * HASH_LEN;
         let children_start = 2*tree_location;
         hasher.input(&tree[children_start..children_start+double_hash_len]);
-        tree[tree_location..tree_location+HASH_LEN].copy_from_slice(&hasher.result_reset());
+        tree[tree_location..tree_location+HASH_LEN].copy_from_slice(&hasher.result());
     }
 }

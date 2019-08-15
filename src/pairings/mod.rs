@@ -12,6 +12,7 @@ pub struct VerifierParams {
     gt_elt: Fq12
 }
 
+// TODO: refactor what's public and what's not
 pub mod paramgen;
 pub mod commit;
 pub mod prove;
