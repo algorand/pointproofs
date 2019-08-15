@@ -14,13 +14,19 @@ mod commit;
 mod prove;
 mod verify;
 
+pub use self::paramgen::paramgen;
+pub use self::commit::commit_no_tree;
+pub use self::commit::commit_with_tree;
+pub use self::commit::commit_update;
+pub use self::commit::tree_update;
+pub use self::prove::prove_from_scratch;
+pub use self::prove::prove_from_tree;
+pub use self::prove::proof_update;
+pub use self::verify::verify;
+
 #[cfg(test)]
 mod tests {
-    use super::paramgen::*;
-    use super::commit::*;
-    use super::verify::*;
-    use super::prove::*;
-
+    use super::*;
 
 /*    fn print_bytes(b : &[u8])->String {
         let mut ret = "".to_string();

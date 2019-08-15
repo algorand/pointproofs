@@ -3,10 +3,7 @@ extern crate bencher;
 extern crate veccom;
 
 use bencher::Bencher;
-use veccom::merkle::paramgen::*;
-use veccom::merkle::commit::*;
-use veccom::merkle::verify::*;
-use veccom::merkle::prove::*;
+use veccom::merkle::*;
 
 benchmark_group!(benches, bench_com_merkle, bench_tree_building_merkle, bench_prove_from_scratch_merkle, bench_prove_from_tree_merkle, bench_verify_merkle, bench_commit_update_merkle, bench_tree_update_merkle, bench_proof_update_no_helper_merkle, bench_proof_update_with_helper_merkle);
 benchmark_main!(benches);
