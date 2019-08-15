@@ -38,7 +38,7 @@ pub fn main() {
     for i in 0..tree.len()/32 {
         println!("{:02x} {}", i, print_bytes(&tree[i*32..(i+1)*32]));
     }
-    assert_eq!(old_com, tree[32..64].to_vec());
+    assert_eq!(old_com[..], tree[32..64]);
     println!("");
 
 
@@ -63,7 +63,7 @@ pub fn main() {
 
     tree_update(&params, update_index, &new_value, &mut tree);
 
-    assert_eq!(new_com, tree[32..64].to_vec());
+    assert_eq!(new_com[..], tree[32..64]);
 
     assert!(verify(&params, &new_com, &proofs[update_index], &new_value, update_index));
     assert!(!verify(&params, &new_com, &proofs[update_index], &old_values[update_index], update_index));

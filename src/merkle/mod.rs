@@ -1,6 +1,7 @@
+use typenum::Unsigned;
 
-
-const HASH_LEN : usize = 32;
+type HashLen = typenum::U32;
+const HASH_LEN : usize = HashLen::USIZE;
 
 pub struct Params {
     n : usize,

@@ -1,10 +1,11 @@
-use super::{Params,HASH_LEN};
+use super::{Params,HASH_LEN,HashLen};
 use sha2::Digest;
+use sha2::digest::generic_array::GenericArray;
 
 /**
  * Assumes params are properly generated and params.n == values.len()
  */
-pub fn commit_no_tree(params: &Params, values: &[&[u8]]) -> Vec<u8> {
+pub fn commit_no_tree(params: &Params, values: &[&[u8]]) -> GenericArray<u8, HashLen> {
     commit_rec(params, values, params.max_depth, 0)
 }
 
@@ -49,14 +50,13 @@ pub fn commit_with_tree(params: &Params, values: &[&[u8]]) -> Vec<u8> {
 }
 
 
-// TODO: maybe the output type should be GenericArray rather than Vec. 
-pub fn commit_rec(params: &Params, values: &[&[u8]], height: usize, index: usize) -> Vec<u8> {
+pub fn commit_rec(params: &Params, values: &[&[u8]], height: usize, index: usize) -> GenericArray<u8, HashLen> {
     // We number levels from 0 at the root to params.max_depth at the leaves
     // We number nodes at each level from 0 to 2^level - 1
     // height = params.max_depth - level -- i.e., 0 at the leaves, params.max_depth at the root
     // Any node that is not an ancestor of a leaf numbered less than n has value 0 (that is, [0u8; HASH_LEN])
     let num_occupied = (params.n+(1<<height)-1)>>height; // divide params.itn by 2^height with rouding up to get number of occupied tree cells in this level
-    let ret = if index < num_occupied { // this node has a descendent leaf numbered less than n
+    if index < num_occupied { // this node has a descendent leaf numbered less than n
         let mut hasher = sha2::Sha256::new(); 
         if height == 0 { // leaf node
             let prefix : [u8; 1] = [0u8];
@@ -71,12 +71,11 @@ pub fn commit_rec(params: &Params, values: &[&[u8]], height: usize, index: usize
             hasher.input(&commit_rec(params, values, height-1, index*2));
             hasher.input(&commit_rec(params, values, height-1, index*2+1));
         }
-        hasher.result().to_vec()
+        hasher.result()
     }
     else { // this node has no descendent leaves numbered less than n
-        vec![0u8; HASH_LEN]
-    };
-    ret
+        GenericArray::default()
+    }
 }
 
 
@@ -84,14 +83,14 @@ pub fn commit_rec(params: &Params, values: &[&[u8]], height: usize, index: usize
 /**
  * Assumes changed_index<params.n, and params and changed_index_proof were properly generated.
  */
-pub fn commit_update(params: &Params, changed_index : usize, changed_index_proof : &[u8], value_after : &[u8]) -> (Vec<u8>, Vec<u8>) {
+pub fn commit_update(params: &Params, changed_index : usize, changed_index_proof : &[u8], value_after : &[u8]) -> (GenericArray<u8, HashLen>, Vec<u8>) {
     let mut fast_proof_update_info = vec!(0u8; params.max_depth*HASH_LEN);
     let res = commit_update_helper(params, changed_index, changed_index_proof, value_after, params.max_depth, Some(&mut fast_proof_update_info));
     (res, fast_proof_update_info)
 }
 
 // TODO: maybe the output type should be GenericArray rather than Vec. 
-pub fn commit_update_helper(params: &Params, changed_index : usize, changed_index_proof : &[u8], value_after : &[u8], update_height : usize, mut fast_proof_update_info : Option<& mut [u8]>) -> Vec<u8> {
+pub fn commit_update_helper(params: &Params, changed_index : usize, changed_index_proof : &[u8], value_after : &[u8], update_height : usize, mut fast_proof_update_info : Option<& mut [u8]>) -> GenericArray<u8, HashLen> {
     let mut hasher = sha2::Sha256::new();
     let prefix : [u8; 1] = [0u8];
     hasher.input(&prefix);
@@ -129,7 +128,7 @@ pub fn commit_update_helper(params: &Params, changed_index : usize, changed_inde
         }
 
     }
-    new_com.to_vec() 
+    new_com
 }
 
 /**
