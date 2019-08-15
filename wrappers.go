@@ -71,10 +71,17 @@ func release_g1(g1 *G1) {
 }
 
 func vcp_value(buf []byte) C.vcp_value {
+	p := (*C.uchar)(C.malloc(C.size_t(len(buf))))
+	arr := (*[math.MaxUint32]byte)(unsafe.Pointer(p))
+	copy(arr[:], buf)
 	return C.vcp_value{
-		buf:    (*C.uchar)(&buf[0]),
+		buf:    p,
 		buflen: C.size_t(len(buf)),
 	}
+}
+
+func release_vcp_value(v C.vcp_value) {
+	C.free(unsafe.Pointer(v.buf))
 }
 
 func vcp_values(vals [][]byte) *C.vcp_value {
@@ -86,9 +93,17 @@ func vcp_values(vals [][]byte) *C.vcp_value {
 	return p
 }
 
+func release_vcp_values(vp *C.vcp_value, n int) {
+	arr := (*[math.MaxUint32]C.vcp_value)(unsafe.Pointer(vp))
+	for i := 0; i < n; i++ {
+		release_vcp_value(arr[i])
+	}
+	C.free(unsafe.Pointer(vp))
+}
+
 func (p *Prover) Commit(vals [][]byte) Commitment {
 	valbufs := vcp_values(vals)
-	defer C.free(unsafe.Pointer(valbufs))
+	defer release_vcp_values(valbufs, len(vals))
 
 	res := C.vcp_commit(p.ptr, valbufs, C.size_t(len(vals)))
 	g1 := &G1{ptr: res}
@@ -98,7 +113,7 @@ func (p *Prover) Commit(vals [][]byte) Commitment {
 
 func (p *Prover) Prove(vals [][]byte, idx int) Proof {
 	valbufs := vcp_values(vals)
-	defer C.free(unsafe.Pointer(valbufs))
+	defer release_vcp_values(valbufs, len(vals))
 
 	res := C.vcp_prove(p.ptr, valbufs, C.size_t(len(vals)), C.size_t(idx))
 	g1 := &G1{ptr: res}
