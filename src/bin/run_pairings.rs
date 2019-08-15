@@ -1,9 +1,6 @@
 extern crate veccom;
 
-use veccom::pairings::paramgen::*;
-use veccom::pairings::commit::*;
-use veccom::pairings::verify::*;
-use veccom::pairings::prove::*;
+use veccom::pairings::*;
 
 fn print_48_bytes(b : [u8; 48])->String {
     let mut ret = "".to_string();

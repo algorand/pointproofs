@@ -6,11 +6,7 @@ use criterion::Bencher;
 use criterion::Criterion;
 use criterion::Benchmark;
 use std::time::Duration;
-use veccom::pairings::ProverParams;
-use veccom::pairings::paramgen::*;
-use veccom::pairings::commit::*;
-use veccom::pairings::verify::*;
-use veccom::pairings::prove::*;
+use veccom::pairings::*;
 
 criterion_group!(benches, bench_pairings);
 criterion_main!(benches);
