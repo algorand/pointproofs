@@ -1,4 +1,5 @@
 use pairing::{bls12_381::*, CurveAffine, CurveProjective, EncodedPoint};
+use pairing::GroupDecodingError;
 use ff::{Field,PrimeField};
 use super::ProverParams;
 
@@ -89,6 +90,20 @@ pub fn convert_bytes_to_proof (input : &[u8]) -> G1 {
         Ok(proof_affine) => proof_affine.into_projective(),
         Err(_) => G1::zero()
     }
-
 }
 
+/**
+ * take an array of 48 bytes and output a proof
+ * In case bytes don't convert to a meaningful element of G1,
+ * returns an error.
+ */
+pub fn convert_bytes_to_proof_err (input : &[u8]) -> Result<G1, GroupDecodingError> {
+    let mut proof_compressed = G1Compressed::empty();
+    proof_compressed
+        .as_mut()
+        .copy_from_slice(input);
+    match proof_compressed.into_affine() {
+        Ok(proof_affine) => Ok(proof_affine.into_projective()),
+        Err(e) => Err(e)
+    }
+}

@@ -5,6 +5,7 @@ package veccom
 import "C"
 
 import (
+	"errors"
 	"math"
 	"runtime"
 	"unsafe"
@@ -18,6 +19,8 @@ type noCopy struct{}
 
 func (*noCopy) Lock()   {}
 func (*noCopy) Unlock() {}
+
+var ErrBadEncoding = errors.New("cannot decode bytes to G1")
 
 // Prover is veccom::pairings::ProverParams
 type Prover struct {
@@ -143,11 +146,15 @@ func (p *Prover) CommitUpdate(com Commitment, changedidx int, oldval []byte, new
 	return Commitment{g1}
 }
 
-func BytesToG1(buf [48]byte) *G1 {
+func BytesToG1(buf [48]byte) (*G1, error) {
 	res := C.vcp_g1_from_bytes((*C.uchar)(&buf[0]))
+	if res == nil {
+		return nil, ErrBadEncoding
+	}
+
 	g1 := &G1{ptr: res}
 	runtime.SetFinalizer(g1, release_g1)
-	return g1
+	return g1, nil
 }
 
 func (g1 *G1) ToBytes() (out [48]byte) {

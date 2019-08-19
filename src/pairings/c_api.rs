@@ -58,8 +58,10 @@ pub extern fn vcp_g1_to_bytes(g1: *const ffi::c_void, pout: *mut u8) {
 #[no_mangle]
 pub extern fn vcp_g1_from_bytes(buf: *const u8) -> *mut ffi::c_void {
   let g1buf = unsafe { slice::from_raw_parts(buf, 48) };
-  let g1 = super::prove::convert_bytes_to_proof(&g1buf);
-  return_g1(&g1)
+  match super::prove::convert_bytes_to_proof_err(&g1buf) {
+    Ok(g1) => return_g1(&g1),
+    Err(_) => std::ptr::null_mut()
+  }
 }
 
 fn return_g1(g1: &super::G1) -> *mut ffi::c_void {
