@@ -66,6 +66,14 @@ func TestCommit(t *testing.T) {
 	}
 }
 
+func TestBadBytesToG1(t *testing.T) {
+	var b [48]byte
+	_, err := BytesToG1(b)
+	if err != ErrBadEncoding {
+		panic("BytesToG1 claims to decode all-zero bytes")
+	}
+}
+
 func BenchmarkOps(b *testing.B) {
 	seed := []byte("This is Leo's Favourite Seed")
 	N := 1000
@@ -92,7 +100,11 @@ func BenchmarkOps(b *testing.B) {
 	com := p.Commit(values)
 	combuf := com.G1.ToBytes()
 
-	com2 := BytesToG1(combuf)
+	com2, err := BytesToG1(combuf)
+	if err != nil {
+		panic(err)
+	}
+
 	com2buf := com2.ToBytes()
 	if combuf != com2buf {
 		b.Errorf("com2buf mismatch")
