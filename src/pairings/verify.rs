@@ -1,4 +1,5 @@
 use pairing::{bls12_381::*, CurveProjective, CurveAffine, Engine};
+//use pairing::Wnaf;
 use ff::Field;
 use super::VerifierParams;
 
@@ -29,6 +30,11 @@ pub fn verify_hash_inverse(verifier_params : &VerifierParams, com : &G1, proof :
 
     match hash_inverse {
         Some(h_inverse) => {
+            // The following may be a tiny bit faster -- not enough to show up on a benchmark
+            /*let mut w = Wnaf::new();
+            let mut wnaf = w.scalar(h_inverse.into());
+            let com_mut = wnaf.base(com_mut);
+            let proof_mut = wnaf.base(proof_mut);*/
             com_mut.mul_assign(h_inverse);
             proof_mut.mul_assign(h_inverse);
             Bls12::pairing_product(com_mut, verifier_params.generators[n-index-1], proof_mut, G2Affine::one()) == verifier_params.gt_elt

@@ -6,6 +6,7 @@ use super::ProverParams;
  * Assumes prover_params are correctly generated for n = values.len
  */
 pub fn commit(prover_params: &ProverParams, values: &[&[u8]]) -> G1 {
+    // TODO: hashing is now a noticeable portion of commit time. Need rethink hashing.
     let n = values.len();
     let scalars_fr_repr:Vec<FrRepr> = values.iter().map(|s| Fr::hash_to_fr(s).into_repr()).collect();
     let scalars_u64:Vec<&[u64;4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
