@@ -1,16 +1,18 @@
 use super::ProverParams;
 use ff::{Field, PrimeField};
+use pairing::hash_to_field::HashToField;
 use pairing::{bls12_381::*, CurveAffine, CurveProjective, EncodedPoint};
-use pairing::hash_to_field::FromRO;
 /**
  * Assumes prover_params are correctly generated for n = values.len
  */
 pub fn commit(prover_params: &ProverParams, values: &[&[u8]]) -> G1 {
     // TODO: hashing is now a noticeable portion of commit time. Need rethink hashing.
     let n = values.len();
+
+
     let scalars_fr_repr: Vec<FrRepr> = values
         .iter()
-        .map(|s| Fr::from_ro(s,0).into_repr())
+        .map(|s| HashToField::<Fr>::new(s, None).with_ctr(0).into_repr())
         .collect();
     let scalars_u64: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
     if prover_params.precomp.len() == 512 * n {
@@ -34,9 +36,9 @@ pub fn commit_update(
     value_before: &[u8],
     value_after: &[u8],
 ) -> G1 {
-    let mut multiplier = Fr::from_ro(&value_before, 0);
+    let mut multiplier = HashToField::<Fr>::new(&value_before, None).with_ctr(0);
     multiplier.negate();
-    multiplier.add_assign(&Fr::from_ro(&value_after,0));
+    multiplier.add_assign(&HashToField::<Fr>::new(&value_after, None).with_ctr(0));
 
     let res = if prover_params.precomp.len() == 3 * prover_params.generators.len() {
         prover_params.generators[changed_index].mul_precomp_3(
@@ -94,7 +96,7 @@ pub fn update_to_zero_hash(
     changed_index: usize,
     value_before: &[u8],
 ) -> G1 {
-    let mut multiplier = Fr::from_ro(&value_before, 0);
+    let mut multiplier = HashToField::<Fr>::new(&value_before, None).with_ctr(0);
     multiplier.negate();
 
     let res = if prover_params.precomp.len() == 3 * prover_params.generators.len() {
