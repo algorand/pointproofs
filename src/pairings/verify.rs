@@ -1,20 +1,25 @@
-use pairing::{bls12_381::*, CurveProjective, CurveAffine, Engine};
+use pairing::{bls12_381::*, CurveAffine, CurveProjective, Engine};
 //use pairing::Wnaf;
-use ff::Field;
 use super::VerifierParams;
-
-
+use ff::Field;
+use pairing::hash_to_field::FromRO;
 
 /**
  * Assumes verifier_params are correctly generated for n such that index<n
  */
-pub fn verify(verifier_params : &VerifierParams, com : &G1, proof : &G1, value : &[u8], index : usize) -> bool {
+pub fn verify(
+    verifier_params: &VerifierParams,
+    com: &G1,
+    proof: &G1,
+    value: &[u8],
+    index: usize,
+) -> bool {
     // verification formula: e(com, param[n-index-1]) = gt_elt ^ hash(value) * e(proof, generator_of_g2)
     // We modify the formula in order to avoid slow exponentation in the target group (which is Fq12)
     // and perform two scalar multiplication by to 1/hash(value) in G1 instead, which is considerably faster.
     // We also move the pairing from the right-hand-side to the left-hand-side in order
     // to take advantage of the pairing product computation, which is faster than two pairings.
-    let hash = Fr::hash_to_fr(value);
+    let hash = Fr::from_ro(value, 0);
     let hash_inverse = hash.inverse();
     // We separate this function so we can test the case of hash_inverse == None
     // (which will get exercised only with probability 1/r, i.e., never,
@@ -22,7 +27,13 @@ pub fn verify(verifier_params : &VerifierParams, com : &G1, proof : &G1, value :
     verify_hash_inverse(verifier_params, com, proof, hash_inverse, index)
 }
 
-pub fn verify_hash_inverse(verifier_params : &VerifierParams, com : &G1, proof : &G1, hash_inverse: Option<Fr>, index : usize) -> bool {
+pub fn verify_hash_inverse(
+    verifier_params: &VerifierParams,
+    com: &G1,
+    proof: &G1,
+    hash_inverse: Option<Fr>,
+    index: usize,
+) -> bool {
     let n = verifier_params.generators.len();
     let mut com_mut = *com;
     let mut proof_mut = *proof;
@@ -37,12 +48,20 @@ pub fn verify_hash_inverse(verifier_params : &VerifierParams, com : &G1, proof :
             let proof_mut = wnaf.base(proof_mut);*/
             com_mut.mul_assign(h_inverse);
             proof_mut.mul_assign(h_inverse);
-            Bls12::pairing_product(com_mut, verifier_params.generators[n-index-1], proof_mut, G2Affine::one()) == verifier_params.gt_elt
+            Bls12::pairing_product(
+                com_mut,
+                verifier_params.generators[n - index - 1],
+                proof_mut,
+                G2Affine::one(),
+            ) == verifier_params.gt_elt
         }
-        None => { 
-            Bls12::pairing_product(com_mut, verifier_params.generators[n-index-1], proof_mut, G2Affine::one())
-                == Fq12::one()
+        None => {
+            Bls12::pairing_product(
+                com_mut,
+                verifier_params.generators[n - index - 1],
+                proof_mut,
+                G2Affine::one(),
+            ) == Fq12::one()
         }
     }
 }
-  

@@ -1,42 +1,41 @@
 use typenum::Unsigned;
 
 type HashLen = typenum::U32;
-const HASH_LEN : usize = HashLen::USIZE;
+const HASH_LEN: usize = HashLen::USIZE;
 
 pub struct Params {
-    n : usize,
-    n_bytes : [u8; 8],
-    max_depth : usize,
+    n: usize,
+    n_bytes: [u8; 8],
+    max_depth: usize,
 }
 
-
-mod paramgen;
 mod commit;
+mod paramgen;
 mod prove;
 mod verify;
 
-pub use self::paramgen::paramgen;
 pub use self::commit::commit_no_tree;
-pub use self::commit::commit_with_tree;
 pub use self::commit::commit_update;
+pub use self::commit::commit_with_tree;
 pub use self::commit::tree_update;
+pub use self::paramgen::paramgen;
+pub use self::prove::proof_update;
 pub use self::prove::prove_from_scratch;
 pub use self::prove::prove_from_tree;
-pub use self::prove::proof_update;
 pub use self::verify::verify;
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-/*    fn print_bytes(b : &[u8])->String {
-        let mut ret = "".to_string();
-        for i in 0..b.len() {
-            ret = ret + &format!("{:02x}", b[i]);
+    /*    fn print_bytes(b : &[u8])->String {
+            let mut ret = "".to_string();
+            for i in 0..b.len() {
+                ret = ret + &format!("{:02x}", b[i]);
+            }
+            ret
         }
-        ret
-    }
-*/
+    */
 
     #[test]
     fn test_com_merkle() {
@@ -52,7 +51,7 @@ mod tests {
             let mut values: Vec<&[u8]> = Vec::with_capacity(n);
             for i in 0..n {
                 values.push(&init_values[i]);
-            }            
+            }
 
             let com = commit_no_tree(&params, &values);
             let mut proofs = Vec::with_capacity(n);
@@ -60,7 +59,7 @@ mod tests {
             assert_eq!(com[..], tree[32..64]);
 
             for i in 0..n {
-                proofs.push (prove_from_scratch(&params, &values, i));
+                proofs.push(prove_from_scratch(&params, &values, i));
                 let p = prove_from_tree(&params, &tree, i);
                 assert_eq!(proofs[i], p);
                 let wrong_string = format!("wrong string {}", i).into_bytes();
@@ -71,7 +70,7 @@ mod tests {
             // update values
             let mut new_values = Vec::with_capacity(n);
             for i in 0..n {
-                new_values.push (format!("new string {}", i).into_bytes());
+                new_values.push(format!("new string {}", i).into_bytes());
             }
             for i in 0..n {
                 let (com, fast_update_info) = commit_update(&params, i, &proofs[i], &new_values[i]);
@@ -83,26 +82,41 @@ mod tests {
                 // Copy over the proof of the updated value in order to avoid mutable borrow isues in the proof_update
                 let mut proof_of_updated_value = vec![0u8; proofs[i].len()];
                 proof_of_updated_value.copy_from_slice(&proofs[i]);
-                
+
                 // update proofs of other values
                 for j in 0..n {
                     // Old proofs should not verify when i!=j, regardless of whether they are for the old or the new value
-                    if i!=j {
+                    if i != j {
                         assert!(!verify(&params, &com, &proofs[j], &values[j], j));
-                        assert!(!verify(&params,  &com, &proofs[j], &new_values[j], j));
+                        assert!(!verify(&params, &com, &proofs[j], &new_values[j], j));
                     }
                     let mut copy_of_proof = vec![0u8; proofs[j].len()];
                     copy_of_proof.copy_from_slice(&proofs[j]);
                     // Test proof update with and without the helper info
-                    proof_update(&params, &mut proofs[j], j, i, &proof_of_updated_value, &new_values[i], None);
-                    proof_update(&params, &mut copy_of_proof, j, i, &proof_of_updated_value, &new_values[i], Some(&fast_update_info));
+                    proof_update(
+                        &params,
+                        &mut proofs[j],
+                        j,
+                        i,
+                        &proof_of_updated_value,
+                        &new_values[i],
+                        None,
+                    );
+                    proof_update(
+                        &params,
+                        &mut copy_of_proof,
+                        j,
+                        i,
+                        &proof_of_updated_value,
+                        &new_values[i],
+                        Some(&fast_update_info),
+                    );
                     assert_eq!(proofs[j], copy_of_proof);
                     // test that the proof you get is the same as from the update tree
                     let p = prove_from_tree(&params, &tree, j);
                     assert_eq!(proofs[j], p);
 
-
-                    if j<=i {
+                    if j <= i {
                         assert!(verify(&params, &com, &proofs[j], &new_values[j], j));
                         assert!(!verify(&params, &com, &proofs[j], &values[j], j));
                     } else {
