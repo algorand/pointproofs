@@ -5,7 +5,6 @@ use pairing::hash_to_field::HashToField;
 pub fn paramgen_from_seed(seed: &[u8], n: usize) -> (ProverParams, VerifierParams) {
     // invoke hash_to_field with a default ciphersuite ID = 0
     // TODO: decide if we want to change the API and receive a ciphersuite ID?
-    println!("here {:?}\n", HashToField::<Fr>::new(seed, None).with_ctr(0));
 
     let t = paramgen_from_alpha(&HashToField::<Fr>::new(&seed, None).with_ctr(0), n);
     println!("{:?}", t);
@@ -13,11 +12,9 @@ pub fn paramgen_from_seed(seed: &[u8], n: usize) -> (ProverParams, VerifierParam
 }
 
 pub fn paramgen_from_alpha(alpha: &Fr, n: usize) -> (ProverParams, VerifierParams) {
-    println!("here\n");
     if n == 0 {
         panic!("n should be at least 1");
     }
-    println!("here\n");
     let mut g1_vec = Vec::with_capacity(2 * n);
     // prover vector at index i-1 contains g1^{alpha^i} for i ranging from 1 to 2n
     // except that at index i, prover vector contains nothing useful
