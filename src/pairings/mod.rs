@@ -1,11 +1,11 @@
 use pairing::bls12_381::*;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ProverParams {
     generators: Vec<G1Affine>,
     precomp: Vec<G1Affine>,
 }
-
+#[derive(Clone, Debug)]
 pub struct VerifierParams {
     generators: Vec<G2Affine>,
     gt_elt: Fq12,
@@ -42,8 +42,11 @@ mod tests {
     #[test]
     fn test_paramgen() {
         let n = 10usize;
-        let (prover_params, verifier_params) =
-            paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n);
+        let (prover_params, verifier_params) = paramgen_from_seed(
+            &format!("This is Leo's Favourite Seed that is very very very very very very long")
+                .into_bytes(),
+            n,
+        );
         // prover_params.generators[i] should contain the generator of the G1 group raised to the power alpha^{i+1},
         // except prover_params.generators[n] will contain nothing useful.
         // verifier_params.generators[j] should contain the generator of the G2 group raised to the power alpha^{j+1}.
@@ -93,8 +96,10 @@ mod tests {
         let n = 10usize;
         let (prover_params, verifier_params) =
             paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n);
+
         let mut prover_params3 = prover_params.clone();
         prover_params3.precomp_3();
+
         let mut prover_params256 = prover_params.clone();
         prover_params256.precomp_256();
 
