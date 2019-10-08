@@ -5,10 +5,7 @@ use pairing::{bls12_381::*, CurveAffine, CurveProjective, Engine};
 pub fn paramgen_from_seed(seed: &[u8], n: usize) -> (ProverParams, VerifierParams) {
     // invoke hash_to_field with a default ciphersuite ID = 0
     // TODO: decide if we want to change the API and receive a ciphersuite ID?
-
-    let t = paramgen_from_alpha(&HashToField::<Fr>::new(&seed, None).with_ctr(0), n);
-    println!("{:?}", t);
-    t
+    paramgen_from_alpha(&HashToField::<Fr>::new(&seed, None).with_ctr(0), n)
 }
 
 pub fn paramgen_from_alpha(alpha: &Fr, n: usize) -> (ProverParams, VerifierParams) {
