@@ -1,7 +1,7 @@
 use super::{ProverParams, VerifierParams};
 use ff::Field;
-use pairing::{bls12_381::*, CurveAffine, CurveProjective, Engine};
 use pairing::hash_to_field::HashToField;
+use pairing::{bls12_381::*, CurveAffine, CurveProjective, Engine};
 pub fn paramgen_from_seed(seed: &[u8], n: usize) -> (ProverParams, VerifierParams) {
     // invoke hash_to_field with a default ciphersuite ID = 0
     // TODO: decide if we want to change the API and receive a ciphersuite ID?

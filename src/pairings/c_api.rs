@@ -15,9 +15,14 @@ pub struct vcp_value {
     buflen: libc::size_t,
 }
 
+/// # Safety
 #[no_mangle]
-pub extern "C" fn vcp_paramgen(seedbuf: *const u8, seedlen: libc::size_t, n: usize) -> vcp_params {
-    let seed = unsafe { slice::from_raw_parts(seedbuf, seedlen) };
+pub unsafe extern "C" fn vcp_paramgen(
+    seedbuf: *const u8,
+    seedlen: libc::size_t,
+    n: usize,
+) -> vcp_params {
+    let seed = slice::from_raw_parts(seedbuf, seedlen);
     let (pp, vp) = super::paramgen::paramgen_from_seed(seed, n);
     let boxpp = Box::new(pp);
     let boxvp = Box::new(vp);
@@ -27,37 +32,36 @@ pub extern "C" fn vcp_paramgen(seedbuf: *const u8, seedlen: libc::size_t, n: usi
     }
 }
 
+/// # Safety
 #[no_mangle]
-pub extern "C" fn vcp_free_prover_params(pp: *mut ffi::c_void) {
-    unsafe {
-        Box::from_raw(pp);
-    }
+pub unsafe extern "C" fn vcp_free_prover_params(pp: *mut ffi::c_void) {
+    Box::from_raw(pp);
 }
 
+/// # Safety
 #[no_mangle]
-pub extern "C" fn vcp_free_verifier_params(vp: *mut ffi::c_void) {
-    unsafe {
-        Box::from_raw(vp);
-    }
+pub unsafe extern "C" fn vcp_free_verifier_params(vp: *mut ffi::c_void) {
+    Box::from_raw(vp);
 }
 
+/// # Safety
 #[no_mangle]
-pub extern "C" fn vcp_free_g1(g1: *mut ffi::c_void) {
-    unsafe {
-        Box::from_raw(g1);
-    }
+pub unsafe extern "C" fn vcp_free_g1(g1: *mut ffi::c_void) {
+    Box::from_raw(g1);
 }
 
+/// # Safety
 #[no_mangle]
-pub extern "C" fn vcp_g1_to_bytes(g1: *const ffi::c_void, pout: *mut u8) {
-    let pg1 = unsafe { &*(g1 as *const super::G1) };
-    let mut out = unsafe { slice::from_raw_parts_mut(pout, 48) };
+pub unsafe extern "C" fn vcp_g1_to_bytes(g1: *const ffi::c_void, pout: *mut u8) {
+    let pg1 = &*(g1 as *const super::G1);
+    let mut out = slice::from_raw_parts_mut(pout, 48);
     super::prove::write_proof_into_slice(pg1, &mut out);
 }
 
+/// # Safety
 #[no_mangle]
-pub extern "C" fn vcp_g1_from_bytes(buf: *const u8) -> *mut ffi::c_void {
-    let g1buf = unsafe { slice::from_raw_parts(buf, 48) };
+pub unsafe extern "C" fn vcp_g1_from_bytes(buf: *const u8) -> *mut ffi::c_void {
+    let g1buf = slice::from_raw_parts(buf, 48);
     match super::prove::convert_bytes_to_proof_err(&g1buf) {
         Ok(g1) => return_g1(&g1),
         Err(_) => std::ptr::null_mut(),
@@ -73,37 +77,40 @@ fn vcp_value_slice<'a>(vv: &vcp_value) -> &'a [u8] {
     unsafe { slice::from_raw_parts(vv.buf, vv.buflen) }
 }
 
+/// # Safety
 #[no_mangle]
-pub extern "C" fn vcp_commit(
+pub unsafe extern "C" fn vcp_commit(
     prover: *const ffi::c_void,
     values: *const vcp_value,
     nvalues: libc::size_t,
 ) -> *mut ffi::c_void {
-    let pprover = unsafe { &*(prover as *const super::ProverParams) };
-    let pvalues = unsafe { slice::from_raw_parts(values, nvalues) };
+    let pprover = &*(prover as *const super::ProverParams);
+    let pvalues = slice::from_raw_parts(values, nvalues);
     let vvalues: Vec<_> = pvalues.iter().map(vcp_value_slice).collect();
 
     let com = super::commit::commit(pprover, &vvalues);
     return_g1(&com)
 }
 
+/// # Safety
 #[no_mangle]
-pub extern "C" fn vcp_prove(
+pub unsafe extern "C" fn vcp_prove(
     prover: *const ffi::c_void,
     values: *const vcp_value,
     nvalues: libc::size_t,
     idx: libc::size_t,
 ) -> *mut ffi::c_void {
-    let pprover = unsafe { &*(prover as *const super::ProverParams) };
-    let pvalues = unsafe { slice::from_raw_parts(values, nvalues) };
+    let pprover = &*(prover as *const super::ProverParams);
+    let pvalues = slice::from_raw_parts(values, nvalues);
     let vvalues: Vec<_> = pvalues.iter().map(vcp_value_slice).collect();
 
     let proof = super::prove::prove(pprover, &vvalues, idx);
     return_g1(&proof)
 }
 
+/// # Safety
 #[no_mangle]
-pub extern "C" fn vcp_proof_update(
+pub unsafe extern "C" fn vcp_proof_update(
     prover: *const ffi::c_void,
     proof: *const ffi::c_void,
     idx: libc::size_t,
@@ -111,8 +118,8 @@ pub extern "C" fn vcp_proof_update(
     val_old: vcp_value,
     val_new: vcp_value,
 ) -> *mut ffi::c_void {
-    let pprover = unsafe { &*(prover as *const super::ProverParams) };
-    let pproof = unsafe { &*(proof as *const super::G1) };
+    let pprover = &*(prover as *const super::ProverParams);
+    let pproof = &*(proof as *const super::G1);
     let value_before = vcp_value_slice(&val_old);
     let value_after = vcp_value_slice(&val_new);
 
@@ -121,16 +128,17 @@ pub extern "C" fn vcp_proof_update(
     return_g1(&newproof)
 }
 
+/// # Safety
 #[no_mangle]
-pub extern "C" fn vcp_commit_update(
+pub unsafe extern "C" fn vcp_commit_update(
     prover: *const ffi::c_void,
     com: *const ffi::c_void,
     changed_idx: libc::size_t,
     val_old: vcp_value,
     val_new: vcp_value,
 ) -> *mut ffi::c_void {
-    let pprover = unsafe { &*(prover as *const super::ProverParams) };
-    let pcom = unsafe { &*(com as *const super::G1) };
+    let pprover = &*(prover as *const super::ProverParams);
+    let pcom = &*(com as *const super::G1);
     let value_before = vcp_value_slice(&val_old);
     let value_after = vcp_value_slice(&val_new);
 
@@ -139,17 +147,18 @@ pub extern "C" fn vcp_commit_update(
     return_g1(&newcom)
 }
 
+/// # Safety
 #[no_mangle]
-pub extern "C" fn vcp_verify(
+pub unsafe extern "C" fn vcp_verify(
     verifier: *const ffi::c_void,
     com: *const ffi::c_void,
     proof: *const ffi::c_void,
     val: vcp_value,
     idx: libc::size_t,
 ) -> bool {
-    let pverifier = unsafe { &*(verifier as *const super::VerifierParams) };
-    let pcom = unsafe { &*(com as *const super::G1) };
-    let pproof = unsafe { &*(proof as *const super::G1) };
+    let pverifier = &*(verifier as *const super::VerifierParams);
+    let pcom = &*(com as *const super::G1);
+    let pproof = &*(proof as *const super::G1);
     let val = vcp_value_slice(&val);
 
     super::verify::verify(pverifier, pcom, pproof, val, idx)

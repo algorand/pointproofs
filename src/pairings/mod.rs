@@ -37,16 +37,14 @@ mod tests {
     use super::verify::verify_hash_inverse;
     use super::*;
     use ff::Field;
-    use pairing::{bls12_381::*, CurveProjective, Engine};
+    use pairing::{CurveProjective, Engine};
 
     #[test]
+
     fn test_paramgen() {
         let n = 10usize;
-        let (prover_params, verifier_params) = paramgen_from_seed(
-            &format!("This is Leo's Favourite Seed that is very very very very very very long")
-                .into_bytes(),
-            n,
-        );
+        let (prover_params, verifier_params) =
+            paramgen_from_seed("This is Leo's Favourite Seed".as_ref(), n);
         // prover_params.generators[i] should contain the generator of the G1 group raised to the power alpha^{i+1},
         // except prover_params.generators[n] will contain nothing useful.
         // verifier_params.generators[j] should contain the generator of the G2 group raised to the power alpha^{j+1}.
@@ -72,11 +70,8 @@ mod tests {
             ));
         }
 
-        for i in 0..n {
-            assert_eq!(
-                dh_values[i],
-                Bls12::pairing(G1::one(), verifier_params.generators[i])
-            );
+        for (i, e) in dh_values.iter().enumerate().take(n) {
+            assert_eq!(e, &Bls12::pairing(G1::one(), verifier_params.generators[i]));
         }
 
         for i in 0..2 * n {
@@ -95,7 +90,7 @@ mod tests {
     fn test_com_pairings() {
         let n = 10usize;
         let (prover_params, verifier_params) =
-            paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n);
+            paramgen_from_seed("This is Leo's Favourite Seed".as_ref(), n);
 
         let mut prover_params3 = prover_params.clone();
         prover_params3.precomp_3();
@@ -110,8 +105,8 @@ mod tests {
         }
 
         let mut values: Vec<&[u8]> = Vec::with_capacity(n);
-        for i in 0..n {
-            values.push(&init_values[i]);
+        for e in init_values.iter().take(n) {
+            values.push(&e);
         }
 
         let mut com = commit(&prover_params, &values);

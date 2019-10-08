@@ -1,3 +1,5 @@
+#![allow(clippy::cognitive_complexity)]
+
 extern crate ff;
 extern crate pairing;
 extern crate sha2;

@@ -11,8 +11,8 @@ pub fn paramgen(n: usize) -> Params {
         max_depth += 1;
     }
     let mut n_bytes: [u8; 8] = [0; 8];
-    for i in 0..8 {
-        n_bytes[i] = ((n >> (i * 8)) & 0xff) as u8;
+    for (i, e) in n_bytes.iter_mut().enumerate() {
+        *e = ((n >> (i * 8)) & 0xff) as u8;
     }
     Params {
         n,

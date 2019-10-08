@@ -19,8 +19,8 @@ fn bench_commit_helper(prover_params: &ProverParams, n: usize, b: &mut Bencher) 
     }
 
     let mut values: Vec<&[u8]> = Vec::with_capacity(n);
-    for i in 0..n {
-        values.push(&init_values[i]);
+    for e in init_values.iter().take(n) {
+        values.push(&e);
     }
 
     b.iter(|| commit(prover_params, &values));
@@ -34,8 +34,8 @@ fn bench_prove_helper(prover_params: &ProverParams, n: usize, b: &mut Bencher) {
     }
 
     let mut values: Vec<&[u8]> = Vec::with_capacity(n);
-    for i in 0..n {
-        values.push(&init_values[i]);
+    for e in init_values.iter().take(n) {
+        values.push(&e);
     }
 
     let mut i: usize = 0;
@@ -82,8 +82,8 @@ fn bench_proof_update_helper(prover_params: &ProverParams, n: usize, b: &mut Ben
     }
 
     let mut old_values: Vec<&[u8]> = Vec::with_capacity(n);
-    for i in 0..n {
-        old_values.push(&init_old_values[i]);
+    for e in init_old_values.iter().take(n) {
+        old_values.push(&e);
     }
 
     let mut proofs = Vec::with_capacity(n);
@@ -118,8 +118,7 @@ fn bench_pairings(c: &mut Criterion) {
         // would store this yourself rather than send it on the network
         let n = 1000usize;
 
-        let prover_params =
-            paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n).0;
+        let prover_params = paramgen_from_seed("This is Leo's Favourite Seed".as_ref(), n).0;
 
         bench_commit_helper(&prover_params, n, b);
     });
@@ -129,8 +128,7 @@ fn bench_pairings(c: &mut Criterion) {
         // would store this yourself rather than send it on the network
         let n = 1000usize;
 
-        let mut prover_params =
-            paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n).0;
+        let mut prover_params = paramgen_from_seed("This is Leo's Favourite Seed".as_ref(), n).0;
         prover_params.precomp_256();
 
         bench_commit_helper(&prover_params, n, b);
@@ -141,8 +139,7 @@ fn bench_pairings(c: &mut Criterion) {
         // to produce a proof you will send on the network
         let n = 1000usize;
 
-        let prover_params =
-            paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n).0;
+        let prover_params = paramgen_from_seed("This is Leo's Favourite Seed".as_ref(), n).0;
 
         bench_prove_helper(&prover_params, n, b);
     });
@@ -152,8 +149,7 @@ fn bench_pairings(c: &mut Criterion) {
         // to produce a proof you will send on the network
         let n = 1000usize;
 
-        let mut prover_params =
-            paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n).0;
+        let mut prover_params = paramgen_from_seed("This is Leo's Favourite Seed".as_ref(), n).0;
         prover_params.precomp_256();
 
         bench_prove_helper(&prover_params, n, b);
@@ -164,7 +160,7 @@ fn bench_pairings(c: &mut Criterion) {
         let n = 100usize;
 
         let (prover_params, verifier_params) =
-            paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n);
+            paramgen_from_seed("This is Leo's Favourite Seed".as_ref(), n);
 
         let mut init_values = Vec::with_capacity(n);
         for i in 0..n {
@@ -173,8 +169,8 @@ fn bench_pairings(c: &mut Criterion) {
         }
 
         let mut values: Vec<&[u8]> = Vec::with_capacity(n);
-        for i in 0..n {
-            values.push(&init_values[i]);
+        for e in init_values.iter().take(n) {
+            values.push(&e);
         }
 
         let com = commit(&prover_params, &values);
@@ -200,8 +196,7 @@ fn bench_pairings(c: &mut Criterion) {
         // Does not include to/from bytes conversion, because this is supposed to be a local operation
         let n = 1000usize;
 
-        let prover_params =
-            paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n).0;
+        let prover_params = paramgen_from_seed("This is Leo's Favourite Seed".as_ref(), n).0;
         bench_commit_update_helper(&prover_params, n, b);
     });
 
@@ -209,8 +204,7 @@ fn bench_pairings(c: &mut Criterion) {
         // Does not include to/from bytes conversion, because this is supposed to be a local operation
         let n = 1000usize;
 
-        let mut prover_params =
-            paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n).0;
+        let mut prover_params = paramgen_from_seed("This is Leo's Favourite Seed".as_ref(), n).0;
         prover_params.precomp_3();
         bench_commit_update_helper(&prover_params, n, b);
     });
@@ -219,8 +213,7 @@ fn bench_pairings(c: &mut Criterion) {
         // Does not include to/from bytes conversion, because this is supposed to be a local operation
         let n = 1000usize;
 
-        let mut prover_params =
-            paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n).0;
+        let mut prover_params = paramgen_from_seed("This is Leo's Favourite Seed".as_ref(), n).0;
         prover_params.precomp_256();
         bench_commit_update_helper(&prover_params, n, b);
     });
@@ -229,8 +222,7 @@ fn bench_pairings(c: &mut Criterion) {
         // Does not include to/from bytes conversion, because this is supposed to be a local operation
         let n = 1000usize;
 
-        let prover_params =
-            paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n).0;
+        let prover_params = paramgen_from_seed("This is Leo's Favourite Seed".as_ref(), n).0;
         bench_proof_update_helper(&prover_params, n, b);
     });
 
@@ -238,8 +230,7 @@ fn bench_pairings(c: &mut Criterion) {
         // Does not include to/from bytes conversion, because this is supposed to be a local operation
         let n = 1000usize;
 
-        let mut prover_params =
-            paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n).0;
+        let mut prover_params = paramgen_from_seed("This is Leo's Favourite Seed".as_ref(), n).0;
         prover_params.precomp_3();
         bench_proof_update_helper(&prover_params, n, b);
     });
@@ -248,8 +239,7 @@ fn bench_pairings(c: &mut Criterion) {
         // Does not include to/from bytes conversion, because this is supposed to be a local operation
         let n = 1000usize;
 
-        let mut prover_params =
-            paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n).0;
+        let mut prover_params = paramgen_from_seed("This is Leo's Favourite Seed".as_ref(), n).0;
         prover_params.precomp_256();
         bench_proof_update_helper(&prover_params, n, b);
     });

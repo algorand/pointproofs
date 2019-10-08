@@ -4,8 +4,8 @@ use veccom::pairings::*;
 
 fn print_48_bytes(b: [u8; 48]) -> String {
     let mut ret = "".to_string();
-    for i in 0..48 {
-        ret = ret + &format!("{:02x}", b[i]);
+    for e in b.iter() {
+        ret = ret + &format!("{:02x}", e);
     }
     ret
 }
@@ -15,7 +15,7 @@ pub fn main() {
     let update_index = n / 2;
 
     let (mut prover_params, verifier_params) =
-        paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n);
+        paramgen_from_seed("This is Leo's Favourite Seed".as_ref(), n);
     prover_params.precomp_3(); // precomp_256, or nothing, as you wish
 
     let mut init_values: Vec<Vec<u8>> = Vec::with_capacity(n);
@@ -27,8 +27,8 @@ pub fn main() {
     }
 
     let mut old_values: Vec<&[u8]> = Vec::with_capacity(n);
-    for i in 0..n {
-        old_values.push(&init_values[i]);
+    for e in init_values.iter().take(n) {
+        old_values.push(&e);
     }
 
     let old_com = commit(&prover_params, &old_values);

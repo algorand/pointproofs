@@ -4,8 +4,8 @@ use veccom::merkle::*;
 
 fn print_bytes(b: &[u8]) -> String {
     let mut ret = "".to_string();
-    for i in 0..b.len() {
-        ret = ret + &format!("{:02x}", b[i]);
+    for e in b.iter() {
+        ret = ret + &format!("{:02x}", e);
     }
     ret
 }
@@ -25,8 +25,8 @@ pub fn main() {
     }
 
     let mut old_values: Vec<&[u8]> = Vec::with_capacity(n);
-    for i in 0..n {
-        old_values.push(&init_values[i]);
+    for e in init_values.iter().take(n) {
+        old_values.push(&e);
     }
 
     let old_com = commit_no_tree(&params, &old_values);
@@ -38,7 +38,7 @@ pub fn main() {
         println!("{:02x} {}", i, print_bytes(&tree[i * 32..(i + 1) * 32]));
     }
     assert_eq!(old_com[..], tree[32..64]);
-    println!("");
+    println!();
 
     let mut proofs = Vec::with_capacity(n);
     for i in 0..n {

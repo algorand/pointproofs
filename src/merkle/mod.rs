@@ -49,8 +49,8 @@ mod tests {
             }
 
             let mut values: Vec<&[u8]> = Vec::with_capacity(n);
-            for i in 0..n {
-                values.push(&init_values[i]);
+            for e in init_values.iter().take(n) {
+                values.push(&e);
             }
 
             let com = commit_no_tree(&params, &values);

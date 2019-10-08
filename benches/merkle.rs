@@ -30,8 +30,8 @@ fn bench_com_merkle(b: &mut Bencher) {
         let s = format!("this is message number {}", i);
         init_values.push(s.into_bytes());
     }
-    for i in 0..n {
-        values.push(&init_values[i]);
+    for e in init_values.iter().take(n) {
+        values.push(&e);
     }
 
     b.iter(|| commit_no_tree(&params, &values));
@@ -48,8 +48,8 @@ fn bench_tree_building_merkle(b: &mut Bencher) {
         let s = format!("this is message number {}", i);
         init_values.push(s.into_bytes());
     }
-    for i in 0..n {
-        values.push(&init_values[i]);
+    for e in init_values.iter().take(n) {
+        values.push(&e);
     }
 
     b.iter(|| commit_with_tree(&params, &values));
@@ -66,8 +66,8 @@ fn bench_prove_from_scratch_merkle(b: &mut Bencher) {
         let s = format!("this is message number {}", i);
         init_values.push(s.into_bytes());
     }
-    for i in 0..n {
-        values.push(&init_values[i]);
+    for e in init_values.iter().take(n) {
+        values.push(&e);
     }
 
     let mut i: usize = 0;
@@ -89,8 +89,8 @@ fn bench_prove_from_tree_merkle(b: &mut Bencher) {
         let s = format!("this is message number {}", i);
         init_values.push(s.into_bytes());
     }
-    for i in 0..n {
-        values.push(&init_values[i]);
+    for e in init_values.iter().take(n) {
+        values.push(&e);
     }
 
     let tree = commit_with_tree(&params, &values);
@@ -113,8 +113,8 @@ fn bench_verify_merkle(b: &mut Bencher) {
         let s = format!("this is message number {}", i);
         init_values.push(s.into_bytes());
     }
-    for i in 0..n {
-        values.push(&init_values[i]);
+    for e in init_values.iter().take(n) {
+        values.push(&e);
     }
 
     let com = commit_no_tree(&params, &values);
@@ -145,8 +145,8 @@ fn bench_commit_update_merkle(b: &mut Bencher) {
         new_values.push(t.into_bytes());
     }
 
-    for i in 0..n {
-        old_values.push(&init_values[i]);
+    for e in init_values.iter().take(n) {
+        old_values.push(&e);
     }
 
     let mut i: usize = 0;
@@ -175,8 +175,8 @@ fn bench_tree_update_merkle(b: &mut Bencher) {
         let t = format!("this is new message number {}", i);
         new_values.push(t.into_bytes());
     }
-    for i in 0..n {
-        old_values.push(&init_values[i]);
+    for e in init_values.iter().take(n) {
+        old_values.push(&e);
     }
 
     let mut i: usize = 0;
@@ -202,8 +202,8 @@ fn bench_proof_update_no_helper_merkle(b: &mut Bencher) {
         let s = format!("this is old message number {}", i);
         init_values.push(s.into_bytes());
     }
-    for i in 0..n {
-        old_values.push(&init_values[i]);
+    for e in init_values.iter().take(n) {
+        old_values.push(&e);
     }
 
     let mut proofs = Vec::with_capacity(n);
@@ -249,8 +249,8 @@ fn bench_proof_update_with_helper_merkle(b: &mut Bencher) {
         let s = format!("this is old message number {}", i);
         init_values.push(s.into_bytes());
     }
-    for i in 0..n {
-        old_values.push(&init_values[i]);
+    for e in init_values.iter().take(n) {
+        old_values.push(&e);
     }
 
     let mut proofs = Vec::with_capacity(n);

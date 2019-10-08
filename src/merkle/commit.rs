@@ -19,19 +19,19 @@ pub fn commit_with_tree(params: &Params, values: &[&[u8]]) -> Vec<u8> {
     let num_leaves = ((params.n + 1) / 2) * 2; // round up n to the nearest even number
     let mut hash_tree = vec![0u8; (num_nodes_above + num_leaves) * HASH_LEN];
 
-    for i in 0..params.n {
+    for (i, vv) in values.iter().enumerate().take(params.n) {
         let prefix: [u8; 1] = [0u8];
         let mut hasher = sha2::Sha256::new();
         hasher.input(&prefix);
         hasher.input(&params.n_bytes);
-        hasher.input(&values[i]);
+        hasher.input(&vv);
         let tree_location = (num_nodes_above + i) * HASH_LEN;
         hash_tree[tree_location..tree_location + HASH_LEN].copy_from_slice(&hasher.result());
     }
 
     let mut num_occupied = num_leaves;
     let double_hash_len = 2 * HASH_LEN;
-    for _height in 1..params.max_depth + 1 {
+    for _height in 1..=params.max_depth {
         num_occupied = (num_occupied + 1) / 2; // number of nonzero entries in the current level, computed by dividing previous level by 2 with rounding up
         num_nodes_above /= 2;
 
@@ -123,7 +123,7 @@ pub fn commit_update_helper(
 
     match fast_proof_update_info {
         None => (),
-        Some(ref mut g) => g[0 * HASH_LEN..HASH_LEN].copy_from_slice(&new_com),
+        Some(ref mut g) => g[0..HASH_LEN].copy_from_slice(&new_com),
     };
 
     let mut child_index = changed_index;

@@ -9,7 +9,6 @@ pub fn commit(prover_params: &ProverParams, values: &[&[u8]]) -> G1 {
     // TODO: hashing is now a noticeable portion of commit time. Need rethink hashing.
     let n = values.len();
 
-
     let scalars_fr_repr: Vec<FrRepr> = values
         .iter()
         .map(|s| HashToField::<Fr>::new(s, None).with_ctr(0).into_repr())
