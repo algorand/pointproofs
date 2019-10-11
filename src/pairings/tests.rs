@@ -276,3 +276,20 @@ fn test_serdes_prover_param() {
     let prover_params_recover = ProverParams::deserialize(&mut buf[..].as_ref(), true).unwrap();
     assert_eq!(prover_params, prover_params_recover);
 }
+
+
+
+#[test]
+fn test_serdes_verifier_param() {
+    let sp = get_system_paramter(0).unwrap();
+    let n = sp.n;
+    let (_prover_params, verifier_params) =
+        paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0).unwrap();
+
+    let mut buf: Vec<u8> = vec![];
+    assert!(verifier_params.serialize(&mut buf, true).is_ok());
+
+    let verifier_params_recover = VerifierParams::deserialize(&mut buf[..].as_ref(), true).unwrap();
+    assert_eq!(verifier_params, verifier_params_recover);
+
+}

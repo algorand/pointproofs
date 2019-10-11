@@ -29,6 +29,8 @@ impl SerDes for VerifierParams {
             e.serialize(&mut buf, compressed)?;
         }
 
+        self.gt_elt.serialize(&mut buf, compressed)?;
+
         // format the output
         writer.write_all(&buf)?;
 
@@ -61,12 +63,13 @@ impl SerDes for VerifierParams {
             let g = G2Affine::deserialize(reader, compressed)?;
             generators.push(g);
         }
+        let gt_elt = Fq12::deserialize(reader, compressed)?;
 
         // format the output
         Ok(Self {
             ciphersuite: csid[0],
             generators,
-            gt_elt: Fq12::zero(),
+            gt_elt,
         })
     }
 }
