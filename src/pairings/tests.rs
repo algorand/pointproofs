@@ -277,8 +277,6 @@ fn test_serdes_prover_param() {
     assert_eq!(prover_params, prover_params_recover);
 }
 
-
-
 #[test]
 fn test_serdes_verifier_param() {
     let sp = get_system_paramter(0).unwrap();
@@ -291,5 +289,4 @@ fn test_serdes_verifier_param() {
 
     let verifier_params_recover = VerifierParams::deserialize(&mut buf[..].as_ref(), true).unwrap();
     assert_eq!(verifier_params, verifier_params_recover);
-
 }

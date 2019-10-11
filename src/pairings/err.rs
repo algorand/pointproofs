@@ -6,3 +6,5 @@ pub const ERR_COMPRESS: &str = "Compressness does not match";
 pub const ERR_SERIAL: &str = "Fail to convert the element to a blob";
 pub const ERR_DESERIAL: &str = "Fail to convert a blob to the element";
 pub const ERR_INVALID_N: &str = "Invalid number of public parameters";
+pub const ERR_INVALID_VALUE: &str = "Invalid number of values";
+pub const ERR_INVALID_INDEX: &str = "Invalid index";

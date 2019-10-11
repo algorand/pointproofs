@@ -88,8 +88,8 @@ pub unsafe extern "C" fn vcp_commit(
     let pvalues = slice::from_raw_parts(values, nvalues);
     let vvalues: Vec<_> = pvalues.iter().map(vcp_value_slice).collect();
 
-    let com = super::commit::commit(pprover, &vvalues);
-    return_g1(&com)
+    let com = super::Commitment::new(pprover, &vvalues).unwrap();
+    return_g1(&com.commit)
 }
 
 /// # Safety

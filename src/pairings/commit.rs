@@ -1,17 +1,123 @@
-use super::ProverParams;
+use super::ciphersuite::*;
+use super::err::*;
+use super::{Commitment, ProverParams, SystemParam};
 use ff::{Field, PrimeField};
 use pairing::hash_to_field::HashToField;
+use pairing::serdes::SerDes;
 use pairing::{bls12_381::*, CurveAffine, CurveProjective, EncodedPoint};
+impl Commitment {
+    pub fn new<Blob: AsRef<[u8]>>(
+        prover_params: &ProverParams,
+        values: &[Blob],
+    ) -> Result<Self, String> {
+        // implicitly checks that cipersuite is supported
+        let sp = get_system_paramter(prover_params.ciphersuite)?;
+
+        if sp.n != values.len() {
+            return Err(ERR_INVALID_VALUE.to_owned());
+        };
+
+        Ok(Self {
+            ciphersuite: prover_params.ciphersuite,
+            commit: commit(&sp, &prover_params, values),
+        })
+    }
+
+    pub fn update<Blob: AsRef<[u8]>>(
+        &mut self,
+        prover_params: &ProverParams,
+        changed_index: usize,
+        value_before: Blob,
+        value_after: Blob,
+    ) {
+        (*self).commit = commit_update(
+            &prover_params,
+            &self.commit,
+            changed_index,
+            value_before.as_ref(),
+            value_after.as_ref(),
+        )
+    }
+}
+type Compressed = bool;
+impl SerDes for Commitment {
+    /// Convert a pop into a blob:
+    ///
+    /// `|ciphersuite id| commit |` => bytes
+    ///
+    /// Returns an error if ciphersuite id is invalid or serialization fails.
+    fn serialize<W: std::io::Write>(
+        &self,
+        writer: &mut W,
+        compressed: Compressed,
+    ) -> std::io::Result<()> {
+        // check the cipher suite id
+        if !check_ciphersuite(self.ciphersuite) {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                ERR_CIPHERSUITE,
+            ));
+        }
+        let mut buf: Vec<u8> = vec![self.ciphersuite];
+        self.commit.serialize(&mut buf, compressed)?;
+
+        // format the output
+        writer.write_all(&buf)?;
+        Ok(())
+    }
+
+    /// Convert a blob into a PoP:
+    ///
+    /// bytes => `|ciphersuite id | commit |`
+    ///
+    /// Returns an error if deserialization fails, or if
+    /// the commit is not compressed.
+    fn deserialize<R: std::io::Read>(
+        reader: &mut R,
+        compressed: Compressed,
+    ) -> std::io::Result<Self> {
+        // constants stores id and the number of ssk-s
+        let mut constants: [u8; 1] = [0u8; 1];
+
+        reader.read_exact(&mut constants)?;
+
+        // check the ciphersuite id in the blob
+        if !check_ciphersuite(constants[0]) {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                ERR_CIPHERSUITE,
+            ));
+        }
+
+        // read into commit
+        let commit = G1::deserialize(reader, true)?;
+
+        // finished
+        Ok((Commitment {
+            ciphersuite: constants[0],
+            commit,
+        }))
+    }
+}
+
 /**
  * Assumes prover_params are correctly generated for n = values.len
  */
-pub fn commit(prover_params: &ProverParams, values: &[&[u8]]) -> G1 {
+fn commit<Blob: AsRef<[u8]>>(
+    sp: &SystemParam,
+    prover_params: &ProverParams,
+    values: &[Blob],
+) -> G1 {
     // TODO: hashing is now a noticeable portion of commit time. Need rethink hashing.
     let n = values.len();
 
     let scalars_fr_repr: Vec<FrRepr> = values
         .iter()
-        .map(|s| HashToField::<Fr>::new(s, None).with_ctr(0).into_repr())
+        .map(|s| {
+            HashToField::<Fr>::new(s.as_ref(), None)
+                .with_ctr(0)
+                .into_repr()
+        })
         .collect();
     let scalars_u64: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
     if prover_params.precomp.len() == 512 * n {
@@ -28,7 +134,7 @@ pub fn commit(prover_params: &ProverParams, values: &[&[u8]]) -> G1 {
 /**
  * Assumes prover_params are correctly generated for n such that changed_index<n
  */
-pub fn commit_update(
+fn commit_update(
     prover_params: &ProverParams,
     com: &G1,
     changed_index: usize,
@@ -62,7 +168,7 @@ pub fn commit_update(
  * convert a commitment (which is a projective G1 element) into a string of 48 bytes
  * Copied from the bls library
  */
-pub fn convert_commitment_to_bytes(commitment: &G1) -> [u8; 48] {
+fn convert_commitment_to_bytes(commitment: &G1) -> [u8; 48] {
     let s = pairing::bls12_381::G1Compressed::from_affine(commitment.into_affine());
     let mut out: [u8; 48] = [0; 48];
     out.copy_from_slice(s.as_ref());
@@ -74,7 +180,7 @@ pub fn convert_commitment_to_bytes(commitment: &G1) -> [u8; 48] {
  * Copied from the bls library
  * In case bytes don't convert to a meaningful element of G1, defaults to the group generator
  */
-pub fn convert_bytes_to_commitment(input: &[u8; 48]) -> G1 {
+fn convert_bytes_to_commitment(input: &[u8; 48]) -> G1 {
     let mut commitment_compressed = G1Compressed::empty();
     commitment_compressed.as_mut().copy_from_slice(input);
     match commitment_compressed.into_affine() {
