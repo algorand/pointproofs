@@ -12,7 +12,7 @@ fn test_paramgen() {
     let sp = get_system_paramter(0).unwrap();
     let n = sp.n;
     let (prover_params, verifier_params) =
-        paramgen_from_seed("This is Leo's Favourite Seed".as_ref(), 0).unwrap();
+        paramgen_from_seed("This is Leo's Favourite very very very long Seed".as_ref(), 0).unwrap();
     // prover_params.generators[i] should contain the generator of the G1 group raised to the power alpha^{i+1},
     // except prover_params.generators[n] will contain nothing useful.
     // verifier_params.generators[j] should contain the generator of the G2 group raised to the power alpha^{j+1}.
@@ -59,7 +59,7 @@ fn test_com_pairings() {
     let sp = get_system_paramter(0).unwrap();
     let n = sp.n;
     let (prover_params, verifier_params) =
-        paramgen_from_seed("This is Leo's Favourite Seed".as_ref(), 0).unwrap();
+        paramgen_from_seed("This is Leo's Favourite very very very long Seed".as_ref(), 0).unwrap();
 
     let mut prover_params3 = prover_params.clone();
     prover_params3.precomp_3();
