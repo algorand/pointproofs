@@ -11,8 +11,8 @@ pub struct SystemParam {
 #[derive(Clone, Debug)]
 pub struct ProverParams {
     ciphersuite: Ciphersuite,
-    generators: Vec<G1Affine>,
-    precomp: Vec<G1Affine>,
+    pub generators: Vec<G1Affine>,
+    pub precomp: Vec<G1Affine>,
 }
 #[derive(Clone, Debug)]
 pub struct VerifierParams {
@@ -40,6 +40,8 @@ mod commit;
 mod err;
 mod paramgen;
 mod prove;
+mod proverparam;
+mod verifierparam;
 mod verify;
 
 pub use self::commit::commit;

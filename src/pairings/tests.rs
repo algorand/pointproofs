@@ -1,18 +1,16 @@
+use self::ciphersuite::get_system_paramter;
 use super::commit::update_to_zero_hash;
 use super::verify::verify_hash_inverse;
 use super::*;
 use ff::Field;
-use pairing::{CurveProjective, Engine};
-use self::ciphersuite::get_system_paramter;
-
+use pairing::{serdes::SerDes, CurveProjective, Engine};
 
 #[test]
 fn test_paramgen() {
-
     let sp = get_system_paramter(0).unwrap();
     let n = sp.n;
     let (prover_params, verifier_params) =
-        paramgen_from_seed("This is Leo's Favourite very very very long Seed".as_ref(), 0).unwrap();
+        paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0).unwrap();
     // prover_params.generators[i] should contain the generator of the G1 group raised to the power alpha^{i+1},
     // except prover_params.generators[n] will contain nothing useful.
     // verifier_params.generators[j] should contain the generator of the G2 group raised to the power alpha^{j+1}.
@@ -59,7 +57,7 @@ fn test_com_pairings() {
     let sp = get_system_paramter(0).unwrap();
     let n = sp.n;
     let (prover_params, verifier_params) =
-        paramgen_from_seed("This is Leo's Favourite very very very long Seed".as_ref(), 0).unwrap();
+        paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0).unwrap();
 
     let mut prover_params3 = prover_params.clone();
     prover_params3.precomp_3();
@@ -245,4 +243,36 @@ fn test_com_pairings() {
             i
         ));
     }
+}
+
+#[test]
+fn test_serdes_prover_param() {
+    let sp = get_system_paramter(0).unwrap();
+    let n = sp.n;
+    let (mut prover_params, verifier_params) =
+        paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0).unwrap();
+
+    let mut buf: Vec<u8> = vec![];
+    assert!(prover_params.serialize(&mut buf, true).is_ok());
+
+    let prover_params_recover = ProverParams::deserialize(&mut buf[..].as_ref(), true).unwrap();
+    assert_eq!(prover_params, prover_params_recover);
+
+    prover_params.precomp_3();
+
+    let mut buf: Vec<u8> = vec![];
+    assert!(prover_params.serialize(&mut buf, true).is_ok());
+    println!("{:02x?}", buf);
+
+    let prover_params_recover = ProverParams::deserialize(&mut buf[..].as_ref(), true).unwrap();
+    assert_eq!(prover_params, prover_params_recover);
+
+    prover_params.precomp_256();
+
+    let mut buf: Vec<u8> = vec![];
+    assert!(prover_params.serialize(&mut buf, true).is_ok());
+    println!("{:02x?}", buf);
+
+    let prover_params_recover = ProverParams::deserialize(&mut buf[..].as_ref(), true).unwrap();
+    assert_eq!(prover_params, prover_params_recover);
 }

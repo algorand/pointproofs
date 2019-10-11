@@ -15,8 +15,13 @@ pub fn main() {
     let update_index = n / 2;
 
     let (mut prover_params, verifier_params) =
-        paramgen_from_seed("This is Leo's Favourite Seed".as_ref(), 0).unwrap();
-    prover_params.precomp_3(); // precomp_256, or nothing, as you wish
+        paramgen_from_seed("This is Leo's Favourite very very long Seed", 0).unwrap();
+    prover_params.precomp_256(); // precomp_256, or nothing, as you wish
+    println!(
+        "{:?} {:?}",
+        prover_params.precomp.len(),
+        prover_params.generators.len()
+    );
 
     let mut init_values: Vec<Vec<u8>> = Vec::with_capacity(n);
     println!("Commiting to the following {} strings", n);
