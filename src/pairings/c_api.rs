@@ -23,7 +23,7 @@ pub unsafe extern "C" fn vcp_paramgen(
     n: usize,
 ) -> vcp_params {
     let seed = slice::from_raw_parts(seedbuf, seedlen);
-    let (pp, vp) = super::paramgen::paramgen_from_seed(seed, n);
+    let (pp, vp) = super::paramgen::paramgen_from_seed(seed, 0).unwrap();
     let boxpp = Box::new(pp);
     let boxvp = Box::new(vp);
     vcp_params {

@@ -15,7 +15,7 @@ pub fn main() {
     let update_index = n / 2;
 
     let (mut prover_params, verifier_params) =
-        paramgen_from_seed("This is Leo's Favourite Seed".as_ref(), n);
+        paramgen_from_seed("This is Leo's Favourite Seed".as_ref(), 0).unwrap();
     prover_params.precomp_3(); // precomp_256, or nothing, as you wish
 
     let mut init_values: Vec<Vec<u8>> = Vec::with_capacity(n);
