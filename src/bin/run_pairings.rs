@@ -2,19 +2,20 @@ extern crate veccom;
 
 use veccom::pairings::*;
 
-fn print_48_bytes(b : [u8; 48])->String {
+fn print_48_bytes(b: [u8; 48]) -> String {
     let mut ret = "".to_string();
-    for i in 0..48 {
-        ret = ret + &format!("{:02x}", b[i]);
+    for e in b.iter() {
+        ret = ret + &format!("{:02x}", e);
     }
     ret
 }
 
 pub fn main() {
     let n = 10usize;
-    let update_index = n/2;
+    let update_index = n / 2;
 
-    let (mut prover_params, verifier_params) = paramgen_from_seed(&format!("This is Leo's Favourite Seed").into_bytes(), n);
+    let (mut prover_params, verifier_params) =
+        paramgen_from_seed("This is Leo's Favourite Seed".as_ref(), n);
     prover_params.precomp_3(); // precomp_256, or nothing, as you wish
 
     let mut init_values: Vec<Vec<u8>> = Vec::with_capacity(n);
@@ -26,8 +27,8 @@ pub fn main() {
     }
 
     let mut old_values: Vec<&[u8]> = Vec::with_capacity(n);
-    for i in 0..n {
-        old_values.push(&init_values[i]);
+    for e in init_values.iter().take(n) {
+        old_values.push(&e);
     }
 
     let old_com = commit(&prover_params, &old_values);
@@ -42,29 +43,72 @@ pub fn main() {
     }
 
     for i in 0..n {
-        assert!(verify(&verifier_params, &old_com, &proofs[i], &old_values[i], i));
+        assert!(verify(
+            &verifier_params,
+            &old_com,
+            &proofs[i],
+            &old_values[i],
+            i
+        ));
     }
 
     let s = format!("\"this is new message number {}\"", update_index);
     println!("\nUpdating string {} to {}", update_index, s);
     let new_value = s.into_bytes();
 
-    let new_com = commit_update(&prover_params, &old_com, update_index, &old_values[update_index], &new_value);
+    let new_com = commit_update(
+        &prover_params,
+        &old_com,
+        update_index,
+        &old_values[update_index],
+        &new_value,
+    );
     let new_commitment_bytes = convert_commitment_to_bytes(&new_com);
     println!("New Commitment:  {}", print_48_bytes(new_commitment_bytes));
 
-    assert!(verify(&verifier_params, &new_com, &proofs[update_index], &new_value, update_index));
-    assert!(!verify(&verifier_params, &new_com, &proofs[update_index], &old_values[update_index], update_index));
+    assert!(verify(
+        &verifier_params,
+        &new_com,
+        &proofs[update_index],
+        &new_value,
+        update_index
+    ));
+    assert!(!verify(
+        &verifier_params,
+        &new_com,
+        &proofs[update_index],
+        &old_values[update_index],
+        update_index
+    ));
 
     for i in 0..n {
-        if i!=update_index {
-            assert!(!verify(&verifier_params, &new_com, &proofs[i], &old_values[i], i));
+        if i != update_index {
+            assert!(!verify(
+                &verifier_params,
+                &new_com,
+                &proofs[i],
+                &old_values[i],
+                i
+            ));
         }
-        proofs[i]=proof_update(&prover_params, &proofs[i], i, update_index, &old_values[update_index], &new_value);
+        proofs[i] = proof_update(
+            &prover_params,
+            &proofs[i],
+            i,
+            update_index,
+            &old_values[update_index],
+            &new_value,
+        );
         let proof_bytes = convert_proof_to_bytes(&proofs[i]);
         println!("New Proof {}: {}", i, print_48_bytes(proof_bytes));
-        if i!=update_index {
-            assert!(verify(&verifier_params, &new_com, &proofs[i], &old_values[i], i));
+        if i != update_index {
+            assert!(verify(
+                &verifier_params,
+                &new_com,
+                &proofs[i],
+                &old_values[i],
+                i
+            ));
         }
     }
 }

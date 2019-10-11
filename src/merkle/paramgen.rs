@@ -1,7 +1,7 @@
 use super::Params;
 
-pub fn paramgen(n : usize) -> Params {
-    if n<2 {
+pub fn paramgen(n: usize) -> Params {
+    if n < 2 {
         panic!("n of {} is less than minimum of 2", n);
     }
     let mut max_depth = 0;
@@ -10,9 +10,13 @@ pub fn paramgen(n : usize) -> Params {
         max_n *= 2;
         max_depth += 1;
     }
-    let mut n_bytes : [u8;8] = [0;8];
-    for i in 0..8 {
-        n_bytes[i] = ((n>>(i*8)) & 0xff) as u8;
+    let mut n_bytes: [u8; 8] = [0; 8];
+    for (i, e) in n_bytes.iter_mut().enumerate() {
+        *e = ((n >> (i * 8)) & 0xff) as u8;
     }
-    Params {n, n_bytes, max_depth}
+    Params {
+        n,
+        n_bytes,
+        max_depth,
+    }
 }

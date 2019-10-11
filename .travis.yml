@@ -1,0 +1,12 @@
+language: rust
+rust:
+  - stable
+#  - beta
+#  - nightly
+
+before_script:
+  - rustup component add clippy
+
+script:
+  - cargo clippy --all-targets --all-features -- -D warnings
+  - travis_wait 360 cargo test
