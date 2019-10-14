@@ -7,6 +7,14 @@ use pairing::serdes::SerDes;
 use pairing::GroupDecodingError;
 use pairing::{bls12_381::*, CurveAffine, CurveProjective, EncodedPoint};
 
+// impl std::cmp::PartialEq for Proof {
+//     /// Convenient function to compare secret key objects
+//     fn eq(&self, other: &Self) -> bool {
+//         self.ciphersuite == other.ciphersuite
+//             && self.proof == other.proof
+//     }
+// }
+
 impl Proof {
     pub fn new<Blob: AsRef<[u8]>>(
         prover_params: &ProverParams,
@@ -21,7 +29,10 @@ impl Proof {
         };
 
         Ok(Self {
-            ciphersuite: prover_params.ciphersuite,
+            // FIXME: there is a potential mismatch of ciphersuite
+            // prover_params.ciphersuite can be 0, 1, 2
+            // while that of commitment and verifier_params are all 0
+            ciphersuite: 0,
             proof: prove(prover_params, values, index),
         })
     }
@@ -62,6 +73,10 @@ impl Proof {
         index: usize,
     ) -> bool {
         if self.ciphersuite != verifier_params.ciphersuite || self.ciphersuite != com.ciphersuite {
+            println!(
+                " ciphersuite fails {}, {}, {}",
+                self.ciphersuite, verifier_params.ciphersuite, com.ciphersuite
+            );
             return false;
         }
 

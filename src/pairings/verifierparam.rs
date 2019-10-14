@@ -19,7 +19,20 @@ impl SerDes for VerifierParams {
         writer: &mut W,
         compressed: Compressed,
     ) -> std::io::Result<()> {
-        // TODO: check ciphersuite id
+        // get the system parameter, which implicitly
+        // checks the ciphersuite id
+        let sp = match get_system_paramter(self.ciphersuite) {
+            Err(e) => return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, e)),
+            Ok(p) => p,
+        };
+
+        // check that #generators matches sp
+        if sp.n != self.generators.len() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                ERR_INVALID_VALUE,
+            ));
+        }
 
         // write csid
         let mut buf: Vec<u8> = vec![self.ciphersuite];
@@ -38,7 +51,7 @@ impl SerDes for VerifierParams {
     }
     /// Convert a blob into a ProverParam:
     ///
-    /// bytes => `|ciphersuite id | generators | [pre_compute]`
+    /// bytes => `|ciphersuite id | generators | gt_element`
     ///
     /// Returns an error if ciphersuite id is invalid or serialization fails.
     fn deserialize<R: std::io::Read>(
@@ -57,7 +70,6 @@ impl SerDes for VerifierParams {
         };
 
         // write the generators
-
         let mut generators: Vec<G2Affine> = vec![];
         for i in 0..sp.n {
             let g = G2Affine::deserialize(reader, compressed)?;

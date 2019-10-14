@@ -2,6 +2,7 @@ use self::ciphersuite::get_system_paramter;
 use super::commit::update_to_zero_hash;
 use super::verify::verify_hash_inverse;
 use super::*;
+use super::{Commitment, Proof};
 use ff::Field;
 use pairing::{serdes::SerDes, CurveProjective, Engine};
 
@@ -76,26 +77,33 @@ fn test_com_pairings() {
         values.push(&e);
     }
 
-    let mut com = commit(&prover_params, &values);
-    assert_eq!(com, commit(&prover_params3, &values));
-    assert_eq!(com, commit(&prover_params256, &values));
+    let mut com = Commitment::new(&prover_params, &values).unwrap();
+    assert_eq!(com, Commitment::new(&prover_params3, &values).unwrap());
+    assert_eq!(com, Commitment::new(&prover_params256, &values).unwrap());
     let mut proofs = Vec::with_capacity(n);
 
-    let mut com_bytes = convert_commitment_to_bytes(&com);
-    assert_eq!(com, convert_bytes_to_commitment(&com_bytes));
+    let mut com_bytes: Vec<u8> = vec![];
+    assert!(com.serialize(&mut com_bytes, true).is_ok());
+    assert_eq!(
+        com,
+        Commitment::deserialize(&mut com_bytes[..].as_ref(), true).unwrap()
+    );
 
     // put garbage into commitment bytes -- it should not crash
     com_bytes[0] = 6u8;
     com_bytes[1] = 17u8;
     com_bytes[2] = 20u8;
     com_bytes[3] = 9u8;
-    assert_ne!(com, convert_bytes_to_commitment(&com_bytes));
+    assert!(Commitment::deserialize(&mut com_bytes[..].as_ref(), true).is_err());
 
     // Check all proofs, together with conversion to/from bytes
     for i in 0..n {
-        proofs.push(prove(&prover_params, &values, i));
-        assert_eq!(proofs[i], prove(&prover_params3, &values, i));
-        assert_eq!(proofs[i], prove(&prover_params256, &values, i));
+        proofs.push(Proof::new(&prover_params, &values, i).unwrap());
+        assert_eq!(proofs[i], Proof::new(&prover_params3, &values, i).unwrap());
+        assert_eq!(
+            proofs[i],
+            Proof::new(&prover_params256, &values, i).unwrap()
+        );
         let wrong_string = format!("wrong string {}", i).into_bytes();
         let mut proof_bytes = convert_proof_to_bytes(&proofs[i]);
         assert!(verify(

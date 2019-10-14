@@ -5,6 +5,15 @@ use ff::{Field, PrimeField};
 use pairing::hash_to_field::HashToField;
 use pairing::serdes::SerDes;
 use pairing::{bls12_381::*, CurveAffine, CurveProjective, EncodedPoint};
+
+// impl std::cmp::PartialEq for Commitment {
+//     /// Convenient function to compare secret key objects
+//     fn eq(&self, other: &Self) -> bool {
+//         self.ciphersuite == other.ciphersuite
+//             && self.commit == other.commit
+//     }
+// }
+
 impl Commitment {
     pub fn new<Blob: AsRef<[u8]>>(
         prover_params: &ProverParams,
@@ -18,7 +27,10 @@ impl Commitment {
         };
 
         Ok(Self {
-            ciphersuite: prover_params.ciphersuite,
+            // FIXME: there is a potential mismatch of ciphersuite
+            // prover_params.ciphersuite can be 0, 1, 2
+            // while that of commitment and verifier_params are all 0
+            ciphersuite: 0,
             commit: commit(&sp, &prover_params, values),
         })
     }

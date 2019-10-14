@@ -21,13 +21,13 @@ pub struct VerifierParams {
     gt_elt: Fq12,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Commitment {
     ciphersuite: Ciphersuite,
     commit: G1,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Proof {
     ciphersuite: Ciphersuite,
     proof: G1,
