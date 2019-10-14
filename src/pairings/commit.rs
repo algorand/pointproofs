@@ -6,14 +6,6 @@ use pairing::hash_to_field::HashToField;
 use pairing::serdes::SerDes;
 use pairing::{bls12_381::*, CurveAffine, CurveProjective};
 
-// impl std::cmp::PartialEq for Commitment {
-//     /// Convenient function to compare secret key objects
-//     fn eq(&self, other: &Self) -> bool {
-//         self.ciphersuite == other.ciphersuite
-//             && self.commit == other.commit
-//     }
-// }
-
 impl Commitment {
     pub fn new<Blob: AsRef<[u8]>>(
         prover_params: &ProverParams,
@@ -35,7 +27,7 @@ impl Commitment {
             commit: commit(&prover_params, values),
         })
     }
-
+    // TODO: return errors?
     pub fn update<Blob: AsRef<[u8]>>(
         &mut self,
         prover_params: &ProverParams,
