@@ -104,35 +104,11 @@ fn test_com_pairings() {
             proofs[i],
             Proof::new(&prover_params256, &values, i).unwrap()
         );
-        let wrong_string = format!("wrong string {}", i).into_bytes();
-        let mut proof_bytes = convert_proof_to_bytes(&proofs[i]);
-        assert!(verify(
-            &verifier_params,
-            &com,
-            &convert_bytes_to_proof(&proof_bytes),
-            &values[i],
-            i
-        ));
-        assert!(!verify(
-            &verifier_params,
-            &com,
-            &convert_bytes_to_proof(&proof_bytes),
-            &wrong_string,
-            i
-        ));
+        let mut buf: Vec<u8> = vec![];
+        assert!(proofs[i].serialize(&mut buf, true).is_ok());
+        let proof_recover = Proof::deserialize(&mut buf[..].as_ref(), true).unwrap();
 
-        // put garbage into proof bytes -- it should not verify
-        proof_bytes[0] = 7u8;
-        proof_bytes[1] = 4u8;
-        proof_bytes[2] = 17u8;
-        proof_bytes[3] = 76u8;
-        assert!(!verify(
-            &verifier_params,
-            &com,
-            &convert_bytes_to_proof(&proof_bytes),
-            &values[i],
-            i
-        ));
+        assert!(proof_recover.verify(&verifier_params, &com, &values[i], i));
     }
 
     // update values
@@ -141,81 +117,69 @@ fn test_com_pairings() {
         new_values.push(format!("new string {}", i).into_bytes());
     }
     for i in 0..n {
-        let old_com = com;
-        com = commit_update(&prover_params, &com, i, &values[i], &new_values[i]);
-        assert_eq!(
-            com,
-            commit_update(&prover_params3, &old_com, i, &values[i], &new_values[i])
-        );
-        assert_eq!(
-            com,
-            commit_update(&prover_params256, &old_com, i, &values[i], &new_values[i])
+        let mut com3 = com.clone();
+        let mut com256 = com.clone();
+        com.update(&prover_params, i, &values[i], &new_values[i][..].as_ref());
+        com3.update(&prover_params3, i, &values[i], &new_values[i][..].as_ref());
+        com256.update(
+            &prover_params256,
+            i,
+            &values[i],
+            &new_values[i][..].as_ref(),
         );
 
+        assert_eq!(com, com3);
+        assert_eq!(com, com256);
+
         // Old value should not verify, but new one should
-        assert!(!verify(&verifier_params, &com, &proofs[i], &values[i], i));
-        assert!(verify(
-            &verifier_params,
-            &com,
-            &proofs[i],
-            &new_values[i],
-            i
-        ));
+        assert!(!proofs[i].verify(&verifier_params, &com, &values[i], i));
+        assert!(proofs[i].verify(&verifier_params, &com, &new_values[i], i));
+
         // update proofs of other values
         for j in 0..n {
             // Old proofs should not verify for i!=j regardless of whether they are for the old or the new value
             if i != j {
-                assert!(!verify(&verifier_params, &com, &proofs[j], &values[j], j));
-                assert!(!verify(
-                    &verifier_params,
-                    &com,
-                    &proofs[j],
-                    &new_values[j],
-                    j
-                ));
+                assert!(!proofs[j].verify(&verifier_params, &com, &values[j], j));
+                assert!(!proofs[j].verify(&verifier_params, &com, &new_values[j], j));
             }
-            let old_proof = proofs[j];
-            proofs[j] = proof_update(&prover_params, &proofs[j], j, i, &values[i], &new_values[i]);
-            assert_eq!(
-                proofs[j],
-                proof_update(
+            let mut proof3 = proofs[j].clone();
+            let mut proof256 = proofs[j].clone();
+            proofs[j]
+                .update(
+                    &prover_params,
+                    j,
+                    i,
+                    &values[i],
+                    &new_values[i][..].as_ref(),
+                )
+                .unwrap();
+            proof3
+                .update(
                     &prover_params3,
-                    &old_proof,
                     j,
                     i,
                     &values[i],
-                    &new_values[i]
+                    &new_values[i][..].as_ref(),
                 )
-            );
-            assert_eq!(
-                proofs[j],
-                proof_update(
-                    &prover_params256,
-                    &old_proof,
+                .unwrap();
+            proof256
+                .update(
+                    &prover_params3,
                     j,
                     i,
                     &values[i],
-                    &new_values[i]
+                    &new_values[i][..].as_ref(),
                 )
-            );
+                .unwrap();
+
+            assert_eq!(proofs[j], proof3);
+            assert_eq!(proofs[j], proof256);
             if j <= i {
-                assert!(verify(
-                    &verifier_params,
-                    &com,
-                    &proofs[j],
-                    &new_values[j],
-                    j
-                ));
-                assert!(!verify(&verifier_params, &com, &proofs[j], &values[j], j));
+                assert!(proofs[j].verify(&verifier_params, &com, &new_values[j], j));
+                assert!(!proofs[j].verify(&verifier_params, &com, &values[j], j));
             } else {
-                assert!(!verify(
-                    &verifier_params,
-                    &com,
-                    &proofs[j],
-                    &new_values[j],
-                    j
-                ));
-                assert!(verify(&verifier_params, &com, &proofs[j], &values[j], j));
+                assert!(!proofs[j].verify(&verifier_params, &com, &new_values[j], j));
+                assert!(proofs[j].verify(&verifier_params, &com, &values[j], j));
             }
         }
         // update commitment to a value whose hash is 0 and see if correct proof verifies while wrong proof doesn't
@@ -224,29 +188,16 @@ fn test_com_pairings() {
         // The old proof should verify
         assert!(verify_hash_inverse(
             &verifier_params,
-            &temp_com,
-            &proofs[i],
-            None,
-            i
-        ));
-        // put garbage into proof bytes -- it should not verify
-        let mut proof_bytes = convert_proof_to_bytes(&proofs[i]);
-        proof_bytes[0] = 8u8;
-        proof_bytes[1] = 14u8;
-        proof_bytes[2] = 20u8;
-        proof_bytes[3] = 19u8;
-        assert!(!verify_hash_inverse(
-            &verifier_params,
-            &temp_com,
-            &convert_bytes_to_proof(&proof_bytes),
+            &temp_com.commit,
+            &proofs[i].proof,
             None,
             i
         ));
         // put some into hash_inverse -- it should not verify
         assert!(!verify_hash_inverse(
             &verifier_params,
-            &temp_com,
-            &proofs[i],
+            &temp_com.commit,
+            &proofs[i].proof,
             Some(Fr::one()),
             i
         ));
@@ -255,9 +206,7 @@ fn test_com_pairings() {
 
 #[test]
 fn test_serdes_prover_param() {
-    let sp = get_system_paramter(0).unwrap();
-    let n = sp.n;
-    let (mut prover_params, verifier_params) =
+    let (mut prover_params, _verifier_params) =
         paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0).unwrap();
 
     let mut buf: Vec<u8> = vec![];
@@ -287,8 +236,6 @@ fn test_serdes_prover_param() {
 
 #[test]
 fn test_serdes_verifier_param() {
-    let sp = get_system_paramter(0).unwrap();
-    let n = sp.n;
     let (_prover_params, verifier_params) =
         paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0).unwrap();
 

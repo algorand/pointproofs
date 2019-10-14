@@ -210,10 +210,10 @@ fn commit_update(
  */
 pub fn update_to_zero_hash(
     prover_params: &ProverParams,
-    com: &G1,
+    com: &Commitment,
     changed_index: usize,
     value_before: &[u8],
-) -> G1 {
+) -> Commitment {
     let mut multiplier = HashToField::<Fr>::new(&value_before, None).with_ctr(0);
     multiplier.negate();
 
@@ -231,7 +231,7 @@ pub fn update_to_zero_hash(
         prover_params.generators[changed_index].mul(multiplier)
     };
 
-    let mut new_com = *com;
-    new_com.add_assign(&res);
+    let mut new_com = com.clone();
+    new_com.commit.add_assign(&res);
     new_com
 }
