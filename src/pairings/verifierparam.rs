@@ -1,10 +1,8 @@
 use super::ciphersuite::*;
 use super::err::*;
-use super::{ProverParams, SystemParam, VerifierParams};
-use ff::Field;
-use pairing::hash_to_field::HashToField;
+use super::VerifierParams;
+use pairing::bls12_381::*;
 use pairing::serdes::SerDes;
-use pairing::{bls12_381::*, CurveAffine, CurveProjective, Engine};
 
 type Compressed = bool;
 
@@ -71,7 +69,7 @@ impl SerDes for VerifierParams {
 
         // write the generators
         let mut generators: Vec<G2Affine> = vec![];
-        for i in 0..sp.n {
+        for _i in 0..sp.n {
             let g = G2Affine::deserialize(reader, compressed)?;
             generators.push(g);
         }

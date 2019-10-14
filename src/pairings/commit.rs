@@ -1,10 +1,10 @@
 use super::ciphersuite::*;
 use super::err::*;
-use super::{Commitment, ProverParams, SystemParam};
+use super::{Commitment, ProverParams};
 use ff::{Field, PrimeField};
 use pairing::hash_to_field::HashToField;
 use pairing::serdes::SerDes;
-use pairing::{bls12_381::*, CurveAffine, CurveProjective, EncodedPoint};
+use pairing::{bls12_381::*, CurveAffine, CurveProjective};
 
 // impl std::cmp::PartialEq for Commitment {
 //     /// Convenient function to compare secret key objects
@@ -31,7 +31,8 @@ impl Commitment {
             // prover_params.ciphersuite can be 0, 1, 2
             // while that of commitment and verifier_params are all 0
             ciphersuite: 0,
-            commit: commit(&sp, &prover_params, values),
+            // commit: commit(&sp, &prover_params, values),
+            commit: commit(&prover_params, values),
         })
     }
 
@@ -102,13 +103,13 @@ impl SerDes for Commitment {
         }
 
         // read into commit
-        let commit = G1::deserialize(reader, true)?;
+        let commit = G1::deserialize(reader, compressed)?;
 
         // finished
-        Ok((Commitment {
+        Ok(Commitment {
             ciphersuite: constants[0],
             commit,
-        }))
+        })
     }
 }
 
@@ -116,7 +117,7 @@ impl SerDes for Commitment {
  * Assumes prover_params are correctly generated for n = values.len
  */
 fn commit<Blob: AsRef<[u8]>>(
-    sp: &SystemParam,
+    //    sp: &SystemParam,
     prover_params: &ProverParams,
     values: &[Blob],
 ) -> G1 {
@@ -175,31 +176,31 @@ fn commit_update(
     new_com.add_assign(&res);
     new_com
 }
-
-/**
- * convert a commitment (which is a projective G1 element) into a string of 48 bytes
- * Copied from the bls library
- */
-fn convert_commitment_to_bytes(commitment: &G1) -> [u8; 48] {
-    let s = pairing::bls12_381::G1Compressed::from_affine(commitment.into_affine());
-    let mut out: [u8; 48] = [0; 48];
-    out.copy_from_slice(s.as_ref());
-    out
-}
-
-/**
- * Take an array of 48 bytes and output a commitment
- * Copied from the bls library
- * In case bytes don't convert to a meaningful element of G1, defaults to the group generator
- */
-fn convert_bytes_to_commitment(input: &[u8; 48]) -> G1 {
-    let mut commitment_compressed = G1Compressed::empty();
-    commitment_compressed.as_mut().copy_from_slice(input);
-    match commitment_compressed.into_affine() {
-        Ok(commitment_affine) => commitment_affine.into_projective(),
-        Err(_) => G1::zero(),
-    }
-}
+//
+// /**
+//  * convert a commitment (which is a projective G1 element) into a string of 48 bytes
+//  * Copied from the bls library
+//  */
+// fn convert_commitment_to_bytes(commitment: &G1) -> [u8; 48] {
+//     let s = pairing::bls12_381::G1Compressed::from_affine(commitment.into_affine());
+//     let mut out: [u8; 48] = [0; 48];
+//     out.copy_from_slice(s.as_ref());
+//     out
+// }
+//
+// /**
+//  * Take an array of 48 bytes and output a commitment
+//  * Copied from the bls library
+//  * In case bytes don't convert to a meaningful element of G1, defaults to the group generator
+//  */
+// fn convert_bytes_to_commitment(input: &[u8; 48]) -> G1 {
+//     let mut commitment_compressed = G1Compressed::empty();
+//     commitment_compressed.as_mut().copy_from_slice(input);
+//     match commitment_compressed.into_affine() {
+//         Ok(commitment_affine) => commitment_affine.into_projective(),
+//         Err(_) => G1::zero(),
+//     }
+// }
 
 #[cfg(test)]
 /**

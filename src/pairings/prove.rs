@@ -1,11 +1,10 @@
 use super::ciphersuite::*;
 use super::err::*;
-use super::{Commitment, Proof, ProverParams, SystemParam, VerifierParams};
+use super::{Commitment, Proof, ProverParams, VerifierParams};
 use ff::{Field, PrimeField};
 use pairing::hash_to_field::HashToField;
 use pairing::serdes::SerDes;
-use pairing::GroupDecodingError;
-use pairing::{bls12_381::*, CurveAffine, CurveProjective, EncodedPoint};
+use pairing::{bls12_381::*, CurveAffine, CurveProjective};
 
 // impl std::cmp::PartialEq for Proof {
 //     /// Convenient function to compare secret key objects
@@ -154,13 +153,13 @@ impl SerDes for Proof {
         }
 
         // read into proof
-        let proof = G1::deserialize(reader, true)?;
+        let proof = G1::deserialize(reader, compressed)?;
 
         // finished
-        Ok((Proof {
+        Ok(Proof {
             ciphersuite: constants[0],
             proof,
-        }))
+        })
     }
 }
 
@@ -236,50 +235,50 @@ fn proof_update(
         new_proof
     }
 }
-
-/**
- *  write a proof (which is a projective G1 element) into a 48-byte slice
- */
-pub fn write_proof_into_slice(proof: &G1, out: &mut [u8]) {
-    let s = pairing::bls12_381::G1Compressed::from_affine(proof.into_affine());
-    out.copy_from_slice(s.as_ref());
-}
-
-/**
- * Write a proof (which is a projective G1 element) into a 48-byte slice
- * Copied from the bls library
- */
-pub fn convert_proof_to_bytes(proof: &G1) -> [u8; 48] {
-    let s = pairing::bls12_381::G1Compressed::from_affine(proof.into_affine());
-    let mut out: [u8; 48] = [0; 48];
-    out.copy_from_slice(s.as_ref());
-    out
-}
-
-/**
- * take an array of 48 bytes and output a proof
- * Copied from the bls library
- * In case bytes don't convert to a meaningful element of G1, defaults to the group generator
- */
-pub fn convert_bytes_to_proof(input: &[u8]) -> G1 {
-    let mut proof_compressed = G1Compressed::empty();
-    proof_compressed.as_mut().copy_from_slice(input);
-    match proof_compressed.into_affine() {
-        Ok(proof_affine) => proof_affine.into_projective(),
-        Err(_) => G1::zero(),
-    }
-}
-
-/**
- * take an array of 48 bytes and output a proof
- * In case bytes don't convert to a meaningful element of G1,
- * returns an error.
- */
-pub fn convert_bytes_to_proof_err(input: &[u8]) -> Result<G1, GroupDecodingError> {
-    let mut proof_compressed = G1Compressed::empty();
-    proof_compressed.as_mut().copy_from_slice(input);
-    match proof_compressed.into_affine() {
-        Ok(proof_affine) => Ok(proof_affine.into_projective()),
-        Err(e) => Err(e),
-    }
-}
+//
+// /**
+//  *  write a proof (which is a projective G1 element) into a 48-byte slice
+//  */
+// pub fn write_proof_into_slice(proof: &G1, out: &mut [u8]) {
+//     let s = pairing::bls12_381::G1Compressed::from_affine(proof.into_affine());
+//     out.copy_from_slice(s.as_ref());
+// }
+//
+// /**
+//  * Write a proof (which is a projective G1 element) into a 48-byte slice
+//  * Copied from the bls library
+//  */
+// pub fn convert_proof_to_bytes(proof: &G1) -> [u8; 48] {
+//     let s = pairing::bls12_381::G1Compressed::from_affine(proof.into_affine());
+//     let mut out: [u8; 48] = [0; 48];
+//     out.copy_from_slice(s.as_ref());
+//     out
+// }
+//
+// /**
+//  * take an array of 48 bytes and output a proof
+//  * Copied from the bls library
+//  * In case bytes don't convert to a meaningful element of G1, defaults to the group generator
+//  */
+// pub fn convert_bytes_to_proof(input: &[u8]) -> G1 {
+//     let mut proof_compressed = G1Compressed::empty();
+//     proof_compressed.as_mut().copy_from_slice(input);
+//     match proof_compressed.into_affine() {
+//         Ok(proof_affine) => proof_affine.into_projective(),
+//         Err(_) => G1::zero(),
+//     }
+// }
+//
+// /**
+//  * take an array of 48 bytes and output a proof
+//  * In case bytes don't convert to a meaningful element of G1,
+//  * returns an error.
+//  */
+// pub fn convert_bytes_to_proof_err(input: &[u8]) -> Result<G1, GroupDecodingError> {
+//     let mut proof_compressed = G1Compressed::empty();
+//     proof_compressed.as_mut().copy_from_slice(input);
+//     match proof_compressed.into_affine() {
+//         Ok(proof_affine) => Ok(proof_affine.into_projective()),
+//         Err(e) => Err(e),
+//     }
+// }

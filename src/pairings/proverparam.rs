@@ -1,10 +1,8 @@
 use super::ciphersuite::*;
 use super::err::*;
-use super::{ProverParams, SystemParam, VerifierParams};
-use ff::Field;
-use pairing::hash_to_field::HashToField;
+use super::ProverParams;
 use pairing::serdes::SerDes;
-use pairing::{bls12_381::*, CurveAffine, CurveProjective, Engine};
+use pairing::{bls12_381::*, CurveAffine};
 
 impl ProverParams {
     /// pre-process the public parameters with precomputation value set to 3
@@ -98,13 +96,13 @@ impl SerDes for ProverParams {
         let mut generators: Vec<G1Affine> = vec![];
 
         // write the generators
-        for i in 0..sp.n * 2 {
+        for _i in 0..sp.n * 2 {
             let g = G1Affine::deserialize(reader, compressed)?;
             generators.push(g);
         }
 
         let mut precomp: Vec<G1Affine> = vec![];
-        for i in 0..sp.pp_len {
+        for _i in 0..sp.pp_len {
             let g = G1Affine::deserialize(reader, compressed)?;
             precomp.push(g);
         }

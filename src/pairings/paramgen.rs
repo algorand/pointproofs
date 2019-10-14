@@ -3,7 +3,6 @@ use super::err::*;
 use super::{ProverParams, SystemParam, VerifierParams};
 use ff::Field;
 use pairing::hash_to_field::HashToField;
-use pairing::serdes::SerDes;
 use pairing::{bls12_381::*, CurveAffine, CurveProjective, Engine};
 
 /// Generate a set of parameters from a seed and a ciphersuite ID.

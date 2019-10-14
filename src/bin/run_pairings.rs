@@ -46,7 +46,6 @@ fn main() {
         assert!(proofs[i].verify(&verifier_params, &old_com, &init_values[i], i));
     }
 
-
     let new_value = format!("\"this is new message number {}\"", update_index).to_owned();
     println!("\nUpdating string {} to {}\n", update_index, new_value);
 
@@ -75,7 +74,6 @@ fn main() {
         &init_values[update_index],
         update_index
     ));
-
 
     for i in 0..n {
         // verifies the old proofs against new commitment -- must fail

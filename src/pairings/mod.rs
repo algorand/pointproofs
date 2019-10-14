@@ -50,11 +50,11 @@ mod verify;
 // pub use self::commit::convert_commitment_to_bytes;
 //pub use self::paramgen::paramgen_from_alpha;
 pub use self::paramgen::paramgen_from_seed;
-pub use self::prove::convert_bytes_to_proof;
-pub use self::prove::convert_proof_to_bytes;
+// pub use self::prove::convert_bytes_to_proof;
+// pub use self::prove::convert_proof_to_bytes;
 // pub use self::prove::proof_update;
 // pub use self::prove::prove;
-pub use self::prove::write_proof_into_slice;
+// pub use self::prove::write_proof_into_slice;
 // pub use self::verify::verify;
 
 #[cfg(test)]
