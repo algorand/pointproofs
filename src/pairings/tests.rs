@@ -119,14 +119,18 @@ fn test_com_pairings() {
     for i in 0..n {
         let mut com3 = com.clone();
         let mut com256 = com.clone();
-        com.update(&prover_params, i, &values[i], &new_values[i][..].as_ref());
-        com3.update(&prover_params3, i, &values[i], &new_values[i][..].as_ref());
-        com256.update(
-            &prover_params256,
-            i,
-            &values[i],
-            &new_values[i][..].as_ref(),
-        );
+        com.update(&prover_params, i, &values[i], &new_values[i][..].as_ref())
+            .unwrap();
+        com3.update(&prover_params3, i, &values[i], &new_values[i][..].as_ref())
+            .unwrap();
+        com256
+            .update(
+                &prover_params256,
+                i,
+                &values[i],
+                &new_values[i][..].as_ref(),
+            )
+            .unwrap();
 
         assert_eq!(com, com3);
         assert_eq!(com, com256);

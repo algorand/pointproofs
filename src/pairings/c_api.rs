@@ -171,7 +171,9 @@ pub unsafe extern "C" fn vcp_commit_update(
     let value_before = vcp_value_slice(&val_old);
     let value_after = vcp_value_slice(&val_new);
     let mut new_com = pcom.clone();
-    new_com.update(pprover, changed_idx, value_before, value_after);
+    new_com
+        .update(pprover, changed_idx, value_before, value_after)
+        .unwrap();
     return_commit(&new_com)
 }
 

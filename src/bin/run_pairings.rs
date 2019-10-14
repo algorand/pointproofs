@@ -56,7 +56,7 @@ fn main() {
         update_index,
         &init_values[update_index][..].as_ref(),
         &new_value.as_ref(),
-    );
+    ).unwrap();
     let mut new_commitment_bytes: Vec<u8> = vec![];
     assert!(new_com.serialize(&mut new_commitment_bytes, true).is_ok());
     assert_eq!(

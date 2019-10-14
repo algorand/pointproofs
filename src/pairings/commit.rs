@@ -27,21 +27,29 @@ impl Commitment {
             commit: commit(&prover_params, values),
         })
     }
-    // TODO: return errors?
+
     pub fn update<Blob: AsRef<[u8]>>(
         &mut self,
         prover_params: &ProverParams,
         changed_index: usize,
         value_before: Blob,
         value_after: Blob,
-    ) {
+    ) -> Result<(), String> {
+        // implicitly checks that cipersuite is supported
+        let sp = get_system_paramter(prover_params.ciphersuite)?;
+
+        if sp.n < changed_index {
+            return Err(ERR_INVALID_INDEX.to_owned());
+        };
+
         (*self).commit = commit_update(
             &prover_params,
             &self.commit,
             changed_index,
             value_before.as_ref(),
             value_after.as_ref(),
-        )
+        );
+        Ok(())
     }
 }
 type Compressed = bool;
