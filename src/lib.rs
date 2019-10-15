@@ -1,7 +1,7 @@
 #![allow(clippy::cognitive_complexity)]
 
 extern crate ff;
-extern crate pairing;
+extern crate pairing_fork as pairing;
 extern crate sha2;
 extern crate typenum;
 
