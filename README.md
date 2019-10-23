@@ -6,7 +6,7 @@
 
 This is a rust implementation of pairing-based vector commitments over curve bls12-381.
 
-__Dependency__: [Pairing-fork](https://github.com/algorand/pairing-fork)
+__Dependency__: [Pairing-plus](https://github.com/algorand/pairing-plus)
 
 __Spec__: to be developed
 
