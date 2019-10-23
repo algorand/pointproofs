@@ -1,6 +1,6 @@
 #[macro_use]
 extern crate criterion;
-extern crate pairing_fork as pairing;
+extern crate pairing_plus as pairing;
 extern crate veccom;
 
 use criterion::Bencher;
