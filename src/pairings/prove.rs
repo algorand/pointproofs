@@ -100,6 +100,11 @@ impl Proof {
             index,
         )
     }
+
+    pub fn aggregate(&mut self, _other: &[Self]) -> Result<(), String> {
+        // FIXME
+        Ok(())
+    }
 }
 
 type Compressed = bool;
@@ -161,6 +166,40 @@ impl SerDes for Proof {
             proof,
         })
     }
+}
+
+// input: the commitment
+// input: a list of indices, for which we need to generate t_i
+// input: Value: the messages that is commited to
+#[allow(dead_code)]
+fn get_ti(commit: &Commitment, set: &Vec<usize>, values: &[&[u8]]) -> Result<Vec<Fr>, String> {
+    // tmp = C | S | m[S]
+    let mut tmp: Vec<u8> = vec![];
+    // serialize commitment
+    match commit.serialize(&mut tmp, true) {
+        Ok(_p) => _p,
+        Err(e) => return Err(e.to_string()),
+    };
+    // add the set to tmp
+    for index in set {
+        let t = index.to_be_bytes();
+        tmp.append(&mut t.to_vec());
+    }
+    // add values to set; panic if index is out of range
+    for index in set {
+        let t = values[*index];
+        tmp.append(&mut t.to_vec());
+    }
+    // formulate the output
+    let mut res: Vec<Fr> = vec![];
+    for index in set {
+        let mut hash_input: Vec<u8> = index.to_be_bytes().to_vec();
+        hash_input.append(&mut tmp.clone());
+        let h2f = HashToField::new(hash_input, None);
+        res.push(h2f.with_ctr(0));
+    }
+
+    Ok(res)
 }
 
 /**

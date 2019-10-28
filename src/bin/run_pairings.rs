@@ -51,12 +51,14 @@ fn main() {
 
     // update the commitment to the new value, and (de)serialize it
     let mut new_com = old_com.clone();
-    new_com.update(
-        &prover_params,
-        update_index,
-        &init_values[update_index][..].as_ref(),
-        &new_value.as_ref(),
-    ).unwrap();
+    new_com
+        .update(
+            &prover_params,
+            update_index,
+            &init_values[update_index][..].as_ref(),
+            &new_value.as_ref(),
+        )
+        .unwrap();
     let mut new_commitment_bytes: Vec<u8> = vec![];
     assert!(new_com.serialize(&mut new_commitment_bytes, true).is_ok());
     assert_eq!(

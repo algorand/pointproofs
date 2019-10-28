@@ -73,7 +73,8 @@ fn bench_commit_update_helper(prover_params: &ProverParams, n: usize, b: &mut Be
     let mut i: usize = 0;
     b.iter(|| {
         let mut tmp = com.clone();
-        tmp.update(prover_params, i, &old_values[i], &new_values[i]).unwrap();
+        tmp.update(prover_params, i, &old_values[i], &new_values[i])
+            .unwrap();
         i = (i + 1) % n;
     });
 }
