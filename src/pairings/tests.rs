@@ -275,15 +275,17 @@ fn test_aggregation() {
 
     let set = vec![1usize, 4, 7];
     let mut proofs: Vec<Proof> = vec![];
+    let mut value_sub_vector: Vec<&[u8]> = vec![];
 
     for index in &set {
         let proof = Proof::new(&prover_params, &values, *index).unwrap();
         proofs.push(proof);
+        value_sub_vector.push(values[*index]);
     }
 
-    let agg_proof = Proof::aggregate(&com, &proofs, &set, &values).unwrap();
-    assert!(agg_proof.batch_verify(&verifier_params, &com, &set, &values));
+    let agg_proof = Proof::aggregate(&com, &proofs, &set, &value_sub_vector).unwrap();
+    assert!(agg_proof.batch_verify(&verifier_params, &com, &set, &value_sub_vector));
 
     let new_set = vec![1usize, 4, 8];
-    assert!(!agg_proof.batch_verify(&verifier_params, &com, &new_set, &values));
+    assert!(!agg_proof.batch_verify(&verifier_params, &com, &new_set, &value_sub_vector));
 }

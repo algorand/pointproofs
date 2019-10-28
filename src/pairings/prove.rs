@@ -109,7 +109,7 @@ impl Proof {
         commit: &Commitment,
         proofs: &[Self],
         set: &[usize],
-        values: &[Blob],
+        value_sub_vector: &[Blob],
     ) -> Result<Self, String> {
         // check that the csids match
         let csid = proofs[0].ciphersuite;
@@ -119,11 +119,11 @@ impl Proof {
             }
         }
         // check that the length of proofs and sets match
-        if proofs.len() != set.len() {
+        if proofs.len() != set.len() || proofs.len() != value_sub_vector.len() {
             return Err(ERR_INDEX_PROOF_NOT_MATCH.to_owned());
         }
         // get the list of scalas
-        let ti = get_ti(commit, set, values)?;
+        let ti = get_ti(commit, set, value_sub_vector)?;
 
         // proof = \prod proofs[i] ^ ti[i]
         let mut proof = G1::zero();
@@ -144,7 +144,7 @@ impl Proof {
         verifier_params: &VerifierParams,
         com: &Commitment,
         set: &[usize],
-        values: &[Blob],
+        value_sub_vector: &[Blob],
     ) -> bool {
         // we want to check if
         //   e(com, g2^{\sum_{i \in set} \alpha^{N+1-i} t_i})
@@ -156,12 +156,29 @@ impl Proof {
         // where
         //   tmp = 1/ \sum value_i*t_i
 
-        // 0. check csid, length, etc
-        // TODO
+        // 0. check the validity of the inputs: csid, length, etc
+        let sp = match get_system_paramter(self.ciphersuite) {
+            Err(_e) => return false,
+            Ok(p) => p,
+        };
+        if sp.ciphersuite != com.ciphersuite || sp.ciphersuite != verifier_params.ciphersuite {
+            return false;
+        }
+        if set.len() != value_sub_vector.len() {
+            return false;
+        }
+        if value_sub_vector.len() >= sp.n {
+            return false;
+        }
+        for e in set {
+            if *e >= sp.n {
+                return false;
+            }
+        }
 
         // 1. compute tmp
         // 1.1 get the list of scalas, return false if this failed
-        let ti = match get_ti(com, set, values) {
+        let ti = match get_ti(com, set, value_sub_vector) {
             Err(_e) => return false,
             Ok(p) => p,
         };
@@ -169,7 +186,7 @@ impl Proof {
         // 1.2 tmp = 1/\sum value_i*t_i
         let mut tmp = Fr::zero();
         for i in 0..set.len() {
-            let mut mi = HashToField::<Fr>::new(values[set[i]].as_ref(), None).with_ctr(0);
+            let mut mi = HashToField::<Fr>::new(value_sub_vector[i].as_ref(), None).with_ctr(0);
             mi.mul_assign(&ti[i]);
             tmp.add_assign(&mi);
         }
@@ -190,9 +207,8 @@ impl Proof {
 
         // 2.2 g2^{\sum_{i \in set} \alpha^{N+1-i} t_i}
         let mut param_subset_sum = G2::zero();
-        let n = verifier_params.generators.len();
         for i in 0..ti.len() {
-            let mut g2_tmp = verifier_params.generators[n - set[i] - 1].into_projective();
+            let mut g2_tmp = verifier_params.generators[sp.n - set[i] - 1].into_projective();
             g2_tmp.mul_assign(ti[i]);
             param_subset_sum.add_assign(&g2_tmp);
         }
@@ -281,8 +297,10 @@ impl SerDes for Proof {
 fn get_ti<Blob: AsRef<[u8]>>(
     commit: &Commitment,
     set: &[usize],
-    values: &[Blob],
+    value_sub_vector: &[Blob],
 ) -> Result<Vec<Fr>, String> {
+    let sp = get_system_paramter(commit.ciphersuite)?;
+
     // tmp = C | S | m[S]
     let mut tmp: Vec<u8> = vec![];
     // serialize commitment
@@ -295,13 +313,17 @@ fn get_ti<Blob: AsRef<[u8]>>(
         let t = index.to_be_bytes();
         tmp.append(&mut t.to_vec());
     }
+
+    if set.len() != value_sub_vector.len() {
+        return Err(ERR_INDEX_PROOF_NOT_MATCH.to_owned());
+    }
+
     // add values to set; returns an error if index is out of range
-    let range = values.len();
-    for index in set {
-        if *index >= range {
+    for i in 0..set.len() {
+        if set[i] >= sp.n {
             return Err(ERR_INVALID_INDEX.to_owned());
         }
-        let t = values[*index].as_ref();
+        let t = value_sub_vector[i].as_ref();
         tmp.append(&mut t.to_vec());
     }
     // formulate the output
