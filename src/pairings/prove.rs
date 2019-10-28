@@ -4,8 +4,8 @@ use super::{Commitment, Proof, ProverParams, VerifierParams};
 use ff::{Field, PrimeField};
 use pairing::hash_to_field::HashToField;
 use pairing::serdes::SerDes;
+use pairing::Engine;
 use pairing::{bls12_381::*, CurveAffine, CurveProjective};
-
 // impl std::cmp::PartialEq for Proof {
 //     /// Convenient function to compare secret key objects
 //     fn eq(&self, other: &Self) -> bool {
@@ -101,9 +101,114 @@ impl Proof {
         )
     }
 
-    pub fn aggregate(&mut self, _other: &[Self]) -> Result<(), String> {
-        // FIXME
-        Ok(())
+    /// Aggregates a vector of commitments into a single one
+    /// Note: the aggregator does not check the validity of
+    /// individual commits. The caller may need to check them
+    /// if they care for it.
+    pub fn aggregate<Blob: AsRef<[u8]>>(
+        commit: &Commitment,
+        proofs: &Vec<Self>,
+        set: &Vec<usize>,
+        values: &[Blob],
+    ) -> Result<Self, String> {
+        // check that the csids match
+        let csid = proofs[0].ciphersuite;
+        for e in proofs.into_iter().skip(0) {
+            if e.ciphersuite != csid {
+                return Err(ERR_CIPHERSUITE.to_owned());
+            }
+        }
+        // check that the length of proofs and sets match
+        if proofs.len() != set.len() {
+            return Err(ERR_INDEX_PROOF_NOT_MATCH.to_owned());
+        }
+        // get the list of scalas
+        let ti = get_ti(commit, set, values)?;
+
+        // proof = \prod proofs[i] ^ ti[i]
+        let mut proof = G1::zero();
+        for i in 0..proofs.len() {
+            let mut tmp = proofs[i].proof;
+            tmp.mul_assign(ti[i]);
+            proof.add_assign(&tmp);
+        }
+
+        Ok(Proof {
+            ciphersuite: csid,
+            proof,
+        })
+    }
+
+    pub fn batch_verify<Blob: AsRef<[u8]>>(
+        &self,
+        verifier_params: &VerifierParams,
+        com: &Commitment,
+        set: &Vec<usize>,
+        values: &[Blob],
+    ) -> bool {
+        // we want to check if
+        //   e(com, g2^{\sum_{i \in set} \alpha^{N+1-i} t_i})
+        //    ?= e(proof, g2) * e(g1, g2)^{alpha^{N+1} \sum value_i*t_i}
+        // which is to check
+        //   e(com^tmp, g2^{\sum_{i \in set} \alpha^{N+1-i} t_i})
+        //    * e(proof^{-tmp}, g2)
+        //    ?= e(g1, g2)^{alpha^N+1}
+        // where
+        //   tmp = 1/ \sum value_i*t_i
+
+        // 0. check csid, length, etc
+        // TODO
+
+        // 1. compute tmp
+        // 1.1 get the list of scalas, return false if this failed
+        let ti = match get_ti(com, set, values) {
+            Err(_e) => return false,
+            Ok(p) => p,
+        };
+
+        // 1.2 tmp = 1/\sum value_i*t_i
+        let mut tmp = Fr::zero();
+        for i in 0..set.len() {
+            let mut mi = HashToField::<Fr>::new(values[set[i]].as_ref(), None).with_ctr(0);
+            mi.mul_assign(&ti[i]);
+            tmp.add_assign(&mi);
+        }
+
+        // 1.3 if tmp == 0 (should never happen in practise)
+        //  FIXME
+        assert!(!tmp.is_zero());
+        let mut tmp = tmp.inverse().unwrap();
+
+        // 2 check
+        //   e(com^tmp, g2^{\sum_{i \in set} \alpha^{N+1-i} t_i})
+        //    * e(proof^{-tmp}, g2)
+        //    ?= e(g1, g2)^{alpha^N+1}
+
+        // 2.1 com ^ tmp
+        let mut com_mut = com.commit;
+        com_mut.mul_assign(tmp);
+
+        // 2.2 g2^{\sum_{i \in set} \alpha^{N+1-i} t_i}
+        let mut param_subset_sum = G2::zero();
+        let n = verifier_params.generators.len();
+        for i in 0..ti.len() {
+            let mut g2_tmp = verifier_params.generators[n - set[i] - 1].into_projective();
+            g2_tmp.mul_assign(ti[i]);
+            param_subset_sum.add_assign(&g2_tmp);
+        }
+
+        // 2.3 proof ^ {-tmp}
+        let mut proof_mut = self.proof;
+        tmp.negate();
+        proof_mut.mul_assign(tmp);
+
+        // 3 pairing product
+        Bls12::pairing_product(
+            com_mut,
+            param_subset_sum,
+            proof_mut,
+            G2Affine::one().into_projective(),
+        ) == verifier_params.gt_elt
     }
 }
 
@@ -171,8 +276,13 @@ impl SerDes for Proof {
 // input: the commitment
 // input: a list of indices, for which we need to generate t_i
 // input: Value: the messages that is commited to
+// output: a list of field elements
 #[allow(dead_code)]
-fn get_ti(commit: &Commitment, set: &Vec<usize>, values: &[&[u8]]) -> Result<Vec<Fr>, String> {
+fn get_ti<Blob: AsRef<[u8]>>(
+    commit: &Commitment,
+    set: &Vec<usize>,
+    values: &[Blob],
+) -> Result<Vec<Fr>, String> {
     // tmp = C | S | m[S]
     let mut tmp: Vec<u8> = vec![];
     // serialize commitment
@@ -185,14 +295,20 @@ fn get_ti(commit: &Commitment, set: &Vec<usize>, values: &[&[u8]]) -> Result<Vec
         let t = index.to_be_bytes();
         tmp.append(&mut t.to_vec());
     }
-    // add values to set; panic if index is out of range
+    // add values to set; returns an error if index is out of range
+    let range = values.len();
     for index in set {
-        let t = values[*index];
+        if *index >= range {
+            return Err(ERR_INVALID_INDEX.to_owned());
+        }
+        let t = values[*index].as_ref();
         tmp.append(&mut t.to_vec());
     }
     // formulate the output
     let mut res: Vec<Fr> = vec![];
     for index in set {
+        // each field element t_i is generated as
+        // t_i = hash_to_field (i | C | S | m[S])
         let mut hash_input: Vec<u8> = index.to_be_bytes().to_vec();
         hash_input.append(&mut tmp.clone());
         let h2f = HashToField::new(hash_input, None);

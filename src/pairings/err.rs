@@ -8,3 +8,4 @@ pub const ERR_CIPHERSUITE: &str = "Invalid ciphersuite ID";
 // pub const ERR_INVALID_N: &str = "Invalid number of public parameters";
 pub const ERR_INVALID_VALUE: &str = "Invalid number of values";
 pub const ERR_INVALID_INDEX: &str = "Invalid index";
+pub const ERR_INDEX_PROOF_NOT_MATCH: &str = "Length of index and proof sets do not match";

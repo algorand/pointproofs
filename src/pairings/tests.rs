@@ -249,3 +249,41 @@ fn test_serdes_verifier_param() {
     let verifier_params_recover = VerifierParams::deserialize(&mut buf[..].as_ref(), true).unwrap();
     assert_eq!(verifier_params, verifier_params_recover);
 }
+
+#[test]
+fn test_aggregation() {
+    let sp = get_system_paramter(0).unwrap();
+    let n = sp.n;
+    let (prover_params, verifier_params) =
+        paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0).unwrap();
+
+    let mut prover_params256 = prover_params.clone();
+    prover_params256.precomp_256();
+
+    let mut init_values = Vec::with_capacity(n);
+    for i in 0..n {
+        let s = format!("this is message number {}", i);
+        init_values.push(s.into_bytes());
+    }
+
+    let mut values: Vec<&[u8]> = Vec::with_capacity(n);
+    for e in init_values.iter().take(n) {
+        values.push(&e);
+    }
+
+    let com = Commitment::new(&prover_params, &values).unwrap();
+
+    let set = vec![1usize, 4, 7];
+    let mut proofs: Vec<Proof> = vec![];
+
+    for i in 0..set.len() {
+        let proof = Proof::new(&prover_params, &values, set[i]).unwrap();
+        proofs.push(proof);
+    }
+
+    let agg_proof = Proof::aggregate(&com, &proofs, &set, &values).unwrap();
+    assert!(agg_proof.batch_verify(&verifier_params, &com, &set, &values));
+
+    let new_set = vec![1usize, 4, 8];
+    assert!(!agg_proof.batch_verify(&verifier_params, &com, &new_set, &values));
+}
