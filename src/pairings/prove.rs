@@ -107,13 +107,13 @@ impl Proof {
     /// if they care for it.
     pub fn aggregate<Blob: AsRef<[u8]>>(
         commit: &Commitment,
-        proofs: &Vec<Self>,
-        set: &Vec<usize>,
+        proofs: &[Self],
+        set: &[usize],
         values: &[Blob],
     ) -> Result<Self, String> {
         // check that the csids match
         let csid = proofs[0].ciphersuite;
-        for e in proofs.into_iter().skip(0) {
+        for e in proofs.iter().skip(0) {
             if e.ciphersuite != csid {
                 return Err(ERR_CIPHERSUITE.to_owned());
             }
@@ -143,7 +143,7 @@ impl Proof {
         &self,
         verifier_params: &VerifierParams,
         com: &Commitment,
-        set: &Vec<usize>,
+        set: &[usize],
         values: &[Blob],
     ) -> bool {
         // we want to check if
@@ -280,7 +280,7 @@ impl SerDes for Proof {
 #[allow(dead_code)]
 fn get_ti<Blob: AsRef<[u8]>>(
     commit: &Commitment,
-    set: &Vec<usize>,
+    set: &[usize],
     values: &[Blob],
 ) -> Result<Vec<Fr>, String> {
     // tmp = C | S | m[S]

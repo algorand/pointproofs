@@ -276,8 +276,8 @@ fn test_aggregation() {
     let set = vec![1usize, 4, 7];
     let mut proofs: Vec<Proof> = vec![];
 
-    for i in 0..set.len() {
-        let proof = Proof::new(&prover_params, &values, set[i]).unwrap();
+    for index in &set {
+        let proof = Proof::new(&prover_params, &values, *index).unwrap();
         proofs.push(proof);
     }
 
