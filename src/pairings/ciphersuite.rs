@@ -14,21 +14,21 @@ pub fn get_system_paramter(csid: Ciphersuite) -> Result<SystemParam, String> {
         // non pre-computation
         0 => Ok(SystemParam {
             ciphersuite: csid,
-            n: 1024,
+            n: 512,
             pp_len: 0,
         }),
         // pre-computation with parameter 3
         // pp_len = n * 2 * 3
         1 => Ok(SystemParam {
             ciphersuite: csid,
-            n: 1024,
+            n: 512,
             pp_len: 192,
         }),
         // pre-computation with parameter 256
         // pp_len = n * 2 * 256
         2 => Ok(SystemParam {
             ciphersuite: csid,
-            n: 1024,
+            n: 512,
             pp_len: 16384,
         }),
         _ => Err(super::err::ERR_CIPHERSUITE.to_owned()),

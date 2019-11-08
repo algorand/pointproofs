@@ -257,9 +257,6 @@ fn test_aggregation() {
     let (prover_params, verifier_params) =
         paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0).unwrap();
 
-    let mut prover_params256 = prover_params.clone();
-    prover_params256.precomp_256();
-
     let mut init_values = Vec::with_capacity(n);
     for i in 0..n {
         let s = format!("this is message number {}", i);
