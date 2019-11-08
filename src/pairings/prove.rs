@@ -124,14 +124,10 @@ impl Proof {
         }
         // get the list of scalas
         let ti = get_ti(commit, set, value_sub_vector)?;
-
+        let scalars_u64: Vec<&[u64; 4]> = ti.iter().map(|s| &s.0).collect();
+        let bases: Vec<G1Affine> = proofs.iter().map(|s| s.proof.into_affine()).collect();
         // proof = \prod proofs[i] ^ ti[i]
-        let mut proof = G1::zero();
-        for i in 0..proofs.len() {
-            let mut tmp = proofs[i].proof;
-            tmp.mul_assign(ti[i]);
-            proof.add_assign(&tmp);
-        }
+        let proof = G1Affine::sum_of_products(&bases[..], &scalars_u64);
 
         Ok(Proof {
             ciphersuite: csid,
@@ -187,7 +183,11 @@ impl Proof {
         let mut tmp = Fr::zero();
         for i in 0..set.len() {
             let mut mi = HashToField::<Fr>::new(value_sub_vector[i].as_ref(), None).with_ctr(0);
-            mi.mul_assign(&ti[i]);
+            let fr = match Fr::from_repr(ti[i]) {
+                Ok(p) => p,
+                Err(_e) => return false,
+            };
+            mi.mul_assign(&fr);
             tmp.add_assign(&mi);
         }
 
@@ -206,12 +206,13 @@ impl Proof {
         com_mut.mul_assign(tmp);
 
         // 2.2 g2^{\sum_{i \in set} \alpha^{N+1-i} t_i}
-        let mut param_subset_sum = G2::zero();
+
+        let mut bases: Vec<G2Affine> = vec![];
         for i in 0..ti.len() {
-            let mut g2_tmp = verifier_params.generators[sp.n - set[i] - 1].into_projective();
-            g2_tmp.mul_assign(ti[i]);
-            param_subset_sum.add_assign(&g2_tmp);
+            bases.push(verifier_params.generators[sp.n - set[i] - 1]);
         }
+        let scalars_u64: Vec<&[u64; 4]> = ti.iter().map(|s| &s.0).collect();
+        let param_subset_sum = G2Affine::sum_of_products(&bases, &scalars_u64);
 
         // 2.3 proof ^ {-tmp}
         let mut proof_mut = self.proof;
@@ -295,7 +296,7 @@ pub fn expose_get_ti_for_testing<Blob: AsRef<[u8]>>(
     commit: &Commitment,
     set: &[usize],
     value_sub_vector: &[Blob],
-) -> Result<Vec<Fr>, String> {
+) -> Result<Vec<FrRepr>, String> {
     get_ti(commit, set, value_sub_vector)
 }
 
@@ -307,7 +308,7 @@ fn get_ti<Blob: AsRef<[u8]>>(
     commit: &Commitment,
     set: &[usize],
     value_sub_vector: &[Blob],
-) -> Result<Vec<Fr>, String> {
+) -> Result<Vec<FrRepr>, String> {
     let sp = get_system_paramter(commit.ciphersuite)?;
 
     // tmp = C | S | m[S]
@@ -336,14 +337,15 @@ fn get_ti<Blob: AsRef<[u8]>>(
         tmp.append(&mut t.to_vec());
     }
     // formulate the output
-    let mut res: Vec<Fr> = vec![];
+    let mut res: Vec<FrRepr> = vec![];
     for index in set {
         // each field element t_i is generated as
         // t_i = hash_to_field (i | C | S | m[S])
         let mut hash_input: Vec<u8> = index.to_be_bytes().to_vec();
         hash_input.append(&mut tmp.clone());
         let h2f = HashToField::new(hash_input, None);
-        res.push(h2f.with_ctr(0));
+        let fr: Fr = h2f.with_ctr(0);
+        res.push(fr.into_repr());
     }
 
     Ok(res)
