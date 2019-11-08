@@ -43,6 +43,7 @@ pub mod prove;
 mod proverparam;
 mod verifierparam;
 mod verify;
+pub mod hash_to_ti;
 
 pub use self::paramgen::paramgen_from_seed;
 

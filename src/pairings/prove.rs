@@ -123,7 +123,7 @@ impl Proof {
             return Err(ERR_INDEX_PROOF_NOT_MATCH.to_owned());
         }
         // get the list of scalas
-        let ti = get_ti(commit, set, value_sub_vector)?;
+        let ti = super::hash_to_ti::get_ti_new(commit, set, value_sub_vector)?;
         let scalars_u64: Vec<&[u64; 4]> = ti.iter().map(|s| &s.0).collect();
         let bases: Vec<G1Affine> = proofs.iter().map(|s| s.proof.into_affine()).collect();
         // proof = \prod proofs[i] ^ ti[i]
@@ -174,7 +174,7 @@ impl Proof {
 
         // 1. compute tmp
         // 1.1 get the list of scalas, return false if this failed
-        let ti = match get_ti(com, set, value_sub_vector) {
+        let ti = match super::hash_to_ti::get_ti_new(com, set, value_sub_vector) {
             Err(_e) => return false,
             Ok(p) => p,
         };
