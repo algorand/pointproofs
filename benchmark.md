@@ -15,11 +15,11 @@ Check `veccom-paramgen`
 ## Commit
 
 
-|Function| n = 512 | n = 1024 |
-|---|---:|---:|---:|
-| new commitment without pre-computation | 19.6 ms |  35.1 ms | sum of n product |
-| new commitment with pre-computation = 3 | 19.6 ms |   35.2 ms | sum of n product |
-| new commitment with pre-computation = 256 | 14.4 ms |  34.0 ms | sum of n product |
+|Function| n = 512 | n = 1024 | main cost |
+|---|---:|---:|:---|
+| new commitment without pre-computation | 19.6 ms |  35.9 ms | sum of n product |
+| new commitment with pre-computation = 3 | 19.6 ms |   35.5 ms | sum of n product |
+| new commitment with pre-computation = 256 | 14.4 ms |  32.0 ms | sum of n product |
 | commitment update without pre-computation | 0.2 ms| 0.2 ms| 2 hash_to_field + g1_mul |
 | commitment update with pre-computation = 3 | 0.1 ms| 0.1 ms| 2 hash_to_field + g1_mul |
 | commitment update with pre-computation = 256 | 0.05 ms| 0.05 ms| 2 hash_to_field + g1_mul |
@@ -27,10 +27,10 @@ Check `veccom-paramgen`
 ## Proof
 
 |Function| n = 512 | n = 1024 | main cost |
-|---|---:|---:|---:|
-| new proof without pre-computation | 19.6 ms|  35.1 ms |  sum of n product |
-| new proof with pre-computation = 3 | 19.9 ms|   36.0 ms | sum of n product |
-| new proof with pre-computation = 256 | 16.6 ms |  33.5 ms |  sum of n product |
+|---|---:|---:|:---|
+| new proof without pre-computation | 19.6 ms|  34.7 ms |  sum of n product |
+| new proof with pre-computation = 3 | 19.9 ms|   34.6 ms | sum of n product |
+| new proof with pre-computation = 256 | 16.6 ms |  34.0 ms |  sum of n product |
 | proof update without pre-computation | 0.2 ms| 0.2 ms| hash_to_field + g1_mul |
 | proof update with pre-computation = 3 | 0.1 ms| 0.1 ms| hash_to_field + g1_mul |
 | proof update with pre-computation = 256 | 0.05 ms| 0.05 ms| hash_to_field + g1_mul |
@@ -44,7 +44,7 @@ Check `veccom-paramgen`
 ## aggregation
 
 | Function| n = 512 | n = 1024 | main cost |
-|---|---:|---:|---:|
+|---|---:|---:|:---|
 | hash to 128 scalars | 2.82 ms|2.98 ms|  128 hash_to_field  |
 | hash to 256 scalars | 9.95 ms|10.65 ms| 256 hash_to_field (with longer inputs)|
 | aggregate 128 proofs | 32.4 ms | 33.4 ms| 128 g1_mul|
