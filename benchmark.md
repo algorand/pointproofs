@@ -47,9 +47,9 @@ Check `veccom-paramgen`
 |---|---:|---:|:---|
 | hash to 128 scalars | 2.82 ms|2.98 ms|  128 hash_to_field  |
 | hash to 256 scalars | 9.95 ms|10.65 ms| 256 hash_to_field (with longer inputs)|
-| aggregate 128 proofs | 32.4 ms | 33.4 ms| 128 g1_mul|
-| aggregate 256 proofs | 69.6 ms | 69.3 ms|  256 g1_mul|
-| aggregate n proofs | 154.0 ms | 395.6 ms| n g1_mul |
-| batch verify 128 proofs | 103.8 ms | 108.4 ms| 128 g2_mul|
-| batch verify 256 proofs | 210.8 ms | 214.8 ms| 256 g2_mul|
-| batch verify n proofs | 431.6 ms | 973.0 ms| n g2_mul|
+| aggregate 128 proofs | 10.6 ms | 10.3 ms| sum of 128 product in G1|
+| aggregate 256 proofs | 23.4 ms | 23.4 ms|  sum of 256 product in G1|
+| aggregate n proofs | 60.2 ms | 189.7 ms| sum of n product in G1|
+| batch verify 128 proofs | 28.2 ms | 27.7 ms| sum of 128 product in G2|
+| batch verify 256 proofs | 50.2 ms | 50.4 ms| sum of 256 product in G2|
+| batch verify n proofs | 104.5 ms | 261.0 ms| sum of n product in G2|
