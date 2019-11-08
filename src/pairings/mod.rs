@@ -4,7 +4,7 @@ use pairing::bls12_381::*;
 #[derive(Clone, Debug)]
 pub struct SystemParam {
     ciphersuite: Ciphersuite,
-    n: usize,
+    pub n: usize,
     pp_len: usize,
 }
 
@@ -23,8 +23,8 @@ pub struct VerifierParams {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Commitment {
-    ciphersuite: Ciphersuite,
-    commit: G1,
+    pub ciphersuite: Ciphersuite,
+    pub commit: G1,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -35,11 +35,11 @@ pub struct Proof {
 
 // TODO: refactor what's public and what's not
 pub mod c_api;
-mod ciphersuite;
-mod commit;
+pub mod ciphersuite;
+pub mod commit;
 mod err;
 mod paramgen;
-mod prove;
+pub mod prove;
 mod proverparam;
 mod verifierparam;
 mod verify;

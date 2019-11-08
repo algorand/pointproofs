@@ -167,7 +167,7 @@ impl Proof {
         if set.len() != value_sub_vector.len() {
             return false;
         }
-        if value_sub_vector.len() >= sp.n {
+        if value_sub_vector.len() > sp.n {
             return false;
         }
         for e in set {
@@ -289,11 +289,20 @@ impl SerDes for Proof {
     }
 }
 
+#[allow(dead_code)]
+//#[cfg(test)]
+pub fn expose_get_ti_for_testing<Blob: AsRef<[u8]>>(
+    commit: &Commitment,
+    set: &[usize],
+    value_sub_vector: &[Blob],
+) -> Result<Vec<Fr>, String> {
+    get_ti(commit, set, value_sub_vector)
+}
+
 // input: the commitment
 // input: a list of indices, for which we need to generate t_i
 // input: Value: the messages that is commited to
 // output: a list of field elements
-#[allow(dead_code)]
 fn get_ti<Blob: AsRef<[u8]>>(
     commit: &Commitment,
     set: &[usize],

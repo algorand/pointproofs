@@ -7,10 +7,13 @@ use criterion::Bencher;
 use criterion::Benchmark;
 use criterion::Criterion;
 use pairing::serdes::SerDes;
+use pairing::CurveProjective;
 use std::time::Duration;
 use veccom::pairings::*;
 
-criterion_group!(benches, bench_pairings);
+//criterion_group!(benches, bench_ti);
+//criterion_group!(benches, bench_ti, bench_aggregation);
+criterion_group!(benches, bench_ti, bench_pairings, bench_aggregation);
 criterion_main!(benches);
 
 fn bench_commit_helper(prover_params: &ProverParams, n: usize, b: &mut Bencher) {
@@ -275,6 +278,322 @@ fn bench_pairings(c: &mut Criterion) {
                 .0;
         prover_params.precomp_256();
         bench_proof_update_helper(&prover_params, n, b);
+    });
+
+    let bench = bench.warm_up_time(Duration::from_millis(1000));
+    let bench = bench.measurement_time(Duration::from_millis(5000));
+    let bench = bench.sample_size(10);
+
+    c.bench("pairings", bench);
+}
+
+fn bench_aggregation(c: &mut Criterion) {
+    // pre-compute the parameters
+
+    let (prover_params, verifier_params) =
+        paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0).unwrap();
+    // let mut prover_comp_3 = prover_params.clone();
+    // let mut prover_comp_256 = prover_params.clone();
+    let prover_params_clone = prover_params.clone();
+    //    let verifier_params_clone = verifier_params.clone();
+    // prover_comp_3.precomp_3();
+    // prover_comp_256.precomp_256();
+    let sys_param = veccom::pairings::ciphersuite::get_system_paramter(0).unwrap();
+
+    // includes from_bytes conversion for the proof, because you would normally get the proof from the network
+    let n = sys_param.n;
+
+    let bench = Benchmark::new("aggree_128", move |b| {
+        let k = 128;
+        // values
+        let mut init_values = Vec::with_capacity(n);
+        for i in 0..n {
+            let s = format!("this is message number {}", i);
+            init_values.push(s.into_bytes());
+        }
+
+        let mut values: Vec<&[u8]> = Vec::with_capacity(n);
+        for e in init_values.iter().take(n) {
+            values.push(&e);
+        }
+
+        let com = Commitment::new(&prover_params_clone, &values).unwrap();
+        let mut proofs: Vec<Proof> = vec![];
+        let mut index: Vec<usize> = vec![];
+        let mut value_sub_vector: Vec<&[u8]> = vec![];
+        for i in 0..k {
+            let p = Proof::new(&prover_params_clone, &values, i).unwrap();
+            proofs.push(p);
+            index.push(i);
+            value_sub_vector.push(values[i]);
+        }
+
+        let mut i: usize = 0;
+        b.iter(|| {
+            let _agg_proof = Proof::aggregate(&com, &proofs, &index, &value_sub_vector).unwrap();
+            // assert!(agg_proof.batch_verify(
+            //     &verifier_params_clone,
+            //     &com,
+            //     &index,
+            //     &value_sub_vector
+            // ));
+            i = (i + 1) % n;
+        });
+    });
+
+    let prover_params_clone = prover_params.clone();
+    //    let verifier_params_clone = verifier_params.clone();
+    let bench = bench.with_function("aggree_256", move |b| {
+        let k = 256;
+        // values
+        let mut init_values = Vec::with_capacity(n);
+        for i in 0..n {
+            let s = format!("this is message number {}", i);
+            init_values.push(s.into_bytes());
+        }
+
+        let mut values: Vec<&[u8]> = Vec::with_capacity(n);
+        for e in init_values.iter().take(n) {
+            values.push(&e);
+        }
+
+        let com = Commitment::new(&prover_params_clone, &values).unwrap();
+        let mut proofs: Vec<Proof> = vec![];
+        let mut index: Vec<usize> = vec![];
+        let mut value_sub_vector: Vec<&[u8]> = vec![];
+        for i in 0..k {
+            let p = Proof::new(&prover_params_clone, &values, i).unwrap();
+            proofs.push(p);
+            index.push(i);
+            value_sub_vector.push(values[i]);
+        }
+
+        let mut i: usize = 0;
+        b.iter(|| {
+            let _agg_proof = Proof::aggregate(&com, &proofs, &index, &value_sub_vector).unwrap();
+            // assert!(agg_proof.batch_verify(
+            //     &verifier_params_clone,
+            //     &com,
+            //     &index,
+            //     &value_sub_vector
+            // ));
+            i = (i + 1) % n;
+        });
+    });
+
+    let prover_params_clone = prover_params.clone();
+    //    let verifier_params_clone = verifier_params.clone();
+    let bench = bench.with_function("aggree_all", move |b| {
+        let k = n;
+        // values
+        let mut init_values = Vec::with_capacity(n);
+        for i in 0..n {
+            let s = format!("this is message number {}", i);
+            init_values.push(s.into_bytes());
+        }
+
+        let mut values: Vec<&[u8]> = Vec::with_capacity(n);
+        for e in init_values.iter().take(n) {
+            values.push(&e);
+        }
+
+        let com = Commitment::new(&prover_params_clone, &values).unwrap();
+        let mut proofs: Vec<Proof> = vec![];
+        let mut index: Vec<usize> = vec![];
+        let mut value_sub_vector: Vec<&[u8]> = vec![];
+        for i in 0..k {
+            let p = Proof::new(&prover_params_clone, &values, i).unwrap();
+            proofs.push(p);
+            index.push(i);
+            value_sub_vector.push(values[i]);
+        }
+
+        let mut i: usize = 0;
+        b.iter(|| {
+            let _agg_proof = Proof::aggregate(&com, &proofs, &index, &value_sub_vector).unwrap();
+            // assert!(agg_proof.batch_verify(
+            //     &verifier_params_clone,
+            //     &com,
+            //     &index,
+            //     &value_sub_vector
+            // ));
+            i = (i + 1) % n;
+        });
+    });
+
+    let prover_params_clone = prover_params.clone();
+    let verifier_params_clone = verifier_params.clone();
+    let bench = bench.with_function("batch_verify_128", move |b| {
+        let k = 128;
+        // values
+        let mut init_values = Vec::with_capacity(n);
+        for i in 0..n {
+            let s = format!("this is message number {}", i);
+            init_values.push(s.into_bytes());
+        }
+
+        let mut values: Vec<&[u8]> = Vec::with_capacity(n);
+        for e in init_values.iter().take(n) {
+            values.push(&e);
+        }
+
+        let com = Commitment::new(&prover_params_clone, &values).unwrap();
+        let mut proofs: Vec<Proof> = vec![];
+        let mut index: Vec<usize> = vec![];
+        let mut value_sub_vector: Vec<&[u8]> = vec![];
+        for i in 0..k {
+            let p = Proof::new(&prover_params_clone, &values, i).unwrap();
+            proofs.push(p);
+            index.push(i);
+            value_sub_vector.push(values[i]);
+        }
+        let agg_proof = Proof::aggregate(&com, &proofs, &index, &value_sub_vector).unwrap();
+
+        let mut i: usize = 0;
+        b.iter(|| {
+            assert!(agg_proof.batch_verify(
+                &verifier_params_clone,
+                &com,
+                &index,
+                &value_sub_vector
+            ));
+            i = (i + 1) % n;
+        });
+    });
+
+    let prover_params_clone = prover_params.clone();
+    let verifier_params_clone = verifier_params.clone();
+    let bench = bench.with_function("batch_verify_256", move |b| {
+        let k = 256;
+        // values
+        let mut init_values = Vec::with_capacity(n);
+        for i in 0..n {
+            let s = format!("this is message number {}", i);
+            init_values.push(s.into_bytes());
+        }
+
+        let mut values: Vec<&[u8]> = Vec::with_capacity(n);
+        for e in init_values.iter().take(n) {
+            values.push(&e);
+        }
+
+        let com = Commitment::new(&prover_params_clone, &values).unwrap();
+        let mut proofs: Vec<Proof> = vec![];
+        let mut index: Vec<usize> = vec![];
+        let mut value_sub_vector: Vec<&[u8]> = vec![];
+        for i in 0..k {
+            let p = Proof::new(&prover_params_clone, &values, i).unwrap();
+            proofs.push(p);
+            index.push(i);
+            value_sub_vector.push(values[i]);
+        }
+        let agg_proof = Proof::aggregate(&com, &proofs, &index, &value_sub_vector).unwrap();
+
+        let mut i: usize = 0;
+        b.iter(|| {
+            assert!(agg_proof.batch_verify(
+                &verifier_params_clone,
+                &com,
+                &index,
+                &value_sub_vector
+            ));
+            i = (i + 1) % n;
+        });
+    });
+
+    let prover_params_clone = prover_params.clone();
+    let verifier_params_clone = verifier_params.clone();
+    let bench = bench.with_function("batch_verify_all", move |b| {
+        let k = n;
+        // values
+        let mut init_values = Vec::with_capacity(n);
+        for i in 0..n {
+            let s = format!("this is message number {}", i);
+            init_values.push(s.into_bytes());
+        }
+
+        let mut values: Vec<&[u8]> = Vec::with_capacity(n);
+        for e in init_values.iter().take(n) {
+            values.push(&e);
+        }
+
+        let com = Commitment::new(&prover_params_clone, &values).unwrap();
+        let mut proofs: Vec<Proof> = vec![];
+        let mut index: Vec<usize> = vec![];
+        let mut value_sub_vector: Vec<&[u8]> = vec![];
+        for i in 0..k {
+            let p = Proof::new(&prover_params_clone, &values, i).unwrap();
+            proofs.push(p);
+            index.push(i);
+            value_sub_vector.push(values[i]);
+        }
+        let agg_proof = Proof::aggregate(&com, &proofs, &index, &value_sub_vector).unwrap();
+
+        let mut i: usize = 0;
+        b.iter(|| {
+            assert!(agg_proof.batch_verify(
+                &verifier_params_clone,
+                &com,
+                &index,
+                &value_sub_vector
+            ));
+            i = (i + 1) % n;
+        });
+    });
+    let bench = bench.warm_up_time(Duration::from_millis(1000));
+    let bench = bench.measurement_time(Duration::from_millis(5000));
+    let bench = bench.sample_size(10);
+
+    c.bench("pairings", bench);
+}
+
+fn bench_ti(c: &mut Criterion) {
+    let bench = Benchmark::new("bench_ti_128", move |b| {
+        let commit = Commitment {
+            ciphersuite: 0,
+            commit: pairing::bls12_381::G1::one(),
+        };
+        let n = 128;
+        // values
+        let mut init_values = Vec::with_capacity(n);
+        let mut index: Vec<usize> = vec![];
+        for i in 0..n {
+            let s = format!("this is message number {}", i);
+            init_values.push(s.into_bytes());
+            index.push(i);
+        }
+
+        let mut values: Vec<&[u8]> = Vec::with_capacity(n);
+        for e in init_values.iter().take(n) {
+            values.push(&e);
+        }
+        b.iter(|| {
+            let _t = veccom::pairings::prove::expose_get_ti_for_testing(&commit, &index, &values);
+        });
+    });
+
+    let bench = bench.with_function("bench_ti_256", move |b| {
+        let commit = Commitment {
+            ciphersuite: 0,
+            commit: pairing::bls12_381::G1::one(),
+        };
+        let n = 256;
+        // values
+        let mut init_values = Vec::with_capacity(n);
+        let mut index: Vec<usize> = vec![];
+        for i in 0..n {
+            let s = format!("this is message number {}", i);
+            init_values.push(s.into_bytes());
+            index.push(i);
+        }
+
+        let mut values: Vec<&[u8]> = Vec::with_capacity(n);
+        for e in init_values.iter().take(n) {
+            values.push(&e);
+        }
+        b.iter(|| {
+            let _t = veccom::pairings::prove::expose_get_ti_for_testing(&commit, &index, &values);
+        });
     });
 
     let bench = bench.warm_up_time(Duration::from_millis(1000));
