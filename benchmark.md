@@ -45,15 +45,16 @@ Check `veccom-paramgen`
 
 | Function| 128 scalars |  256 scalars |  512 scalars | 1024 scalars |
 |---|---:|---:|---:|---:|
-| hash to scalars | 2.98 ms|  10.4 ms | 39.2 ms | 109.3 ms |
+| hash to scalars | 2.98 ms|  10.4 ms | 39.2 ms | 156.7 ms |
+| new hash to scalars | 0.6 ms|  1.2 ms | 2.5 ms | 5.3 ms |
 
 
 
 | Function| n = 512 | n = 1024 | main cost |
 |---|---:|---:|:---|
-| aggregate 128 proofs | 10.6 ms | 10.3 ms| hash to 128 scalars + sum of 128 product in G1|
-| aggregate 256 proofs | 23.4 ms | 23.4 ms|  hash to 256 scalars + sum of 256 product in G1|
-| aggregate n proofs | 60.2 ms | 189.7 ms| hash to n scalars + sum of n product in G1|
-| batch verify 128 proofs | 28.2 ms | 27.7 ms| hash to 128 scalars + sum of 128 product in G2|
-| batch verify 256 proofs | 50.2 ms | 50.4 ms| hash to 256 scalars + sum of 256 product in G2|
-| batch verify n proofs | 104.5 ms | 261.0 ms| hash to n scalars +sum of n product in G2|
+| aggregate 128 proofs | 8.1 ms | 8.1 ms| hash to 128 scalars + sum of 128 product in G1|
+| aggregate 256 proofs | 14.3 ms | 14.4 ms|  hash to 256 scalars + sum of 256 product in G1|
+| aggregate n proofs | 25.9 ms | 46.4 ms| hash to n scalars + sum of n product in G1|
+| batch verify 128 proofs | 25.7 ms | 25.3 ms| hash to 128 scalars + sum of 128 product in G2|
+| batch verify 256 proofs | 42.9 ms | 42.8 ms| hash to 256 scalars + sum of 256 product in G2|
+| batch verify n proofs | 71.9 ms | 119.4 ms| hash to n scalars +sum of n product in G2|
