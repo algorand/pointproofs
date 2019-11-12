@@ -2,7 +2,8 @@ use super::ciphersuite::*;
 use super::err::*;
 use super::{ProverParams, SystemParam, VerifierParams};
 use ff::Field;
-use pairing::hash_to_field::HashToField;
+use pairings::hash_to_field_veccom::hash_to_field_veccom;
+//use pairing::hash_to_field::HashToField;
 use pairing::{bls12_381::*, CurveAffine, CurveProjective, Engine};
 
 /// Generate a set of parameters from a seed and a ciphersuite ID.
@@ -21,10 +22,7 @@ pub fn paramgen_from_seed<Blob: AsRef<[u8]>>(
     let sp = get_system_paramter(ciphersuite)?;
 
     // invoke the internal parameter generation function
-    Ok(paramgen_from_alpha(
-        &HashToField::<Fr>::new(&seed, None).with_ctr(0),
-        sp,
-    ))
+    Ok(paramgen_from_alpha(&hash_to_field_veccom(&seed), sp))
 }
 
 /// Internal logic for parameter generation.

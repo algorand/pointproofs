@@ -1,8 +1,10 @@
 use super::ciphersuite::*;
 use super::err::*;
+use super::hash_to_field_veccom::{hash_to_field_veccom, hash_to_ti};
 use super::{Commitment, Proof, ProverParams, VerifierParams};
 use ff::{Field, PrimeField};
-use pairing::hash_to_field::HashToField;
+use pairings::hash_to_field_veccom::hash_to_field_repr_veccom;
+//use pairing::hash_to_field::HashToField;
 use pairing::serdes::SerDes;
 use pairing::Engine;
 use pairing::{bls12_381::*, CurveAffine, CurveProjective};
@@ -123,7 +125,7 @@ impl Proof {
             return Err(ERR_INDEX_PROOF_NOT_MATCH.to_owned());
         }
         // get the list of scalas
-        let ti = super::hash_to_ti::get_ti_new(commit, set, value_sub_vector)?;
+        let ti = hash_to_ti(commit, set, value_sub_vector)?;
         let scalars_u64: Vec<&[u64; 4]> = ti.iter().map(|s| &s.0).collect();
         let bases: Vec<G1Affine> = proofs.iter().map(|s| s.proof.into_affine()).collect();
         // proof = \prod proofs[i] ^ ti[i]
@@ -174,7 +176,7 @@ impl Proof {
 
         // 1. compute tmp
         // 1.1 get the list of scalas, return false if this failed
-        let ti = match super::hash_to_ti::get_ti_new(com, set, value_sub_vector) {
+        let ti = match hash_to_ti(com, set, value_sub_vector) {
             Err(_e) => return false,
             Ok(p) => p,
         };
@@ -182,7 +184,7 @@ impl Proof {
         // 1.2 tmp = 1/\sum value_i*t_i
         let mut tmp = Fr::zero();
         for i in 0..set.len() {
-            let mut mi = HashToField::<Fr>::new(value_sub_vector[i].as_ref(), None).with_ctr(0);
+            let mut mi = hash_to_field_veccom(value_sub_vector[i].as_ref());
             let fr = match Fr::from_repr(ti[i]) {
                 Ok(p) => p,
                 Err(_e) => return false,
@@ -208,8 +210,8 @@ impl Proof {
         // 2.2 g2^{\sum_{i \in set} \alpha^{N+1-i} t_i}
 
         let mut bases: Vec<G2Affine> = vec![];
-        for i in 0..ti.len() {
-            bases.push(verifier_params.generators[sp.n - set[i] - 1]);
+        for index in set.iter().take(ti.len()) {
+            bases.push(verifier_params.generators[sp.n - index - 1]);
         }
         let scalars_u64: Vec<&[u64; 4]> = ti.iter().map(|s| &s.0).collect();
         let param_subset_sum = G2Affine::sum_of_products(&bases, &scalars_u64);
@@ -290,66 +292,66 @@ impl SerDes for Proof {
     }
 }
 
-#[allow(dead_code)]
-//#[cfg(test)]
-pub fn expose_get_ti_for_testing<Blob: AsRef<[u8]>>(
-    commit: &Commitment,
-    set: &[usize],
-    value_sub_vector: &[Blob],
-) -> Result<Vec<FrRepr>, String> {
-    get_ti(commit, set, value_sub_vector)
-}
-
-// input: the commitment
-// input: a list of indices, for which we need to generate t_i
-// input: Value: the messages that is commited to
-// output: a list of field elements
-fn get_ti<Blob: AsRef<[u8]>>(
-    commit: &Commitment,
-    set: &[usize],
-    value_sub_vector: &[Blob],
-) -> Result<Vec<FrRepr>, String> {
-    let sp = get_system_paramter(commit.ciphersuite)?;
-
-    // tmp = C | S | m[S]
-    let mut tmp: Vec<u8> = vec![];
-    // serialize commitment
-    match commit.serialize(&mut tmp, true) {
-        Ok(_p) => _p,
-        Err(e) => return Err(e.to_string()),
-    };
-    // add the set to tmp
-    for index in set {
-        let t = index.to_be_bytes();
-        tmp.append(&mut t.to_vec());
-    }
-
-    if set.len() != value_sub_vector.len() {
-        return Err(ERR_INDEX_PROOF_NOT_MATCH.to_owned());
-    }
-
-    // add values to set; returns an error if index is out of range
-    for i in 0..set.len() {
-        if set[i] >= sp.n {
-            return Err(ERR_INVALID_INDEX.to_owned());
-        }
-        let t = value_sub_vector[i].as_ref();
-        tmp.append(&mut t.to_vec());
-    }
-    // formulate the output
-    let mut res: Vec<FrRepr> = vec![];
-    for index in set {
-        // each field element t_i is generated as
-        // t_i = hash_to_field (i | C | S | m[S])
-        let mut hash_input: Vec<u8> = index.to_be_bytes().to_vec();
-        hash_input.append(&mut tmp.clone());
-        let h2f = HashToField::new(hash_input, None);
-        let fr: Fr = h2f.with_ctr(0);
-        res.push(fr.into_repr());
-    }
-
-    Ok(res)
-}
+// #[allow(dead_code)]
+// //#[cfg(test)]
+// pub fn expose_get_ti_for_testing<Blob: AsRef<[u8]>>(
+//     commit: &Commitment,
+//     set: &[usize],
+//     value_sub_vector: &[Blob],
+// ) -> Result<Vec<FrRepr>, String> {
+//     get_ti(commit, set, value_sub_vector)
+// }
+//
+// // input: the commitment
+// // input: a list of indices, for which we need to generate t_i
+// // input: Value: the messages that is commited to
+// // output: a list of field elements
+// fn get_ti<Blob: AsRef<[u8]>>(
+//     commit: &Commitment,
+//     set: &[usize],
+//     value_sub_vector: &[Blob],
+// ) -> Result<Vec<FrRepr>, String> {
+//     let sp = get_system_paramter(commit.ciphersuite)?;
+//
+//     // tmp = C | S | m[S]
+//     let mut tmp: Vec<u8> = vec![];
+//     // serialize commitment
+//     match commit.serialize(&mut tmp, true) {
+//         Ok(_p) => _p,
+//         Err(e) => return Err(e.to_string()),
+//     };
+//     // add the set to tmp
+//     for index in set {
+//         let t = index.to_be_bytes();
+//         tmp.append(&mut t.to_vec());
+//     }
+//
+//     if set.len() != value_sub_vector.len() {
+//         return Err(ERR_INDEX_PROOF_NOT_MATCH.to_owned());
+//     }
+//
+//     // add values to set; returns an error if index is out of range
+//     for i in 0..set.len() {
+//         if set[i] >= sp.n {
+//             return Err(ERR_INVALID_INDEX.to_owned());
+//         }
+//         let t = value_sub_vector[i].as_ref();
+//         tmp.append(&mut t.to_vec());
+//     }
+//     // formulate the output
+//     let mut res: Vec<FrRepr> = vec![];
+//     for index in set {
+//         // each field element t_i is generated as
+//         // t_i = hash_to_field (i | C | S | m[S])
+//         let mut hash_input: Vec<u8> = index.to_be_bytes().to_vec();
+//         hash_input.append(&mut tmp.clone());
+// //        let h2f = HashToField::new(hash_input, None);
+// //        let fr: Fr = h2f.with_ctr(0);
+//         res.push(hash_to_field_repr_veccom(hash_input));
+//     }
+//
+//     Ok(res)
+// }
 
 /**
  * Assumes prover_params are correctly generated for n = values.len and that index<n
@@ -359,9 +361,10 @@ fn prove<Blob: AsRef<[u8]>>(prover_params: &ProverParams, values: &[Blob], index
     let scalars_fr_repr: Vec<FrRepr> = values
         .iter()
         .map(|s| {
-            HashToField::<Fr>::new(&s.as_ref(), None)
-                .with_ctr(0)
-                .into_repr()
+            hash_to_field_repr_veccom(&s.as_ref())
+            // HashToField::<Fr>::new(&s.as_ref(), None)
+            //     .with_ctr(0)
+            //     .into_repr()
         })
         .collect();
     let scalars_u64: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
@@ -399,9 +402,9 @@ fn proof_update(
     } else {
         let n = prover_params.generators.len() / 2;
 
-        let mut multiplier = HashToField::<Fr>::new(&value_before, None).with_ctr(0);
+        let mut multiplier = hash_to_field_veccom(&value_before);
         multiplier.negate();
-        multiplier.add_assign(&HashToField::<Fr>::new(&value_after, None).with_ctr(0));
+        multiplier.add_assign(&hash_to_field_veccom(&value_after));
 
         let param_index = changed_index + n - proof_index;
 

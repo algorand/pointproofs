@@ -1,8 +1,10 @@
 use super::ciphersuite::*;
 use super::err::*;
+use super::hash_to_field_veccom::hash_to_field_veccom;
 use super::{Commitment, ProverParams};
-use ff::{Field, PrimeField};
-use pairing::hash_to_field::HashToField;
+use ff::Field;
+use pairings::hash_to_field_veccom::hash_to_field_repr_veccom;
+//use pairing::hash_to_field::HashToField;
 use pairing::serdes::SerDes;
 use pairing::{bls12_381::*, CurveAffine, CurveProjective};
 
@@ -126,11 +128,7 @@ fn commit<Blob: AsRef<[u8]>>(
 
     let scalars_fr_repr: Vec<FrRepr> = values
         .iter()
-        .map(|s| {
-            HashToField::<Fr>::new(s.as_ref(), None)
-                .with_ctr(0)
-                .into_repr()
-        })
+        .map(|s| hash_to_field_repr_veccom(s.as_ref()))
         .collect();
     let scalars_u64: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
     if prover_params.precomp.len() == 512 * n {
@@ -154,9 +152,9 @@ fn commit_update(
     value_before: &[u8],
     value_after: &[u8],
 ) -> G1 {
-    let mut multiplier = HashToField::<Fr>::new(&value_before, None).with_ctr(0);
+    let mut multiplier = hash_to_field_veccom(&value_before);
     multiplier.negate();
-    multiplier.add_assign(&HashToField::<Fr>::new(&value_after, None).with_ctr(0));
+    multiplier.add_assign(&hash_to_field_veccom(&value_after));
 
     let res = if prover_params.precomp.len() == 3 * prover_params.generators.len() {
         prover_params.generators[changed_index].mul_precomp_3(
@@ -214,7 +212,7 @@ pub fn update_to_zero_hash(
     changed_index: usize,
     value_before: &[u8],
 ) -> Commitment {
-    let mut multiplier = HashToField::<Fr>::new(&value_before, None).with_ctr(0);
+    let mut multiplier = hash_to_field_veccom(&value_before);
     multiplier.negate();
 
     let res = if prover_params.precomp.len() == 3 * prover_params.generators.len() {

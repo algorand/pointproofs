@@ -38,12 +38,12 @@ pub mod c_api;
 pub mod ciphersuite;
 pub mod commit;
 mod err;
+pub mod hash_to_field_veccom;
 mod paramgen;
 pub mod prove;
 mod proverparam;
 mod verifierparam;
 mod verify;
-pub mod hash_to_ti;
 
 pub use self::paramgen::paramgen_from_seed;
 

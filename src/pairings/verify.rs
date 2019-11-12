@@ -1,8 +1,9 @@
 use pairing::{bls12_381::*, CurveAffine, CurveProjective, Engine};
+use pairings::hash_to_field_veccom::hash_to_field_veccom;
 //use pairing::Wnaf;
 use super::VerifierParams;
 use ff::Field;
-use pairing::hash_to_field::HashToField;
+//use pairing::hash_to_field::HashToField;
 
 /**
  * Assumes verifier_params are correctly generated for n such that index<n
@@ -19,7 +20,7 @@ pub fn verify(
     // and perform two scalar multiplication by to 1/hash(value) in G1 instead, which is considerably faster.
     // We also move the pairing from the right-hand-side to the left-hand-side in order
     // to take advantage of the pairing product computation, which is faster than two pairings.
-    let hash = HashToField::<Fr>::new(&value, None).with_ctr(0);
+    let hash = hash_to_field_veccom(&value);
     let hash_inverse = hash.inverse();
     // We separate this function so we can test the case of hash_inverse == None
     // (which will get exercised only with probability 1/r, i.e., never,

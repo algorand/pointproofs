@@ -4,7 +4,7 @@ use super::ciphersuite::*;
 use super::err::*;
 use super::Commitment;
 use bigint::U512;
-
+use ff::PrimeField;
 use pairing::bls12_381::*;
 use pairing::serdes::SerDes;
 use sha2::{Digest, Sha512};
@@ -14,7 +14,7 @@ use std::ops::Rem;
 // input: a list of indices, for which we need to generate t_i
 // input: Value: the messages that is commited to
 // output: a list of field elements
-pub fn get_ti_new<Blob: AsRef<[u8]>>(
+pub fn hash_to_ti<Blob: AsRef<[u8]>>(
     commit: &Commitment,
     set: &[usize],
     value_sub_vector: &[Blob],
@@ -57,16 +57,38 @@ pub fn get_ti_new<Blob: AsRef<[u8]>>(
         // each field element t_i is generated as
         // t_i = hash_to_field (i | C | S | m[S])
         let hash_input = [index.to_be_bytes().to_vec()[..].as_ref(), digest.as_ref()].concat();
-        let mut hasher2 = Sha512::new();
-        hasher2.input(hash_input);
-        let hash_output = hasher2.result();
-        res.push(os2ip_mod_p(&hash_output));
+        res.push(hash_to_field_repr_veccom(hash_input));
     }
 
     Ok(res)
 }
 
-/// this is pixel's Octect String to Integer Primitive (os2ip) function
+// hash_to_field_veccom use SHA 512 to hash a blob into a non-zero field element
+pub fn hash_to_field_veccom<Blob: AsRef<[u8]>>(input: Blob) -> Fr {
+    match Fr::from_repr(hash_to_field_repr_veccom(input.as_ref())) {
+        Ok(p) => p,
+        // the hash_to_field_repr_veccom should already produce a valid Fr element
+        // something is wrong if this errors
+        Err(e) => panic!(e),
+    }
+}
+
+// hash_to_field_veccom use SHA 512 to hash a blob into a non-zero field element
+pub fn hash_to_field_repr_veccom<Blob: AsRef<[u8]>>(input: Blob) -> FrRepr {
+    let mut hasher = Sha512::new();
+    hasher.input(input);
+    let hash_output = hasher.result();
+    let mut t = os2ip_mod_p(&hash_output);
+
+    // if we get 0, return 1
+    // this should not happen in practise
+    if t == FrRepr([0, 0, 0, 0]) {
+        t = FrRepr([1, 0, 0, 0]);
+    }
+    t
+}
+
+/// this is Veccom's Octect String to Integer Primitive (os2ip) function
 /// https://tools.ietf.org/html/rfc8017#section-4
 /// the input is a 64 bytes array, and the output is between 0 and p-1
 /// i.e., it performs mod operation by default.
@@ -90,8 +112,6 @@ fn os2ip_mod_p(oct_str: &[u8]) -> FrRepr {
     //  ...  + x_1 256 + x_0.
     // 3.  Output x. "
 
-    // TODO: review and test this function.
-
     let r_sec = U512::from(oct_str);
 
     // hard coded modulus p
@@ -109,7 +129,7 @@ fn os2ip_mod_p(oct_str: &[u8]) -> FrRepr {
     let bytes: &mut [u8] = tslide.as_mut();
     t_sec.to_big_endian(bytes);
 
-    let s = FrRepr([
+    FrRepr([
         u64::from_be_bytes([
             bytes[56], bytes[57], bytes[58], bytes[59], bytes[60], bytes[61], bytes[62], bytes[63],
         ]),
@@ -122,9 +142,7 @@ fn os2ip_mod_p(oct_str: &[u8]) -> FrRepr {
         u64::from_be_bytes([
             bytes[32], bytes[33], bytes[34], bytes[35], bytes[36], bytes[37], bytes[38], bytes[39],
         ]),
-    ]);
-    s
-    //Fr::from_repr(s).unwrap()
+    ])
 }
 
 // examples from
@@ -136,7 +154,7 @@ fn os2ip_mod_p(oct_str: &[u8]) -> FrRepr {
 // 65535  ->  FF:FF
 #[test]
 fn test_os2ip() {
-    use ff::PrimeField;
+    use ff::{Field, PrimeField};
     assert_eq!(
         Fr::from_str("0").unwrap(),
         Fr::from_repr(os2ip_mod_p(&[0u8, 0u8])).unwrap()
@@ -157,4 +175,6 @@ fn test_os2ip() {
         Fr::from_str("65535").unwrap(),
         Fr::from_repr(os2ip_mod_p(&[0xffu8, 0xffu8])).unwrap()
     );
+
+    assert_eq!(Fr::from_repr(FrRepr([1, 0, 0, 0])).unwrap(), Fr::one());
 }
