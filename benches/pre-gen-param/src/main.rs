@@ -5,6 +5,11 @@ use pairing_plus::serdes::SerDes;
 
 fn main() {
 
+    println!("WARNING!!!");
+    println!("WARNING!!!");
+    println!("WARNING!!!");
+    println!("Parameters generated in this crate is INSECURE. Do NOT use it in production");
+
     let alpha = Fr::from_repr(FrRepr([5, 0, 0, 0])).unwrap();
     let test_dim = [256usize, 1024, 4096, 16384, 65536, 262144];
 
