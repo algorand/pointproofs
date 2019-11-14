@@ -39,7 +39,7 @@ pub mod ciphersuite;
 pub mod commit;
 mod err;
 pub mod hash_to_field_veccom;
-mod paramgen;
+pub mod paramgen;
 pub mod prove;
 mod proverparam;
 mod verifierparam;
