@@ -12,7 +12,7 @@ use std::time::Duration;
 use veccom::pairings::*;
 
 //const N_ARRAY: [usize; 6] = [256, 1024, 4096, 16384, 65536, 262144];
-const N_ARRAY: [usize; 1] = [256];
+const N_ARRAY: [usize; 3] = [256, 1024, 4096];
 
 criterion_group!(
     benches,
@@ -141,6 +141,15 @@ fn bench_veccom_with_param(c: &mut Criterion) {
         let file_name = format!("benches/pre-gen-param/{}.param", n);
         let mut file = std::fs::File::open(file_name).unwrap();
         let (pp, vp) = paramgen::read_param(&mut file).unwrap();
+
+        let file_name = format!("benches/pre-gen-param/{}_pre3.param", n);
+        let mut file = std::fs::File::open(file_name).unwrap();
+        let pp3 = ProverParams::deserialize(&mut file, true).unwrap();
+
+        let file_name = format!("benches/pre-gen-param/{}_pre256.param", n);
+        let mut file = std::fs::File::open(file_name).unwrap();
+        let pp256 = ProverParams::deserialize(&mut file, true).unwrap();
+
         let pp_clone = pp.clone();
         let bench_str = format!("commit_no_precomp_{}", n);
         let bench = Benchmark::new(bench_str, move |b| {
@@ -148,32 +157,23 @@ fn bench_veccom_with_param(c: &mut Criterion) {
             // would store this yourself rather than send it on the network
             bench_commit_helper(&pp_clone, b);
         });
-        //
-        // let bench = bench.with_function("commit_precomp_3", |b| {
-        //     // Does not include a to_bytes conversion for the commitment, because you normally
-        //     // would store this yourself rather than send it on the network
-        //
-        //     let mut prover_params =
-        //         paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0)
-        //             .unwrap()
-        //             .0;
-        //     prover_params.precomp_3();
-        //
-        //     bench_commit_helper(&prover_params, N, b);
-        // });
-        // let bench = bench.with_function("commit_precomp_256", |b| {
-        //     // Does not include a to_bytes conversion for the commitment, because you normally
-        //     // would store this yourself rather than send it on the network
-        //
-        //     let mut prover_params =
-        //         paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0)
-        //             .unwrap()
-        //             .0;
-        //     prover_params.precomp_256();
-        //
-        //     bench_commit_helper(&prover_params, N, b);
-        // });
-        //
+
+        let pp3_clone = pp3.clone();
+        let bench_str = format!("commit_precomp3_{}", n);
+        let bench = bench.with_function(bench_str, move |b| {
+            // Does not include a to_bytes conversion for the commitment, because you normally
+            // would store this yourself rather than send it on the network
+
+            bench_commit_helper(&pp3_clone, b);
+        });
+
+        let pp256_clone = pp256.clone();
+        let bench_str = format!("commit_precomp256_{}", n);
+        let bench = bench.with_function(bench_str, move |b| {
+            // Does not include a to_bytes conversion for the commitment, because you normally
+            // would store this yourself rather than send it on the network
+            bench_commit_helper(&pp256_clone, b);
+        });
 
         let pp_clone = pp.clone();
         let bench_str = format!("prove_no_precomp_{}", n);
@@ -182,32 +182,24 @@ fn bench_veccom_with_param(c: &mut Criterion) {
             // to produce a proof you will send on the network
             bench_prove_helper(&pp_clone, b);
         });
+        let pp3_clone = pp3.clone();
+        let bench_str = format!("prove_precomp3_{}", n);
+        let bench = bench.with_function(bench_str, move |b| {
+            // includes to_bytes conversion for the proof, because this is supposed to measure what it takes
+            // to produce a proof you will send on the network
 
-        // let bench = bench.with_function("prove_precomp_3", |b| {
-        //     // includes to_bytes conversion for the proof, because this is supposed to measure what it takes
-        //     // to produce a proof you will send on the network
-        //     let mut prover_params =
-        //         paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0)
-        //             .unwrap()
-        //             .0;
-        //     prover_params.precomp_3();
-        //
-        //     bench_prove_helper(&prover_params, N, b);
-        // });
-        //
-        // let bench = bench.with_function("prove_precomp_256", |b| {
-        //     // includes to_bytes conversion for the proof, because this is supposed to measure what it takes
-        //     // to produce a proof you will send on the network
-        //
-        //     let mut prover_params =
-        //         paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0)
-        //             .unwrap()
-        //             .0;
-        //     prover_params.precomp_256();
-        //
-        //     bench_prove_helper(&prover_params, N, b);
-        // });
-        //
+            bench_prove_helper(&pp3_clone, b);
+        });
+
+        let pp256_clone = pp256.clone();
+        let bench_str = format!("prove_precomp256_{}", n);
+        let bench = bench.with_function(bench_str, move |b| {
+            // includes to_bytes conversion for the proof, because this is supposed to measure what it takes
+            // to produce a proof you will send on the network
+
+            bench_prove_helper(&pp256_clone, b);
+        });
+
         let pp_clone = pp.clone();
         let vp_clone = vp.clone();
         let bench_str = format!("verify_{}", n);
@@ -247,29 +239,24 @@ fn bench_veccom_with_param(c: &mut Criterion) {
 
             bench_commit_update_helper(&pp_clone, b);
         });
-        //
-        // let bench = bench.with_function("commit_update_precomp_3", |b| {
-        //     // Does not include to/from bytes conversion, because this is supposed to be a local operation
-        //
-        //     let mut prover_params =
-        //         paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0)
-        //             .unwrap()
-        //             .0;
-        //     prover_params.precomp_3();
-        //     bench_commit_update_helper(&prover_params, N, b);
-        // });
-        //
-        // let bench = bench.with_function("commit_update_precomp_256", |b| {
-        //     // Does not include to/from bytes conversion, because this is supposed to be a local operation
-        //
-        //     let mut prover_params =
-        //         paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0)
-        //             .unwrap()
-        //             .0;
-        //     prover_params.precomp_256();
-        //     bench_commit_update_helper(&prover_params, N, b);
-        // });
-        //
+
+        let pp3_clone = pp3.clone();
+        let bench_str = format!("commit_update_precomp3_{}", n);
+
+        let bench = bench.with_function(bench_str, move |b| {
+            // Does not include to/from bytes conversion, because this is supposed to be a local operation
+
+            bench_commit_update_helper(&pp3_clone, b);
+        });
+
+        let pp256_clone = pp256.clone();
+        let bench_str = format!("commit_update_precomp256_{}", n);
+
+        let bench = bench.with_function(bench_str, move |b| {
+            // Does not include to/from bytes conversion, because this is supposed to be a local operation
+
+            bench_commit_update_helper(&pp256_clone, b);
+        });
 
         let pp_clone = pp.clone();
         let bench_str = format!("proof_update_no_precomp_{}", n);
@@ -279,27 +266,22 @@ fn bench_veccom_with_param(c: &mut Criterion) {
             bench_proof_update_helper(&pp_clone, b);
         });
 
-        // let bench = bench.with_function("proof_update_precomp_3", |b| {
-        //     // Does not include to/from bytes conversion, because this is supposed to be a local operation
-        //
-        //     let mut prover_params =
-        //         paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0)
-        //             .unwrap()
-        //             .0;
-        //     prover_params.precomp_3();
-        //     bench_proof_update_helper(&prover_params, N, b);
-        // });
-        //
-        // let bench = bench.with_function("proof_update_precomp_256", |b| {
-        //     // Does not include to/from bytes conversion, because this is supposed to be a local operation
-        //
-        //     let mut prover_params =
-        //         paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0)
-        //             .unwrap()
-        //             .0;
-        //     prover_params.precomp_256();
-        //     bench_proof_update_helper(&prover_params, N, b);
-        // });
+        let pp3_clone = pp3.clone();
+        let bench_str = format!("proof_update_precomp3_{}", n);
+        let bench = bench.with_function(bench_str, move |b| {
+            // Does not include to/from bytes conversion, because this is supposed to be a local operation
+
+            bench_proof_update_helper(&pp3_clone, b);
+        });
+
+        let pp256_clone = pp256.clone();
+        let bench_str = format!("proof_update_precomp256_{}", n);
+        let bench = bench.with_function(bench_str, move |b| {
+            // Does not include to/from bytes conversion, because this is supposed to be a local operation
+
+            bench_proof_update_helper(&pp256_clone, b);
+        });
+
         let bench = bench.warm_up_time(Duration::from_millis(1000));
         let bench = bench.measurement_time(Duration::from_millis(5000));
         let bench = bench.sample_size(10);
@@ -314,7 +296,7 @@ fn bench_aggregation_with_param(c: &mut Criterion) {
         let mut file = std::fs::File::open(file_name).unwrap();
         let (pp, vp) = paramgen::read_param(&mut file).unwrap();
         let pp_clone = pp.clone();
-        let bench_str = format!("aggree_all_{}", n);
+        let bench_str = format!("aggregate_{}", n);
         let bench = Benchmark::new(bench_str, move |b| {
             let n = pp_clone.n;
             // values
@@ -350,7 +332,7 @@ fn bench_aggregation_with_param(c: &mut Criterion) {
 
         let pp_clone = pp.clone();
         let vp_clone = vp.clone();
-        let bench_str = format!("aggregate_{}", n);
+        let bench_str = format!("batch_verify_{}", n);
         let bench = bench.with_function(bench_str, move |b| {
             let n = pp_clone.n;
             let mut init_values = Vec::with_capacity(n);
