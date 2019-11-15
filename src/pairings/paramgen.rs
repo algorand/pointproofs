@@ -2,11 +2,9 @@ use super::ciphersuite::*;
 use super::err::*;
 use super::{ProverParams, VerifierParams};
 use ff::Field;
-use pairings::hash_to_field_veccom::hash_to_field_veccom;
-use std::io::Read;
-//use pairing::hash_to_field::HashToField;
 use pairing::serdes::SerDes;
 use pairing::{bls12_381::*, CurveAffine, CurveProjective, Engine};
+use pairings::hash_to_field_veccom::hash_to_field_veccom;
 use veccom_paramgen::*;
 
 /// this function reads the default parameter
@@ -66,8 +64,9 @@ pub fn read_param<R: std::io::Read>(
         ciphersuite: param.ciphersuite,
         n: param.n,
         generators: [
-            param.g1_alpha_1_to_n.to_vec(),
-            param.g1_alpha_nplus2_to_2n.to_vec(),
+            param.g1_alpha_1_to_n,
+            vec![G1::zero().into_affine()],
+            param.g1_alpha_nplus2_to_2n,
         ]
         .concat(),
         pp_len: 0,
@@ -76,7 +75,7 @@ pub fn read_param<R: std::io::Read>(
     let vp = VerifierParams {
         ciphersuite: param.ciphersuite,
         n: param.n,
-        generators: param.g2_alpha_1_to_n.to_vec(),
+        generators: param.g2_alpha_1_to_n,
         gt_elt: param.gt_alpha_nplus1,
     };
     Ok((pp, vp))

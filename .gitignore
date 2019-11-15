@@ -13,5 +13,5 @@ Cargo.lock
 **/*.rs.bk
 
 # pre-generated parameters for testing and benchmarking
-*.param
+# *.param
 benches/pre-gen-param/target

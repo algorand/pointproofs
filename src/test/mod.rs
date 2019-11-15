@@ -1,7 +1,4 @@
-use super::pairings::paramgen::*;
 use pairing::serdes::SerDes;
-use std::io::BufReader;
-use std::io::Read;
 use veccom_paramgen::VeccomParams;
 // #[test]
 // fn test_pre_param() {
