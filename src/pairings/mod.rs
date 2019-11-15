@@ -10,7 +10,7 @@ use pairing::bls12_381::*;
 
 #[derive(Clone, Debug)]
 pub struct ProverParams {
-    ciphersuite: Ciphersuite,
+    pub ciphersuite: Ciphersuite,
     pub n: usize,
     pub generators: Vec<G1Affine>,
     pub pp_len: usize,
