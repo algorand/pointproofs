@@ -22,6 +22,8 @@
   itoa = "0.4"
   typenum = "1.10.0"
   bigint = { version = "4", default-features = false }
+  veccom-paramgen = { git = "ssh://git@github.com/algorand/veccom-paramgen", branch = "potential_bug"}
+  # veccom-paramgen = { path = "../veccom-paramgen"}
 
 [build-dependencies]
   cbindgen = "0.9.0"
@@ -30,8 +32,13 @@
   bencher = "0.1.5"
   criterion = "0.2.11"
 
+# [[bench]]
+#   name = "pairings"
+#   harness = false
+
+
 [[bench]]
-  name = "pairings"
+  name = "slow"
   harness = false
 
 # [[bench]]

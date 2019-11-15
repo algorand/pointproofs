@@ -65,8 +65,8 @@ pub fn read_param<R: std::io::Read>(
     };
     println!("here");
     let pp = ProverParams {
-        // FIXME: there isn't a ciphersuite in veccom_paramgen
-        ciphersuite: 0,
+        ciphersuite: param.ciphersuite,
+        n: param.n,
         generators: [
             param.g1_alpha_1_to_n.to_vec(),
             param.g1_alpha_nplus2_to_2n.to_vec(),
@@ -75,8 +75,8 @@ pub fn read_param<R: std::io::Read>(
         precomp: vec![],
     };
     let vp = VerifierParams {
-        // FIXME: there isn't a ciphersuite in veccom_paramgen
-        ciphersuite: 0,
+        ciphersuite: param.ciphersuite,
+        n: param.n,
         generators: param.g2_alpha_1_to_n.to_vec(),
         gt_elt: param.gt_alpha_nplus1,
     };
@@ -135,11 +135,13 @@ fn paramgen_from_alpha(alpha: &Fr, sp: SystemParam) -> (ProverParams, VerifierPa
     (
         ProverParams {
             ciphersuite: sp.ciphersuite,
+            n: sp.n,
             generators: g1_vec,
             precomp: Vec::with_capacity(0),
         },
         VerifierParams {
             ciphersuite: sp.ciphersuite,
+            n: sp.n,
             generators: g2_vec,
             gt_elt: gt,
         },

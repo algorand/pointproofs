@@ -11,12 +11,14 @@ pub struct SystemParam {
 #[derive(Clone, Debug)]
 pub struct ProverParams {
     ciphersuite: Ciphersuite,
+    pub n: usize,
     pub generators: Vec<G1Affine>,
     pub precomp: Vec<G1Affine>,
 }
 #[derive(Clone, Debug)]
 pub struct VerifierParams {
     ciphersuite: Ciphersuite,
+    pub n: usize,
     generators: Vec<G2Affine>,
     gt_elt: Fq12,
 }

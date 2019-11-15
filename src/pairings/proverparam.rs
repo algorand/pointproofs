@@ -110,6 +110,7 @@ impl SerDes for ProverParams {
         // format the output
         Ok(Self {
             ciphersuite: csid[0],
+            n: sp.n,
             generators,
             precomp,
         })

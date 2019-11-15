@@ -78,6 +78,7 @@ impl SerDes for VerifierParams {
         // format the output
         Ok(Self {
             ciphersuite: csid[0],
+            n: sp.n,
             generators,
             gt_elt,
         })
