@@ -18,8 +18,11 @@ pub fn hash_to_ti<Blob: AsRef<[u8]>>(
     commit: &Commitment,
     set: &[usize],
     value_sub_vector: &[Blob],
+    n: usize,
 ) -> Result<Vec<FrRepr>, String> {
-    let sp = get_system_paramter(commit.ciphersuite)?;
+    if !check_ciphersuite(commit.ciphersuite) {
+        return Err(ERR_CIPHERSUITE.to_owned());
+    }
 
     // tmp = C | S | m[S]
     let mut tmp: Vec<u8> = vec![];
@@ -40,7 +43,7 @@ pub fn hash_to_ti<Blob: AsRef<[u8]>>(
 
     // add values to set; returns an error if index is out of range
     for i in 0..set.len() {
-        if set[i] >= sp.n {
+        if set[i] >= n {
             return Err(ERR_INVALID_INDEX.to_owned());
         }
         let t = value_sub_vector[i].as_ref();

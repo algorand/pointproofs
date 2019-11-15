@@ -9,7 +9,7 @@ fn main() {
 
     // generate the parameters, and performs pre_computation
     let (mut prover_params, verifier_params) =
-        paramgen_from_seed("This is Leo's Favourite very very long Seed", 0).unwrap();
+        paramgen_from_seed("This is Leo's Favourite very very long Seed", 0, n).unwrap();
     prover_params.precomp_256(); // precomp_256, or nothing, as you wish
 
     // initiate the data to commit

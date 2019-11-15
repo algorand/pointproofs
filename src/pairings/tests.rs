@@ -1,4 +1,4 @@
-use self::ciphersuite::get_system_paramter;
+//use self::ciphersuite::get_system_paramter;
 use super::commit::update_to_zero_hash;
 use super::verify::verify_hash_inverse;
 use super::*;
@@ -8,10 +8,9 @@ use pairing::{serdes::SerDes, CurveProjective, Engine};
 
 #[test]
 fn test_paramgen() {
-    let sp = get_system_paramter(0).unwrap();
-    let n = sp.n;
+    let n = 32usize;
     let (prover_params, verifier_params) =
-        paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0).unwrap();
+        paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, n).unwrap();
     // prover_params.generators[i] should contain the generator of the G1 group raised to the power alpha^{i+1},
     // except prover_params.generators[n] will contain nothing useful.
     // verifier_params.generators[j] should contain the generator of the G2 group raised to the power alpha^{j+1}.
@@ -55,10 +54,9 @@ fn test_paramgen() {
 
 #[test]
 fn test_com_pairings() {
-    let sp = get_system_paramter(0).unwrap();
-    let n = sp.n;
+    let n = 32usize;
     let (prover_params, verifier_params) =
-        paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0).unwrap();
+        paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, n).unwrap();
 
     let mut prover_params3 = prover_params.clone();
     prover_params3.precomp_3();
@@ -211,13 +209,14 @@ fn test_com_pairings() {
 #[test]
 fn test_serdes_prover_param() {
     let (mut prover_params, _verifier_params) =
-        paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0).unwrap();
+        paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, 32).unwrap();
 
     let mut buf: Vec<u8> = vec![];
     assert!(prover_params.serialize(&mut buf, true).is_ok());
-
+    println!("{:02x?}", buf);
     let prover_params_recover = ProverParams::deserialize(&mut buf[..].as_ref(), true).unwrap();
     assert_eq!(prover_params, prover_params_recover);
+    println!("?");
 
     prover_params.precomp_3();
 
@@ -241,7 +240,7 @@ fn test_serdes_prover_param() {
 #[test]
 fn test_serdes_verifier_param() {
     let (_prover_params, verifier_params) =
-        paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0).unwrap();
+        paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, 32).unwrap();
 
     let mut buf: Vec<u8> = vec![];
     assert!(verifier_params.serialize(&mut buf, true).is_ok());
@@ -252,10 +251,9 @@ fn test_serdes_verifier_param() {
 
 #[test]
 fn test_aggregation() {
-    let sp = get_system_paramter(0).unwrap();
-    let n = sp.n;
+    let n = 32usize;
     let (prover_params, verifier_params) =
-        paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0).unwrap();
+        paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, n).unwrap();
 
     let mut init_values = Vec::with_capacity(n);
     for i in 0..n {
@@ -280,7 +278,8 @@ fn test_aggregation() {
         value_sub_vector.push(values[*index]);
     }
 
-    let agg_proof = Proof::aggregate(&com, &proofs, &set, &value_sub_vector).unwrap();
+    let agg_proof =
+        Proof::aggregate(&com, &proofs, &set, &value_sub_vector, prover_params.n).unwrap();
     assert!(agg_proof.batch_verify(&verifier_params, &com, &set, &value_sub_vector));
 
     let new_set = vec![1usize, 4, 8];

@@ -23,9 +23,14 @@ impl Proof {
         index: usize,
     ) -> Result<Self, String> {
         // implicitly checks that cipersuite is supported
-        let sp = get_system_paramter(prover_params.ciphersuite)?;
+        // let sp = get_system_paramter(prover_params.ciphersuite)?;
+        assert!(
+            check_ciphersuite(prover_params.ciphersuite),
+            ERR_CIPHERSUITE.to_owned()
+        );
+
         // check index is valid
-        if index >= sp.n {
+        if index >= prover_params.n {
             return Err(ERR_INVALID_INDEX.to_owned());
         };
 
@@ -47,10 +52,14 @@ impl Proof {
         value_after: Blob,
     ) -> Result<(), String> {
         // implicitly checks that cipersuite is supported
-        let sp = get_system_paramter(self.ciphersuite)?;
+        // let sp = get_system_paramter(self.ciphersuite)?;
+        assert!(
+            check_ciphersuite(prover_params.ciphersuite),
+            ERR_CIPHERSUITE.to_owned()
+        );
 
         // check indices are valid
-        if proof_index >= sp.n || changed_index >= sp.n {
+        if proof_index >= prover_params.n || changed_index >= prover_params.n {
             return Err(ERR_INVALID_INDEX.to_owned());
         }
 
@@ -82,14 +91,18 @@ impl Proof {
         }
 
         // implicitly checks that cipersuite is supported
-        let sp = match get_system_paramter(self.ciphersuite) {
-            Err(e) => {
-                println!("{}", e);
-                return false;
-            }
-            Ok(p) => p,
-        };
-        if index >= sp.n {
+        // let sp = match get_system_paramter(self.ciphersuite) {
+        //     Err(e) => {
+        //         println!("{}", e);
+        //         return false;
+        //     }
+        //     Ok(p) => p,
+        // };
+        if !check_ciphersuite(com.ciphersuite) {
+            return false;
+        }
+
+        if index >= verifier_params.n {
             println!("Invalid index");
             return false;
         }
@@ -112,6 +125,7 @@ impl Proof {
         proofs: &[Self],
         set: &[usize],
         value_sub_vector: &[Blob],
+        n: usize,
     ) -> Result<Self, String> {
         // check that the csids match
         let csid = proofs[0].ciphersuite;
@@ -125,7 +139,7 @@ impl Proof {
             return Err(ERR_INDEX_PROOF_NOT_MATCH.to_owned());
         }
         // get the list of scalas
-        let ti = hash_to_ti(commit, set, value_sub_vector)?;
+        let ti = hash_to_ti(commit, set, value_sub_vector, n)?;
         let scalars_u64: Vec<&[u64; 4]> = ti.iter().map(|s| &s.0).collect();
         let bases: Vec<G1Affine> = proofs.iter().map(|s| s.proof.into_affine()).collect();
         // proof = \prod proofs[i] ^ ti[i]
@@ -155,28 +169,31 @@ impl Proof {
         //   tmp = 1/ \sum value_i*t_i
 
         // 0. check the validity of the inputs: csid, length, etc
-        let sp = match get_system_paramter(self.ciphersuite) {
-            Err(_e) => return false,
-            Ok(p) => p,
-        };
-        if sp.ciphersuite != com.ciphersuite || sp.ciphersuite != verifier_params.ciphersuite {
+        // let sp = match get_system_paramter(self.ciphersuite) {
+        //     Err(_e) => return false,
+        //     Ok(p) => p,
+        // };
+        if !check_ciphersuite(com.ciphersuite) {
+            return false;
+        }
+        if com.ciphersuite != verifier_params.ciphersuite {
             return false;
         }
         if set.len() != value_sub_vector.len() {
             return false;
         }
-        if value_sub_vector.len() > sp.n {
+        if value_sub_vector.len() > verifier_params.n {
             return false;
         }
         for e in set {
-            if *e >= sp.n {
+            if *e >= verifier_params.n {
                 return false;
             }
         }
 
         // 1. compute tmp
         // 1.1 get the list of scalas, return false if this failed
-        let ti = match hash_to_ti(com, set, value_sub_vector) {
+        let ti = match hash_to_ti(com, set, value_sub_vector, verifier_params.n) {
             Err(_e) => return false,
             Ok(p) => p,
         };
@@ -211,7 +228,7 @@ impl Proof {
 
         let mut bases: Vec<G2Affine> = vec![];
         for index in set.iter().take(ti.len()) {
-            bases.push(verifier_params.generators[sp.n - index - 1]);
+            bases.push(verifier_params.generators[verifier_params.n - index - 1]);
         }
         let scalars_u64: Vec<&[u64; 4]> = ti.iter().map(|s| &s.0).collect();
         let param_subset_sum = G2Affine::sum_of_products(&bases, &scalars_u64);

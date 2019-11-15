@@ -1,18 +1,19 @@
 use self::ciphersuite::Ciphersuite;
 use pairing::bls12_381::*;
 
-#[derive(Clone, Debug)]
-pub struct SystemParam {
-    ciphersuite: Ciphersuite,
-    pub n: usize,
-    pp_len: usize,
-}
+// #[derive(Clone, Debug)]
+// pub struct SystemParam {
+//     ciphersuite: Ciphersuite,
+//     pub n: usize,
+//     pp_len: usize,
+// }
 
 #[derive(Clone, Debug)]
 pub struct ProverParams {
     ciphersuite: Ciphersuite,
     pub n: usize,
     pub generators: Vec<G1Affine>,
+    pub pp_len: usize,
     pub precomp: Vec<G1Affine>,
 }
 #[derive(Clone, Debug)]

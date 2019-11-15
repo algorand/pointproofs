@@ -14,9 +14,13 @@ impl Commitment {
         values: &[Blob],
     ) -> Result<Self, String> {
         // implicitly checks that cipersuite is supported
-        let sp = get_system_paramter(prover_params.ciphersuite)?;
+        //let sp = get_system_paramter(prover_params.ciphersuite)?;
+        assert!(
+            check_ciphersuite(prover_params.ciphersuite),
+            ERR_CIPHERSUITE.to_owned()
+        );
 
-        if sp.n != values.len() {
+        if prover_params.n != values.len() {
             return Err(ERR_INVALID_VALUE.to_owned());
         };
 
@@ -38,9 +42,13 @@ impl Commitment {
         value_after: Blob,
     ) -> Result<(), String> {
         // implicitly checks that cipersuite is supported
-        let sp = get_system_paramter(prover_params.ciphersuite)?;
+        // let sp = get_system_paramter(prover_params.ciphersuite)?;
+        assert!(
+            check_ciphersuite(prover_params.ciphersuite),
+            ERR_CIPHERSUITE.to_owned()
+        );
 
-        if sp.n < changed_index {
+        if prover_params.n < changed_index {
             return Err(ERR_INVALID_INDEX.to_owned());
         };
 

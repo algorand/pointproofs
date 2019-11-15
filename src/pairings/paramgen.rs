@@ -1,6 +1,6 @@
 use super::ciphersuite::*;
 use super::err::*;
-use super::{ProverParams, SystemParam, VerifierParams};
+use super::{ProverParams, VerifierParams};
 use ff::Field;
 use pairings::hash_to_field_veccom::hash_to_field_veccom;
 use std::io::Read;
@@ -53,17 +53,15 @@ pub fn read_default_param_with_pre_computation(
 pub fn read_param<R: std::io::Read>(
     reader: &mut R,
 ) -> Result<(ProverParams, VerifierParams), String> {
-    println!("here 2");
-
     let param = match VeccomParams::deserialize(reader, true) {
         Err(e) => return Err(format!("read_param:{}", e.to_string())),
         Ok(p) => p,
     };
-    println!("here");
+
     if !consistent(&param) {
         return Err("Input params are not consistent".to_owned());
     };
-    println!("here");
+
     let pp = ProverParams {
         ciphersuite: param.ciphersuite,
         n: param.n,
@@ -72,6 +70,7 @@ pub fn read_param<R: std::io::Read>(
             param.g1_alpha_nplus2_to_2n.to_vec(),
         ]
         .concat(),
+        pp_len: 0,
         precomp: vec![],
     };
     let vp = VerifierParams {
@@ -88,6 +87,7 @@ pub fn read_param<R: std::io::Read>(
 pub fn paramgen_from_seed<Blob: AsRef<[u8]>>(
     seed: Blob,
     ciphersuite: Ciphersuite,
+    n: usize,
 ) -> Result<(ProverParams, VerifierParams), String> {
     // check the length of the seed
     if seed.as_ref().len() < 32 {
@@ -96,24 +96,34 @@ pub fn paramgen_from_seed<Blob: AsRef<[u8]>>(
 
     // get the system parameters, which also implicitly
     // checks the validity of the inputs
-    let sp = get_system_paramter(ciphersuite)?;
-
+    // let sp = get_system_paramter(ciphersuite)?;
+    if !check_ciphersuite(ciphersuite) {
+        return Err(ERR_CIPHERSUITE.to_owned());
+    }
     // invoke the internal parameter generation function
-    Ok(paramgen_from_alpha(&hash_to_field_veccom(&seed), sp))
+    Ok(paramgen_from_alpha(
+        &hash_to_field_veccom(&seed),
+        ciphersuite,
+        n,
+    ))
 }
 
 /// Internal logic for parameter generation.
 /// Will always succeed.
 /// Will not be called outside this module.
-fn paramgen_from_alpha(alpha: &Fr, sp: SystemParam) -> (ProverParams, VerifierParams) {
-    let mut g1_vec = Vec::with_capacity(2 * sp.n);
+fn paramgen_from_alpha(
+    alpha: &Fr,
+    ciphersuite: Ciphersuite,
+    n: usize,
+) -> (ProverParams, VerifierParams) {
+    let mut g1_vec = Vec::with_capacity(2 * n);
     // prover vector at index i-1 contains g1^{alpha^i} for i ranging from 1 to 2n
     // except that at index i, prover vector contains nothing useful
     // (we'll use G1::one as a placeholder in order to maintain the indexing)
-    let mut g2_vec = Vec::with_capacity(sp.n);
+    let mut g2_vec = Vec::with_capacity(n);
     // verifier vector at index i-1 contains g2^{alpha^i} for i ranging from 1 to n
     let mut alpha_power = Fr::one();
-    for _ in 0..sp.n {
+    for _ in 0..n {
         alpha_power.mul_assign(&alpha); // compute alpha^i
         g1_vec.push(G1Affine::one().mul(alpha_power).into_affine());
         g2_vec.push(G2Affine::one().mul(alpha_power).into_affine());
@@ -124,24 +134,25 @@ fn paramgen_from_alpha(alpha: &Fr, sp: SystemParam) -> (ProverParams, VerifierPa
     g1_vec.push(G1::zero().into_affine()); // this 0 is important -- without it, prove will not work correctly
 
     // Now do the rest of the prover
-    for _ in sp.n..2 * sp.n - 1 {
+    for _ in n..2 * n - 1 {
         alpha_power.mul_assign(&alpha); // compute alpha^i
         g1_vec.push(G1Affine::one().mul(alpha_power).into_affine());
     }
 
     // verifier also gets gt^{alpha^{n+1}} in the target group
-    let gt = Bls12::pairing(g1_vec[0], g2_vec[sp.n - 1]);
+    let gt = Bls12::pairing(g1_vec[0], g2_vec[n - 1]);
 
     (
         ProverParams {
-            ciphersuite: sp.ciphersuite,
-            n: sp.n,
+            ciphersuite,
+            n,
             generators: g1_vec,
+            pp_len: 0,
             precomp: Vec::with_capacity(0),
         },
         VerifierParams {
-            ciphersuite: sp.ciphersuite,
-            n: sp.n,
+            ciphersuite,
+            n,
             generators: g2_vec,
             gt_elt: gt,
         },
