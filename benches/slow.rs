@@ -36,7 +36,15 @@ fn bench_commit_helper(prover_params: &ProverParams, b: &mut Bencher) {
         values.push(&e);
     }
 
-    b.iter(|| Commitment::new(prover_params, &values));
+    let file_name = format!("tmp/{}.commit", n);
+    let mut file = std::fs::File::open(file_name).unwrap();
+
+    b.iter(|| {
+        Commitment::new(prover_params, &values)
+            .unwrap()
+            .serialize(&mut file, true)
+            .unwrap();
+    });
 }
 
 fn bench_prove_helper(prover_params: &ProverParams, b: &mut Bencher) {
@@ -54,13 +62,13 @@ fn bench_prove_helper(prover_params: &ProverParams, b: &mut Bencher) {
 
     let mut i: usize = 0;
     b.iter(|| {
-        let mut buf: Vec<u8> = vec![];
+        let file_name = format!("tmp/{}_{}.proof", n, i);
+        let mut file = std::fs::File::open(file_name).unwrap();
         Proof::new(prover_params, &values, i)
             .unwrap()
-            .serialize(&mut buf, true)
+            .serialize(&mut file, true)
             .unwrap();
         i = (i + 1) % n;
-        buf
     });
 }
 
@@ -82,7 +90,11 @@ fn bench_commit_update_helper(prover_params: &ProverParams, b: &mut Bencher) {
         new_values.push(&init_new_values[i]);
     }
 
-    let com = Commitment::new(&prover_params, &old_values).unwrap();
+    //let com = Commitment::new(&prover_params, &old_values).unwrap();
+    let file_name = format!("tmp/{}.commit", n);
+    let mut file = std::fs::File::open(file_name).unwrap();
+    let com = Commitment::deserialize(&mut file, true).unwrap();
+
     let mut i: usize = 0;
     b.iter(|| {
         let mut tmp = com.clone();
@@ -111,7 +123,11 @@ fn bench_proof_update_helper(prover_params: &ProverParams, b: &mut Bencher) {
 
     let mut proofs = Vec::with_capacity(n);
     for i in 0..n {
-        proofs.push(Proof::new(prover_params, &old_values, i).unwrap());
+        //proofs.push(Proof::new(prover_params, &old_values, i).unwrap());
+        let file_name = format!("tmp/{}_{}.proof", n, i);
+        let mut file = std::fs::File::open(file_name).unwrap();
+        let proof = Proof::deserialize(&mut file, true).unwrap();
+        proofs.push(proof);
     }
 
     let new_value = format!("this is new message number {}", update_index).into_bytes();
@@ -216,18 +232,29 @@ fn bench_veccom_with_param(c: &mut Criterion) {
             for e in init_values.iter().take(n) {
                 values.push(&e);
             }
-            let com = Commitment::new(&pp_clone, &values).unwrap();
-            let mut proofs: Vec<Vec<u8>> = vec![];
+
+            let file_name = format!("tmp/{}.commit", n);
+            let mut file = std::fs::File::open(file_name).unwrap();
+            let com = Commitment::deserialize(&mut file, true).unwrap();
+
+            //    let com = Commitment::new(&pp_clone, &values).unwrap();
+
+            let mut proofs: Vec<Proof> = vec![];
+
             for i in 0..n {
-                let mut buf: Vec<u8> = vec![];
-                let p = Proof::new(&pp_clone, &values, i).unwrap();
-                assert!(p.serialize(&mut buf, true).is_ok());
-                proofs.push(buf);
+                let file_name = format!("tmp/{}_{}.proof", n, i);
+                let mut file = std::fs::File::open(file_name).unwrap();
+                let proof = Proof::deserialize(&mut file, true).unwrap();
+                proofs.push(proof);
+                // let mut buf: Vec<u8> = vec![];
+                // let p = Proof::new(&pp_clone, &values, i).unwrap();
+                // assert!(p.serialize(&mut buf, true).is_ok());
+                // proofs.push(buf);
             }
             let mut i: usize = 0;
             b.iter(|| {
-                let p = Proof::deserialize::<&[u8]>(&mut proofs[i][..].as_ref(), true).unwrap();
-                assert!(p.verify(&vp_clone, &com, &values[i], i));
+                //    let p = Proof::deserialize::<&[u8]>(&mut proofs[i][..].as_ref(), true).unwrap();
+                assert!(proofs[i].verify(&vp_clone, &com, &values[i], i));
                 i = (i + 1) % n;
             });
         });
@@ -311,22 +338,33 @@ fn bench_aggregation_with_param(c: &mut Criterion) {
                 values.push(&e);
             }
 
-            let com = Commitment::new(&pp_clone, &values).unwrap();
+            // let com = Commitment::new(&pp_clone, &values).unwrap();
+
+            let file_name = format!("tmp/{}.commit", n);
+            let mut file = std::fs::File::open(file_name).unwrap();
+            let com = Commitment::deserialize(&mut file, true).unwrap();
+
             let mut proofs: Vec<Proof> = vec![];
             let mut index: Vec<usize> = vec![];
             let mut value_sub_vector: Vec<&[u8]> = vec![];
             for i in 0..n {
-                let p = Proof::new(&pp_clone, &values, i).unwrap();
-                proofs.push(p);
+                //proofs.push(Proof::new(prover_params, &old_values, i).unwrap());
+                let file_name = format!("tmp/{}_{}.proof", n, i);
+                let mut file = std::fs::File::open(file_name).unwrap();
+                let proof = Proof::deserialize(&mut file, true).unwrap();
+                proofs.push(proof);
                 index.push(i);
                 value_sub_vector.push(values[i]);
             }
 
-            let mut i: usize = 0;
+            //            let mut i: usize = 0;
             b.iter(|| {
-                let _agg_proof =
+                let agg_proof =
                     Proof::aggregate(&com, &proofs, &index, &value_sub_vector, n).unwrap();
-                i = (i + 1) % n;
+                let file_name = format!("tmp/agg_{}.proof", n);
+                let mut file = std::fs::File::open(file_name).unwrap();
+                agg_proof.serialize(&mut file, true).unwrap();
+                //                i = (i + 1) % n;
             });
         });
 
@@ -346,17 +384,30 @@ fn bench_aggregation_with_param(c: &mut Criterion) {
                 values.push(&e);
             }
 
-            let com = Commitment::new(&pp_clone, &values).unwrap();
-            let mut proofs: Vec<Proof> = vec![];
+            //            let com = Commitment::new(&pp_clone, &values).unwrap();
+
+            let file_name = format!("tmp/{}.commit", n);
+            let mut file = std::fs::File::open(file_name).unwrap();
+            let com = Commitment::deserialize(&mut file, true).unwrap();
+
+            // let mut proofs: Vec<Proof> = vec![];
             let mut index: Vec<usize> = vec![];
             let mut value_sub_vector: Vec<&[u8]> = vec![];
             for i in 0..n {
-                let p = Proof::new(&pp, &values, i).unwrap();
-                proofs.push(p);
+                // let file_name = format!("tmp/{}_{}.proof", n, i);
+                // let mut file = std::fs::File::open(file_name).unwrap();
+                // let proof = Proof::deserialize(&mut file, true).unwrap();
+                // proofs.push(proof);
+
                 index.push(i);
                 value_sub_vector.push(values[i]);
             }
-            let agg_proof = Proof::aggregate(&com, &proofs, &index, &value_sub_vector, n).unwrap();
+            //    let agg_proof = Proof::aggregate(&com, &proofs, &index, &value_sub_vector, n).unwrap();
+
+            let file_name = format!("tmp/agg_{}.proof", n);
+            let mut file = std::fs::File::open(file_name).unwrap();
+            let agg_proof = Proof::deserialize(&mut file, true).unwrap();
+            //                i = (i + 1) % n;
 
             let mut i: usize = 0;
             b.iter(|| {
