@@ -15,5 +15,6 @@ Cargo.lock
 # pre-generated parameters for testing and benchmarking
 *.param
 benches/pre-gen-param/target
+benches/pre-gen-com-and-proof/target
 *.proof
 *.commit
