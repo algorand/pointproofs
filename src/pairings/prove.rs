@@ -1,6 +1,6 @@
 use super::ciphersuite::*;
 use super::err::*;
-use super::hash_to_field_veccom::{hash_to_field_veccom, hash_to_ti};
+use super::hash_to_field_veccom::{hash_to_field_veccom, hash_to_ti, hash_to_tj};
 use super::{Commitment, Proof, ProverParams, VerifierParams};
 use ff::{Field, PrimeField};
 use pairings::hash_to_field_veccom::hash_to_field_repr_veccom;
@@ -151,6 +151,50 @@ impl Proof {
         })
     }
 
+    pub fn cross_commit_aggregate<Blob: AsRef<[u8]>>(
+        commits: &Vec<Commitment>,
+        proofs: &Vec<&[Self]>,
+        set: &Vec<&[usize]>,
+        value_sub_vector: &Vec<&[Blob]>,
+        n: usize,
+    ) -> Result<Self, String> {
+        // TODO: check ciphersuite
+
+        // check the length are correct
+        if commits.len() != proofs.len()
+            || commits.len() != set.len()
+            || commits.len() != value_sub_vector.len()
+        {
+            return Err(ERR_X_COM_SIZE.to_owned());
+        };
+
+        let scalars = hash_to_tj(&commits, &set, &value_sub_vector, n)?;
+
+        let mut pi: Vec<Self> = vec![];
+        for i in 0..commits.len() {
+            pi.push(Self::aggregate(
+                &commits[i],
+                proofs[i],
+                set[i],
+                value_sub_vector[i],
+                n,
+            )?);
+        }
+        if scalars.len() != pi.len() {
+            return Err(ERR_X_COM_SIZE.to_owned());
+        }
+
+        let scalars_u64: Vec<&[u64; 4]> = scalars.iter().map(|s| &s.0).collect();
+        let bases: Vec<G1Affine> = pi.iter().map(|s| s.proof.into_affine()).collect();
+        // proof = \prod pi[i] ^ tj[i]
+        let proof = G1Affine::sum_of_products(&bases[..], &scalars_u64);
+
+        Ok(Proof {
+            ciphersuite: commits[0].ciphersuite,
+            proof,
+        })
+    }
+
     pub fn batch_verify<Blob: AsRef<[u8]>>(
         &self,
         verifier_params: &VerifierParams,
@@ -245,6 +289,20 @@ impl Proof {
             proof_mut,
             G2Affine::one().into_projective(),
         ) == verifier_params.gt_elt
+    }
+
+    pub fn cross_commit_batch_verify<Blob: AsRef<[u8]>>(
+        &self,
+        verifier_params: &VerifierParams,
+        com: &Vec<Commitment>,
+        set: &Vec<&[usize]>,
+        value_sub_vector: &Vec<&[Blob]>,
+    ) -> bool {
+        // TODO: check ciphersuite
+
+        // TODO: batch verify
+
+        true
     }
 }
 

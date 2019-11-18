@@ -10,6 +10,72 @@ use pairing::serdes::SerDes;
 use sha2::{Digest, Sha512};
 use std::ops::Rem;
 
+// input: a list of k commitments
+// input: a list of k * x indices, for which we need to generate t_j
+// input: Value: a list of k * x messages that is commited to
+// output: a list of k field elements
+pub fn hash_to_tj<Blob: AsRef<[u8]>>(
+    commits: &Vec<Commitment>,
+    set: &Vec<&[usize]>,
+    value_sub_vector: &Vec<&[Blob]>,
+    n: usize,
+) -> Result<Vec<FrRepr>, String> {
+    // check the length are correct
+    if commits.len() != set.len() || commits.len() != value_sub_vector.len() {
+        return Err(ERR_X_COM_SIZE.to_owned());
+    };
+
+    // check the ciphersuite is supported
+    for e in commits {
+        if !check_ciphersuite(e.ciphersuite) {
+            return Err(ERR_CIPHERSUITE.to_owned());
+        }
+    }
+    // tmp = {C | S | m[S]} for i \in [0 .. commit.len-1]
+    let mut tmp: Vec<u8> = vec![];
+    for i in 0..commits.len() {
+        // serialize commitment
+        match commits[i].serialize(&mut tmp, true) {
+            Ok(_p) => _p,
+            Err(e) => return Err(e.to_string()),
+        };
+        // add the set to tmp
+        for j in 0..set[i].len() {
+            let t = set[i][j].to_be_bytes();
+            tmp.append(&mut t.to_vec());
+        }
+
+        // if the set leng does not mathc values, return an error
+        if set.len() != value_sub_vector.len() {
+            return Err(ERR_INDEX_PROOF_NOT_MATCH.to_owned());
+        }
+
+        // add values to set; returns an error if index is out of range
+        for j in 0..set.len() {
+            if set[i][j] >= n {
+                return Err(ERR_INVALID_INDEX.to_owned());
+            }
+            let t = value_sub_vector[i][j].as_ref();
+            tmp.append(&mut t.to_vec());
+        }
+    }
+
+    let mut hasher = Sha512::new();
+    hasher.input(tmp);
+    let digest = hasher.result();
+
+    // formulate the output
+    let mut res: Vec<FrRepr> = vec![];
+    for i in 0..commits.len() {
+        // each field element t_i is generated as
+        // t_i = hash_to_field (i | C | S | m[S])
+        let hash_input = [i.to_be_bytes().to_vec()[..].as_ref(), digest.as_ref()].concat();
+        res.push(hash_to_field_repr_veccom(hash_input));
+    }
+
+    Ok(res)
+}
+
 // input: the commitment
 // input: a list of indices, for which we need to generate t_i
 // input: Value: the messages that is commited to
@@ -36,7 +102,7 @@ pub fn hash_to_ti<Blob: AsRef<[u8]>>(
         let t = index.to_be_bytes();
         tmp.append(&mut t.to_vec());
     }
-
+    // if the set leng does not mathc values, return an error
     if set.len() != value_sub_vector.len() {
         return Err(ERR_INDEX_PROOF_NOT_MATCH.to_owned());
     }

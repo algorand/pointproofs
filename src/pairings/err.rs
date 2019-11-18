@@ -9,3 +9,4 @@ pub const ERR_CIPHERSUITE: &str = "Invalid ciphersuite ID";
 pub const ERR_INVALID_VALUE: &str = "Invalid number of values";
 pub const ERR_INVALID_INDEX: &str = "Invalid index";
 pub const ERR_INDEX_PROOF_NOT_MATCH: &str = "Length of index and proof sets do not match";
+pub const ERR_X_COM_SIZE: &str = "Invalid sizes for commit, proof, or values for cross commit";
