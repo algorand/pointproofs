@@ -16,9 +16,15 @@ const N_ARRAY: [usize; 3] = [256, 1024, 4096];
 
 criterion_group!(
     benches,
-    bench_veccom_with_param,
-    bench_aggregation_with_param,
-    bench_ti
+    //    bench_veccom_commit,
+    bench_veccom_proof,
+    //    bench_veccom_commit_update,
+    bench_veccom_proof_update,
+    bench_veccom_aggregate,
+    bench_veccom_batch_verify,
+    //    bench_veccom_with_param,
+    //    bench_aggregation_with_param,
+    //    bench_ti
 );
 
 criterion_main!(benches);
@@ -37,7 +43,7 @@ fn bench_commit_helper(prover_params: &ProverParams, b: &mut Bencher) {
     }
 
     let file_name = format!("tmp/{}.commit", n);
-    let mut file = std::fs::File::open(file_name).unwrap();
+    let mut file = std::fs::File::create(file_name).unwrap();
 
     b.iter(|| {
         Commitment::new(prover_params, &values)
@@ -60,10 +66,19 @@ fn bench_prove_helper(prover_params: &ProverParams, b: &mut Bencher) {
         values.push(&e);
     }
 
+    for i in 0..n {
+        let file_name = format!("tmp/{}_{}.proof", n, i);
+        let mut file = std::fs::File::create(file_name).unwrap();
+        Proof::new(prover_params, &values, i)
+            .unwrap()
+            .serialize(&mut file, true)
+            .unwrap();
+    }
+
     let mut i: usize = 0;
     b.iter(|| {
         let file_name = format!("tmp/{}_{}.proof", n, i);
-        let mut file = std::fs::File::open(file_name).unwrap();
+        let mut file = std::fs::File::create(file_name).unwrap();
         Proof::new(prover_params, &values, i)
             .unwrap()
             .serialize(&mut file, true)
@@ -152,11 +167,11 @@ fn bench_proof_update_helper(prover_params: &ProverParams, b: &mut Bencher) {
     });
 }
 
-fn bench_veccom_with_param(c: &mut Criterion) {
+fn bench_veccom_commit(c: &mut Criterion) {
     for n in N_ARRAY.iter() {
         let file_name = format!("benches/pre-gen-param/{}.param", n);
         let mut file = std::fs::File::open(file_name).unwrap();
-        let (pp, vp) = paramgen::read_param(&mut file).unwrap();
+        let (pp, _vp) = paramgen::read_param(&mut file).unwrap();
 
         let file_name = format!("benches/pre-gen-param/{}_pre3.param", n);
         let mut file = std::fs::File::open(file_name).unwrap();
@@ -190,10 +205,31 @@ fn bench_veccom_with_param(c: &mut Criterion) {
             // would store this yourself rather than send it on the network
             bench_commit_helper(&pp256_clone, b);
         });
+        let bench = bench.warm_up_time(Duration::from_millis(1000));
+        let bench = bench.measurement_time(Duration::from_millis(5000));
+        let bench = bench.sample_size(10);
+
+        c.bench("pairings", bench);
+    }
+}
+
+fn bench_veccom_proof(c: &mut Criterion) {
+    for n in N_ARRAY.iter() {
+        let file_name = format!("benches/pre-gen-param/{}.param", n);
+        let mut file = std::fs::File::open(file_name).unwrap();
+        let (pp, vp) = paramgen::read_param(&mut file).unwrap();
+
+        let file_name = format!("benches/pre-gen-param/{}_pre3.param", n);
+        let mut file = std::fs::File::open(file_name).unwrap();
+        let pp3 = ProverParams::deserialize(&mut file, true).unwrap();
+
+        let file_name = format!("benches/pre-gen-param/{}_pre256.param", n);
+        let mut file = std::fs::File::open(file_name).unwrap();
+        let pp256 = ProverParams::deserialize(&mut file, true).unwrap();
 
         let pp_clone = pp.clone();
         let bench_str = format!("prove_no_precomp_{}", n);
-        let bench = bench.with_function(bench_str, move |b| {
+        let bench = Benchmark::new(bench_str, move |b| {
             // includes to_bytes conversion for the proof, because this is supposed to measure what it takes
             // to produce a proof you will send on the network
             bench_prove_helper(&pp_clone, b);
@@ -258,10 +294,31 @@ fn bench_veccom_with_param(c: &mut Criterion) {
                 i = (i + 1) % n;
             });
         });
+        let bench = bench.warm_up_time(Duration::from_millis(1000));
+        let bench = bench.measurement_time(Duration::from_millis(5000));
+        let bench = bench.sample_size(10);
+
+        c.bench("pairings", bench);
+    }
+}
+
+fn bench_veccom_commit_update(c: &mut Criterion) {
+    for n in N_ARRAY.iter() {
+        let file_name = format!("benches/pre-gen-param/{}.param", n);
+        let mut file = std::fs::File::open(file_name).unwrap();
+        let (pp, _vp) = paramgen::read_param(&mut file).unwrap();
+
+        let file_name = format!("benches/pre-gen-param/{}_pre3.param", n);
+        let mut file = std::fs::File::open(file_name).unwrap();
+        let pp3 = ProverParams::deserialize(&mut file, true).unwrap();
+
+        let file_name = format!("benches/pre-gen-param/{}_pre256.param", n);
+        let mut file = std::fs::File::open(file_name).unwrap();
+        let pp256 = ProverParams::deserialize(&mut file, true).unwrap();
 
         let pp_clone = pp.clone();
         let bench_str = format!("commit_update_no_precomp_{}", n);
-        let bench = bench.with_function(bench_str, move |b| {
+        let bench = Benchmark::new(bench_str, move |b| {
             // Does not include to/from bytes conversion, because this is supposed to be a local operation
 
             bench_commit_update_helper(&pp_clone, b);
@@ -285,9 +342,31 @@ fn bench_veccom_with_param(c: &mut Criterion) {
             bench_commit_update_helper(&pp256_clone, b);
         });
 
+        let bench = bench.warm_up_time(Duration::from_millis(1000));
+        let bench = bench.measurement_time(Duration::from_millis(5000));
+        let bench = bench.sample_size(10);
+
+        c.bench("pairings", bench);
+    }
+}
+
+fn bench_veccom_proof_update(c: &mut Criterion) {
+    for n in N_ARRAY.iter() {
+        let file_name = format!("benches/pre-gen-param/{}.param", n);
+        let mut file = std::fs::File::open(file_name).unwrap();
+        let (pp, _vp) = paramgen::read_param(&mut file).unwrap();
+
+        let file_name = format!("benches/pre-gen-param/{}_pre3.param", n);
+        let mut file = std::fs::File::open(file_name).unwrap();
+        let pp3 = ProverParams::deserialize(&mut file, true).unwrap();
+
+        let file_name = format!("benches/pre-gen-param/{}_pre256.param", n);
+        let mut file = std::fs::File::open(file_name).unwrap();
+        let pp256 = ProverParams::deserialize(&mut file, true).unwrap();
+
         let pp_clone = pp.clone();
         let bench_str = format!("proof_update_no_precomp_{}", n);
-        let bench = bench.with_function(bench_str, move |b| {
+        let bench = Benchmark::new(bench_str, move |b| {
             // Does not include to/from bytes conversion, because this is supposed to be a local operation
 
             bench_proof_update_helper(&pp_clone, b);
@@ -317,11 +396,11 @@ fn bench_veccom_with_param(c: &mut Criterion) {
     }
 }
 
-fn bench_aggregation_with_param(c: &mut Criterion) {
+fn bench_veccom_aggregate(c: &mut Criterion) {
     for n in N_ARRAY.iter() {
         let file_name = format!("benches/pre-gen-param/{}.param", n);
         let mut file = std::fs::File::open(file_name).unwrap();
-        let (pp, vp) = paramgen::read_param(&mut file).unwrap();
+        let (pp, _vp) = paramgen::read_param(&mut file).unwrap();
         let pp_clone = pp.clone();
         let bench_str = format!("aggregate_{}", n);
         let bench = Benchmark::new(bench_str, move |b| {
@@ -362,16 +441,30 @@ fn bench_aggregation_with_param(c: &mut Criterion) {
                 let agg_proof =
                     Proof::aggregate(&com, &proofs, &index, &value_sub_vector, n).unwrap();
                 let file_name = format!("tmp/agg_{}.proof", n);
-                let mut file = std::fs::File::open(file_name).unwrap();
+                let mut file = std::fs::File::create(file_name).unwrap();
                 agg_proof.serialize(&mut file, true).unwrap();
                 //                i = (i + 1) % n;
             });
         });
 
+        let bench = bench.warm_up_time(Duration::from_millis(1000));
+        let bench = bench.measurement_time(Duration::from_millis(5000));
+        let bench = bench.sample_size(10);
+
+        c.bench("pairings", bench);
+    }
+}
+
+fn bench_veccom_batch_verify(c: &mut Criterion) {
+    for n in N_ARRAY.iter() {
+        let file_name = format!("benches/pre-gen-param/{}.param", n);
+        let mut file = std::fs::File::open(file_name).unwrap();
+        let (pp, vp) = paramgen::read_param(&mut file).unwrap();
+
         let pp_clone = pp.clone();
         let vp_clone = vp.clone();
         let bench_str = format!("batch_verify_{}", n);
-        let bench = bench.with_function(bench_str, move |b| {
+        let bench = Benchmark::new(bench_str, move |b| {
             let n = pp_clone.n;
             let mut init_values = Vec::with_capacity(n);
             for i in 0..n {
@@ -423,6 +516,7 @@ fn bench_aggregation_with_param(c: &mut Criterion) {
     }
 }
 
+#[allow(dead_code)]
 fn bench_ti(c: &mut Criterion) {
     for t in N_ARRAY.iter() {
         let n = *t;
