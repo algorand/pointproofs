@@ -16,15 +16,15 @@ use std::ops::Rem;
 // output: a list of k field elements
 pub fn hash_to_tj<Blob: AsRef<[u8]>>(
     commits: &Vec<Commitment>,
-    set: &Vec<&[usize]>,
-    value_sub_vector: &Vec<&[Blob]>,
+    set: &Vec<Vec<usize>>,
+    value_sub_vector: &Vec<Vec<Blob>>,
     n: usize,
 ) -> Result<Vec<FrRepr>, String> {
     // check the length are correct
     if commits.len() != set.len() || commits.len() != value_sub_vector.len() {
         return Err(ERR_X_COM_SIZE.to_owned());
     };
-
+    println!("{} {} {}", commits.len(), set.len(), value_sub_vector.len());
     // check the ciphersuite is supported
     for e in commits {
         if !check_ciphersuite(e.ciphersuite) {
@@ -46,12 +46,12 @@ pub fn hash_to_tj<Blob: AsRef<[u8]>>(
         }
 
         // if the set leng does not mathc values, return an error
-        if set.len() != value_sub_vector.len() {
+        if set[i].len() != value_sub_vector[i].len() {
             return Err(ERR_INDEX_PROOF_NOT_MATCH.to_owned());
         }
 
         // add values to set; returns an error if index is out of range
-        for j in 0..set.len() {
+        for j in 0..set[i].len() {
             if set[i][j] >= n {
                 return Err(ERR_INVALID_INDEX.to_owned());
             }
@@ -59,6 +59,7 @@ pub fn hash_to_tj<Blob: AsRef<[u8]>>(
             tmp.append(&mut t.to_vec());
         }
     }
+    //    println!("{:?}", tmp);
 
     let mut hasher = Sha512::new();
     hasher.input(tmp);

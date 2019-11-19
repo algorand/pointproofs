@@ -248,40 +248,40 @@ fn test_serdes_verifier_param() {
     let verifier_params_recover = VerifierParams::deserialize(&mut buf[..].as_ref(), true).unwrap();
     assert_eq!(verifier_params, verifier_params_recover);
 }
-
-#[test]
-fn test_aggregation() {
-    let n = 32usize;
-    let (prover_params, verifier_params) =
-        paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, n).unwrap();
-
-    let mut init_values = Vec::with_capacity(n);
-    for i in 0..n {
-        let s = format!("this is message number {}", i);
-        init_values.push(s.into_bytes());
-    }
-
-    let mut values: Vec<&[u8]> = Vec::with_capacity(n);
-    for e in init_values.iter().take(n) {
-        values.push(&e);
-    }
-
-    let com = Commitment::new(&prover_params, &values).unwrap();
-
-    let set = vec![1usize, 4, 7];
-    let mut proofs: Vec<Proof> = vec![];
-    let mut value_sub_vector: Vec<&[u8]> = vec![];
-
-    for index in &set {
-        let proof = Proof::new(&prover_params, &values, *index).unwrap();
-        proofs.push(proof);
-        value_sub_vector.push(values[*index]);
-    }
-
-    let agg_proof =
-        Proof::aggregate(&com, &proofs, &set, &value_sub_vector, prover_params.n).unwrap();
-    assert!(agg_proof.batch_verify(&verifier_params, &com, &set, &value_sub_vector));
-
-    let new_set = vec![1usize, 4, 8];
-    assert!(!agg_proof.batch_verify(&verifier_params, &com, &new_set, &value_sub_vector));
-}
+//
+// #[test]
+// fn test_aggregation() {
+//     let n = 32usize;
+//     let (prover_params, verifier_params) =
+//         paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, n).unwrap();
+//
+//     let mut init_values = Vec::with_capacity(n);
+//     for i in 0..n {
+//         let s = format!("this is message number {}", i);
+//         init_values.push(s.into_bytes());
+//     }
+//
+//     let mut values: Vec<&[u8]> = Vec::with_capacity(n);
+//     for e in init_values.iter().take(n) {
+//         values.push(&e);
+//     }
+//
+//     let com = Commitment::new(&prover_params, &values).unwrap();
+//
+//     let set = vec![1usize, 4, 7];
+//     let mut proofs: Vec<Proof> = vec![];
+//     let mut value_sub_vector: Vec<&[u8]> = vec![];
+//
+//     for index in &set {
+//         let proof = Proof::new(&prover_params, &values, *index).unwrap();
+//         proofs.push(proof);
+//         value_sub_vector.push(values[*index]);
+//     }
+//
+//     let agg_proof =
+//         Proof::aggregate(&com, &proofs, &set, &value_sub_vector, prover_params.n).unwrap();
+//     assert!(agg_proof.batch_verify(&verifier_params, &com, &set, &value_sub_vector));
+//
+//     let new_set = vec![1usize, 4, 8];
+//     assert!(!agg_proof.batch_verify(&verifier_params, &com, &new_set, &value_sub_vector));
+// }
