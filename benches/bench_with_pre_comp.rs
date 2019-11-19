@@ -7,7 +7,7 @@ use criterion::Bencher;
 use criterion::Benchmark;
 use criterion::Criterion;
 use pairing::serdes::SerDes;
-use pairing::CurveProjective;
+// use pairing::CurveProjective;
 use std::time::Duration;
 use veccom::pairings::*;
 
@@ -15,7 +15,7 @@ use veccom::pairings::*;
 // const N_ARRAY: [usize; 3] = [256, 1024, 4096];
 const N_ARRAY: [usize; 1] = [256];
 const MAX_P: usize = 16;
-
+const MAX_C: usize = 16;
 criterion_group!(
     benches,
     bench_veccom_commit,
@@ -24,6 +24,8 @@ criterion_group!(
     bench_veccom_proof_update,
     bench_veccom_aggregate,
     bench_veccom_batch_verify,
+    bench_veccom_cross_commit_aggregate,
+    bench_veccom_cross_commit_batch_verify,
     // bench_veccom_with_param,
     // bench_aggregation_with_param,
     // bench_ti
@@ -401,8 +403,8 @@ fn bench_veccom_aggregate(c: &mut Criterion) {
             // let com = Commitment::new(&pp_clone, &values).unwrap();
 
             let file_name = format!("benches/pre-gen-com-and-proof/tmp/n_{}_com_{}.commit", n, 0);
-            let mut file = match std::fs::File::open(&file_name){
-                Err(e)=> panic!("file {} not exist {}", &file_name, e),
+            let mut file = match std::fs::File::open(&file_name) {
+                Err(e) => panic!("file {} not exist {}", &file_name, e),
                 Ok(p) => p,
             };
             let com = Commitment::deserialize(&mut file, true).unwrap();
@@ -416,8 +418,8 @@ fn bench_veccom_aggregate(c: &mut Criterion) {
                     "benches/pre-gen-com-and-proof/tmp/n_{}_com_{}_proof_{}.proof",
                     n, 0, i
                 );
-                let mut file = match std::fs::File::open(&file_name){
-                    Err(e)=> panic!("file {} not exist {}", &file_name, e),
+                let mut file = match std::fs::File::open(&file_name) {
+                    Err(e) => panic!("file {} not exist {}", &file_name, e),
                     Ok(p) => p,
                 };;
                 let proof = Proof::deserialize(&mut file, true).unwrap();
@@ -485,9 +487,171 @@ fn bench_veccom_batch_verify(c: &mut Criterion) {
             //let mut i: usize = 0;
             b.iter(|| {
                 assert!(agg_proof.batch_verify(&vp_clone, &com, &index, &value_sub_vector));
-            //    i = (i + 1) % n;
+                //    i = (i + 1) % n;
             });
         });
+        let bench = bench.warm_up_time(Duration::from_millis(1000));
+        let bench = bench.measurement_time(Duration::from_millis(5000));
+        let bench = bench.sample_size(10);
+
+        c.bench("pairings", bench);
+    }
+}
+
+fn bench_veccom_cross_commit_aggregate(c: &mut Criterion) {
+    for n in N_ARRAY.iter() {
+        let file_name = format!("benches/pre-gen-param/{}.param", n);
+        let mut file = std::fs::File::open(file_name).unwrap();
+        let (pp, vp) = paramgen::read_param(&mut file).unwrap();
+        let pp_clone = pp.clone();
+        let bench_str = format!("cross_aggregate_{}_{}", n, MAX_P);
+        let bench = Benchmark::new(bench_str, move |b| {
+            let n = pp_clone.n;
+
+            //        let mut values: Vec<Vec<Vec<u8>>> = vec![];
+            let mut commits: Vec<Commitment> = vec![];
+            let mut proofs: Vec<Vec<Proof>> = vec![];
+            let mut index: Vec<Vec<usize>> = vec![];
+            let mut value_sub_vector: Vec<Vec<Vec<u8>>> = vec![];
+
+            for j in 0..MAX_C {
+                let mut init_values = Vec::with_capacity(n);
+                for i in 0..n {
+                    let s = format!("this is message: commit {}, index {}", j, i);
+                    init_values.push(s.into_bytes());
+                }
+
+                // let mut tmp_values: Vec<&[u8]> = Vec::with_capacity(n);
+                // for e in init_values.iter().take(n) {
+                //     tmp_values.push(&e);
+                // }
+
+                let file_name =
+                    format!("benches/pre-gen-com-and-proof/tmp/n_{}_com_{}.commit", n, j);
+                let mut file = match std::fs::File::open(&file_name) {
+                    Err(e) => panic!("file {} not exist {}", &file_name, e),
+                    Ok(p) => p,
+                };
+                let tmp_com = Commitment::deserialize(&mut file, true).unwrap();
+                let mut tmp_proofs: Vec<Proof> = vec![];
+                let mut tmp_index: Vec<usize> = vec![];
+                let mut tmp_value_sub_vector: Vec<Vec<u8>> = vec![];
+                for i in 0..MAX_P {
+                    //proofs.push(Proof::new(prover_params, &old_values, i).unwrap());
+                    let file_name = format!(
+                        "benches/pre-gen-com-and-proof/tmp/n_{}_com_{}_proof_{}.proof",
+                        n, j, i
+                    );
+                    let mut file = match std::fs::File::open(&file_name) {
+                        Err(e) => panic!("file {} not exist {}", &file_name, e),
+                        Ok(p) => p,
+                    };;
+                    let proof = Proof::deserialize(&mut file, true).unwrap();
+
+                    assert!(
+                        proof.verify(&vp, &tmp_com, &init_values[i], i),
+                        "proof verification failed for {}",
+                        i
+                    );
+                    tmp_proofs.push(proof);
+                    tmp_index.push(i);
+                    tmp_value_sub_vector.push(init_values[i].clone());
+                }
+
+                //            values.push(init_values);
+                commits.push(tmp_com);
+                proofs.push(tmp_proofs);
+                index.push(tmp_index);
+                value_sub_vector.push(tmp_value_sub_vector);
+            }
+
+            //            let mut i: usize = 0;
+            b.iter(|| {
+                let agg_proof =
+                    Proof::cross_commit_aggregate(&commits, &proofs, &index, &value_sub_vector, n)
+                        .unwrap();
+                let file_name = format!("tmp/cross_agg_{}.proof", n);
+                let mut file = std::fs::File::create(file_name).unwrap();
+                agg_proof.serialize(&mut file, true).unwrap();
+            });
+        });
+
+        let bench = bench.warm_up_time(Duration::from_millis(1000));
+        let bench = bench.measurement_time(Duration::from_millis(5000));
+        let bench = bench.sample_size(10);
+
+        c.bench("pairings", bench);
+    }
+}
+
+fn bench_veccom_cross_commit_batch_verify(c: &mut Criterion) {
+    for n in N_ARRAY.iter() {
+        let file_name = format!("benches/pre-gen-param/{}.param", n);
+        let mut file = std::fs::File::open(file_name).unwrap();
+        let (pp, vp) = paramgen::read_param(&mut file).unwrap();
+        let pp_clone = pp.clone();
+        let bench_str = format!("cross_verify_{}_{}", n, MAX_P);
+        let bench = Benchmark::new(bench_str, move |b| {
+            let n = pp_clone.n;
+
+            // values
+            // let mut init_values = Vec::with_capacity(n);
+            // for i in 0..n {
+            //     let s = format!("this is message: commit {}, index {}", 0, i);
+            //     init_values.push(s.into_bytes());
+            // }
+            //
+            // let mut values: Vec<&[u8]> = Vec::with_capacity(n);
+            // for e in init_values.iter().take(n) {
+            //     values.push(&e);
+            // }
+
+            let mut values: Vec<Vec<Vec<u8>>> = vec![];
+            let mut commits: Vec<Commitment> = vec![];
+            let mut index: Vec<Vec<usize>> = vec![];
+            let mut value_sub_vector: Vec<Vec<Vec<u8>>> = vec![];
+
+            for j in 0..MAX_C {
+                let mut init_values = Vec::with_capacity(n);
+                for i in 0..n {
+                    let s = format!("this is message: commit {}, index {}", j, i);
+                    init_values.push(s.into_bytes());
+                }
+
+                let file_name =
+                    format!("benches/pre-gen-com-and-proof/tmp/n_{}_com_{}.commit", n, j);
+                let mut file = match std::fs::File::open(&file_name) {
+                    Err(e) => panic!("file {} not exist {}", &file_name, e),
+                    Ok(p) => p,
+                };
+                let tmp_com = Commitment::deserialize(&mut file, true).unwrap();
+                let mut tmp_index: Vec<usize> = vec![];
+                let mut tmp_value_sub_vector: Vec<Vec<u8>> = vec![];
+                for i in 0..MAX_P {
+                    tmp_index.push(i);
+                    tmp_value_sub_vector.push(init_values[i].clone());
+                }
+                values.push(init_values);
+                commits.push(tmp_com);
+                index.push(tmp_index);
+                value_sub_vector.push(tmp_value_sub_vector);
+            }
+
+            let file_name = format!("tmp/cross_agg_{}.proof", n);
+            let mut file = std::fs::File::open(file_name).unwrap();
+            let agg_proof = Proof::deserialize(&mut file, true).unwrap();
+            //        println!("{:?} \n{:?}\n", index, values);
+            //            let mut i: usize = 0;
+            b.iter(|| {
+                assert!(agg_proof.cross_commit_batch_verify(
+                    &vp,
+                    &commits,
+                    &index,
+                    &value_sub_vector
+                ));
+            });
+        });
+
         let bench = bench.warm_up_time(Duration::from_millis(1000));
         let bench = bench.measurement_time(Duration::from_millis(5000));
         let bench = bench.sample_size(10);

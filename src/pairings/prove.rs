@@ -176,7 +176,7 @@ impl Proof {
         };
 
         let scalars = hash_to_tj(&commits, &set, &value_sub_vector, n)?;
-        println!("number of scalars: {}", scalars.len());
+        //        println!("number of scalars: {}", scalars.len());
         let mut pi: Vec<Self> = vec![];
         for i in 0..commits.len() {
             pi.push(Self::aggregate(
