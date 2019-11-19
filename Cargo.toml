@@ -37,10 +37,14 @@
 #   harness = false
 
 
-[[bench]]
-  name = "slow"
-  harness = false
+# [[bench]]
+#   name = "slow"
+#   harness = false
 
 # [[bench]]
 #   name = "merkle"
 #   harness = false
+
+[[bench]]
+  name = "bench_with_pre_comp"
+  harness = false
