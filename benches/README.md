@@ -40,7 +40,7 @@ pairings/proof_update_precomp_256  time:   [54.065 us 54.775 us 56.730 us]
 ## Merkle-based scheme
 
 - committing to an n-vector: 1.2*n microseconds
-- proving a single element in an n-vector: once commitment is done, essentially free (though in the current implementation we don't cache enough data and recomput each proof from scratch -- this should be fixed)
+- proving a single element in an n-vector: once commitment is done, essentially free
 - verifying a single proof: 8 microseconds (for n = 1000)
 - updating a proof: 6 microseconds (for n = 1000)
 - updating a commitment: 8 microseconds (for n = 1000)
