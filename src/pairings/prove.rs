@@ -1,6 +1,8 @@
 use super::ciphersuite::*;
 use super::err::*;
-use super::hash_to_field_veccom::{hash_to_field_veccom, hash_to_ti, hash_to_tj};
+use super::hash_to_field_veccom::{
+    hash_to_field_veccom, hash_to_ti_fr, hash_to_ti_repr, hash_to_tj,
+};
 use super::{Commitment, Proof, ProverParams, VerifierParams};
 use ff::{Field, PrimeField};
 use pairings::hash_to_field_veccom::hash_to_field_repr_veccom;
@@ -139,7 +141,7 @@ impl Proof {
             return Err(ERR_INDEX_PROOF_NOT_MATCH.to_owned());
         }
         // get the list of scalas
-        let ti = hash_to_ti(commit, set, value_sub_vector, n)?;
+        let ti = hash_to_ti_repr(commit, set, value_sub_vector, n)?;
         let scalars_u64: Vec<&[u64; 4]> = ti.iter().map(|s| &s.0).collect();
         let bases: Vec<G1Affine> = proofs.iter().map(|s| s.proof.into_affine()).collect();
         // proof = \prod proofs[i] ^ ti[i]
@@ -244,7 +246,7 @@ impl Proof {
 
         // 1. compute tmp
         // 1.1 get the list of scalas, return false if this failed
-        let ti = match hash_to_ti(com, set, value_sub_vector, verifier_params.n) {
+        let ti = match hash_to_ti_repr(com, set, value_sub_vector, verifier_params.n) {
             Err(_e) => return false,
             Ok(p) => p,
         };
@@ -316,9 +318,10 @@ impl Proof {
         }
 
         // generate all the t_i-s for j \in [num_commit]
-        let mut ti_s: Vec<Vec<FrRepr>> = vec![];
+        let mut ti_s: Vec<Vec<Fr>> = vec![];
         for i in 0..num_commit {
-            let ti = match hash_to_ti(&com[i], &set[i], &value_sub_vector[i], verifier_params.n) {
+            let ti = match hash_to_ti_fr(&com[i], &set[i], &value_sub_vector[i], verifier_params.n)
+            {
                 Err(_e) => return false,
                 Ok(p) => p,
             };
@@ -340,10 +343,7 @@ impl Proof {
 
             // tmp2 = sum_i m_ij * t_ij
             for i in 0..ti_s[j].len() {
-                let mut tmp3 = match Fr::from_repr(ti_s[j][i]) {
-                    Ok(p) => p,
-                    Err(_e) => return false,
-                };
+                let mut tmp3 = ti_s[j][i];
                 let mij = hash_to_field_veccom(value_sub_vector[j][i].as_ref());
                 tmp3.mul_assign(&mij);
                 tmp2.add_assign(&tmp3);
@@ -364,22 +364,23 @@ impl Proof {
         let tmp_inverse = tmp.inverse().unwrap();
 
         // now the formula becomes
-        // \prod e( com[j]^{tj/tmp}, g2^{\sum alpha^{n + 1 - i} * t_i,j} )
+        // \prod e(com[j], g2^{\sum alpha^{n + 1 - i} * t_i,j * tj/tmp} )
         //  * e(proof^{-1/tmp}, g2)
         //  ?= e(g1, g2)^{alpha^{n+1}} == verifier_params.Fq12
 
         // g1_vec stores the g1 components for the pairing product
-        // for j \in [num_commit], compute com[j]^{tj/tmp}
+        // for j \in [num_commit], store com[j]
         let mut g1_vec: Vec<G1Affine> = vec![];
         for j in 0..num_commit {
-            let mut tmp2 = com[j].commit;
-            let mut scalar = match Fr::from_repr(tj[j]) {
-                Ok(p) => p,
-                Err(_e) => return false,
-            };
-            scalar.mul_assign(&tmp_inverse);
-            tmp2.mul_assign(scalar);
-            g1_vec.push(tmp2.into_affine());
+            g1_vec.push(com[j].commit.into_affine());
+            // let mut tmp2 = com[j].commit;
+            // let mut scalar = match Fr::from_repr(tj[j]) {
+            //     Ok(p) => p,
+            //     Err(_e) => return false,
+            // };
+            // scalar.mul_assign(&tmp_inverse);
+            // tmp2.mul_assign(scalar);
+            // g1_vec.push(tmp2.into_affine());
         }
         // the last element for g1_vec is proof^{-1/tmp}
         let mut tmp2 = self.proof;
@@ -388,15 +389,33 @@ impl Proof {
         g1_vec.push(tmp2.into_affine());
 
         // g2_vec stores the g2 components for the pairing product
-        // for j \in [num_commit], g2^{\sum alpha^{n + 1 - i} * t_i,j} )
+        // for j \in [num_commit], g2^{\sum alpha^{n + 1 - i} * t_i,j} * tj/tmp )
         let mut g2_vec: Vec<G2Affine> = vec![];
         for j in 0..num_commit {
+            let mut tmp3 = tmp_inverse.clone();
+            let scalar = match Fr::from_repr(tj[j]) {
+                Ok(p) => p,
+                Err(_e) => return false,
+            };
+            tmp3.mul_assign(&scalar);
+
             let mut bases: Vec<G2Affine> = vec![];
+            let mut scalars_u64: Vec<[u64; 4]> = vec![];
             for i in 0..ti_s[j].len() {
                 bases.push(verifier_params.generators[verifier_params.n - set[j][i] - 1]);
+
+                let mut t = ti_s[j][i].clone();
+                t.mul_assign(&tmp3);
+                scalars_u64.push(t.into_repr().0);
             }
-            let scalars_u64: Vec<&[u64; 4]> = ti_s[j].iter().map(|s| &s.0).collect();
-            let param_subset_sum = G2Affine::sum_of_products(&bases, &scalars_u64);
+
+            let mut scalars_u64_ref: Vec<&[u64; 4]> = vec![];
+            for i in 0..ti_s[j].len() {
+                scalars_u64_ref.push(&scalars_u64[i]);
+            }
+
+            let param_subset_sum = G2Affine::sum_of_products(&bases, &scalars_u64_ref);
+
             g2_vec.push(param_subset_sum.into_affine());
         }
         // the last element for g1_vec is g2

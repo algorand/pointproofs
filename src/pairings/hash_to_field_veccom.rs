@@ -76,12 +76,30 @@ pub fn hash_to_tj<Blob: AsRef<[u8]>>(
 
     Ok(res)
 }
-
+pub fn hash_to_ti_fr<Blob: AsRef<[u8]>>(
+    commit: &Commitment,
+    set: &[usize],
+    value_sub_vector: &[Blob],
+    n: usize,
+) -> Result<Vec<Fr>, String> {
+    let frrepr_vec = hash_to_ti_repr(commit, set, value_sub_vector, n)?;
+    let mut fr_vec: Vec<Fr> = vec![];
+    for frrepr in &frrepr_vec {
+        let fr = match Fr::from_repr(*frrepr) {
+            Ok(p) => p,
+            // the hash_to_ti_repr should already produce valid Fr elements
+            // something is wrong if this errors
+            Err(e) => panic!(e),
+        };
+        fr_vec.push(fr);
+    }
+    Ok(fr_vec)
+}
 // input: the commitment
 // input: a list of indices, for which we need to generate t_i
 // input: Value: the messages that is commited to
 // output: a list of field elements
-pub fn hash_to_ti<Blob: AsRef<[u8]>>(
+pub fn hash_to_ti_repr<Blob: AsRef<[u8]>>(
     commit: &Commitment,
     set: &[usize],
     value_sub_vector: &[Blob],
