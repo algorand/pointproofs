@@ -8,32 +8,38 @@ use pairing::bls12_381::*;
 //     pp_len: usize,
 // }
 
+type VeccomG1 = G2;
+type VeccomG2 = G1;
+type VeccomG1Affine = G2Affine;
+type VeccomG2Affine = G1Affine;
+
+
 #[derive(Clone, Debug)]
 pub struct ProverParams {
     pub ciphersuite: Ciphersuite,
     pub n: usize,
-    pub generators: Vec<G1Affine>,
+    pub generators: Vec<VeccomG1Affine>,
     pub pp_len: usize,
-    pub precomp: Vec<G1Affine>,
+    pub precomp: Vec<VeccomG1Affine>,
 }
 #[derive(Clone, Debug)]
 pub struct VerifierParams {
     ciphersuite: Ciphersuite,
     pub n: usize,
-    generators: Vec<G2Affine>,
+    generators: Vec<VeccomG2Affine>,
     gt_elt: Fq12,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Commitment {
     pub ciphersuite: Ciphersuite,
-    pub commit: G1,
+    pub commit: VeccomG1,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Proof {
     ciphersuite: Ciphersuite,
-    proof: G1,
+    proof: VeccomG1,
 }
 
 // TODO: refactor what's public and what's not

@@ -5,6 +5,7 @@ use super::*;
 use super::{Commitment, Proof};
 use ff::Field;
 use pairing::{serdes::SerDes, CurveProjective, Engine};
+use pairings::*;
 
 #[test]
 fn test_paramgen() {
@@ -23,21 +24,24 @@ fn test_paramgen() {
     // of the two groups, and see if they all match as appropriate.
 
     for i in 0..n {
-        dh_values.push(Bls12::pairing(prover_params.generators[i], G2::one()));
+        dh_values.push(Bls12::pairing(VeccomG2::one(), prover_params.generators[i]));
     }
     dh_values.push(verifier_params.gt_elt);
     for i in n + 1..2 * n {
-        dh_values.push(Bls12::pairing(prover_params.generators[i], G2::one()));
+        dh_values.push(Bls12::pairing(VeccomG2::one(), prover_params.generators[i]));
     }
     for i in 0..n {
         dh_values.push(Bls12::pairing(
-            prover_params.generators[2 * n - 1],
             verifier_params.generators[i],
+            prover_params.generators[2 * n - 1],
         ));
     }
 
     for (i, e) in dh_values.iter().enumerate().take(n) {
-        assert_eq!(e, &Bls12::pairing(G1::one(), verifier_params.generators[i]));
+        assert_eq!(
+            e,
+            &Bls12::pairing(verifier_params.generators[i], VeccomG1::one())
+        );
     }
 
     for i in 0..2 * n {
@@ -45,7 +49,7 @@ fn test_paramgen() {
             for j in 0..n {
                 assert_eq!(
                     dh_values[i + j + 1],
-                    Bls12::pairing(prover_params.generators[i], verifier_params.generators[j])
+                    Bls12::pairing(verifier_params.generators[j], prover_params.generators[i])
                 );
             }
         }

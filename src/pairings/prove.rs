@@ -10,6 +10,10 @@ use pairings::hash_to_field_veccom::hash_to_field_repr_veccom;
 use pairing::serdes::SerDes;
 use pairing::Engine;
 use pairing::{bls12_381::*, CurveAffine, CurveProjective};
+use pairings::*;
+
+
+
 // impl std::cmp::PartialEq for Proof {
 //     /// Convenient function to compare secret key objects
 //     fn eq(&self, other: &Self) -> bool {
@@ -148,9 +152,9 @@ impl Proof {
         // get the list of scalas
         let ti = hash_to_ti_repr(commit, set, value_sub_vector, n)?;
         let scalars_u64: Vec<&[u64; 4]> = ti.iter().map(|s| &s.0).collect();
-        let bases: Vec<G1Affine> = proofs.iter().map(|s| s.proof.into_affine()).collect();
+        let bases: Vec<VeccomG1Affine> = proofs.iter().map(|s| s.proof.into_affine()).collect();
         // proof = \prod proofs[i] ^ ti[i]
-        let proof = G1Affine::sum_of_products(&bases[..], &scalars_u64);
+        let proof = VeccomG1Affine::sum_of_products(&bases[..], &scalars_u64);
 
         Ok(Proof {
             ciphersuite: csid,
@@ -199,9 +203,9 @@ impl Proof {
         }
 
         let scalars_u64: Vec<&[u64; 4]> = scalars.iter().map(|s| &s.0).collect();
-        let bases: Vec<G1Affine> = pi.iter().map(|s| s.proof.into_affine()).collect();
+        let bases: Vec<VeccomG1Affine> = pi.iter().map(|s| s.proof.into_affine()).collect();
         // proof = \prod pi[i] ^ tj[i]
-        let proof = G1Affine::sum_of_products(&bases[..], &scalars_u64);
+        let proof = VeccomG1Affine::sum_of_products(&bases[..], &scalars_u64);
 
         Ok(Proof {
             ciphersuite: commits[0].ciphersuite,
@@ -288,12 +292,12 @@ impl Proof {
 
         // 2.2 g2^{\sum_{i \in set} \alpha^{N+1-i} t_i}
 
-        let mut bases: Vec<G2Affine> = vec![];
+        let mut bases: Vec<VeccomG2Affine> = vec![];
         for index in set.iter().take(ti.len()) {
             bases.push(verifier_params.generators[verifier_params.n - index - 1]);
         }
         let scalars_u64: Vec<&[u64; 4]> = ti.iter().map(|s| &s.0).collect();
-        let param_subset_sum = G2Affine::sum_of_products(&bases, &scalars_u64);
+        let param_subset_sum = VeccomG2Affine::sum_of_products(&bases, &scalars_u64);
 
         // 2.3 proof ^ {-tmp}
         let mut proof_mut = self.proof;
@@ -302,10 +306,10 @@ impl Proof {
 
         // 3 pairing product
         Bls12::pairing_product(
-            com_mut,
             param_subset_sum,
+            com_mut,
+            VeccomG2Affine::one().into_projective(),
             proof_mut,
-            G2Affine::one().into_projective(),
         ) == verifier_params.gt_elt
     }
 
@@ -379,7 +383,7 @@ impl Proof {
 
         // g1_vec stores the g1 components for the pairing product
         // for j \in [num_commit], store com[j]
-        let mut g1_vec: Vec<G1Affine> = vec![];
+        let mut g1_vec: Vec<VeccomG1Affine> = vec![];
         for j in 0..num_commit {
             g1_vec.push(com[j].commit.into_affine());
             // let mut tmp2 = com[j].commit;
@@ -399,7 +403,7 @@ impl Proof {
 
         // g2_vec stores the g2 components for the pairing product
         // for j \in [num_commit], g2^{\sum alpha^{n + 1 - i} * t_i,j} * tj/tmp )
-        let mut g2_vec: Vec<G2Affine> = vec![];
+        let mut g2_vec: Vec<VeccomG2Affine> = vec![];
         for j in 0..num_commit {
             let mut tmp3 = tmp_inverse.clone();
             let scalar = match Fr::from_repr(tj[j]) {
@@ -408,7 +412,7 @@ impl Proof {
             };
             tmp3.mul_assign(&scalar);
 
-            let mut bases: Vec<G2Affine> = vec![];
+            let mut bases: Vec<VeccomG2Affine> = vec![];
             let mut scalars_u64: Vec<[u64; 4]> = vec![];
             for i in 0..ti_s[j].len() {
                 bases.push(verifier_params.generators[verifier_params.n - set[j][i] - 1]);
@@ -423,16 +427,16 @@ impl Proof {
                 scalars_u64_ref.push(&scalars_u64[i]);
             }
 
-            let param_subset_sum = G2Affine::sum_of_products(&bases, &scalars_u64_ref);
+            let param_subset_sum = VeccomG2Affine::sum_of_products(&bases, &scalars_u64_ref);
 
             g2_vec.push(param_subset_sum.into_affine());
         }
         // the last element for g1_vec is g2
-        g2_vec.push(G2::one().into_affine());
+        g2_vec.push( VeccomG2::one().into_affine());
 
         // now check the pairing product ?= verifier_params.Fq12
 
-        Bls12::pairing_multi_product(&g1_vec[..], &g2_vec[..]) == verifier_params.gt_elt
+        Bls12::pairing_multi_product( &g2_vec[..], &g1_vec[..]) == verifier_params.gt_elt
     }
 }
 
@@ -487,7 +491,7 @@ impl SerDes for Proof {
         }
 
         // read into proof
-        let proof = G1::deserialize(reader, compressed)?;
+        let proof = VeccomG1::deserialize(reader, compressed)?;
 
         // finished
         Ok(Proof {
@@ -561,7 +565,7 @@ impl SerDes for Proof {
 /**
  * Assumes prover_params are correctly generated for n = values.len and that index<n
  */
-fn prove<Blob: AsRef<[u8]>>(prover_params: &ProverParams, values: &[Blob], index: usize) -> G1 {
+fn prove<Blob: AsRef<[u8]>>(prover_params: &ProverParams, values: &[Blob], index: usize) -> VeccomG1 {
     let n = values.len();
     let scalars_fr_repr: Vec<FrRepr> = values
         .iter()
@@ -574,13 +578,13 @@ fn prove<Blob: AsRef<[u8]>>(prover_params: &ProverParams, values: &[Blob], index
         .collect();
     let scalars_u64: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
     if prover_params.precomp.len() == 512 * n {
-        G1Affine::sum_of_products_precomp_256(
+        VeccomG1Affine::sum_of_products_precomp_256(
             &prover_params.generators[n - index..2 * n - index],
             &scalars_u64,
             &prover_params.precomp[(n - index) * 256..(2 * n - index) * 256],
         )
     } else {
-        G1Affine::sum_of_products(
+        VeccomG1Affine::sum_of_products(
             &prover_params.generators[n - index..2 * n - index],
             &scalars_u64,
         )
@@ -594,12 +598,12 @@ fn prove<Blob: AsRef<[u8]>>(prover_params: &ProverParams, values: &[Blob], index
  */
 fn proof_update(
     prover_params: &ProverParams,
-    proof: &G1,
+    proof: &VeccomG1,
     proof_index: usize,
     changed_index: usize,
     value_before: &[u8],
     value_after: &[u8],
-) -> G1 {
+) -> VeccomG1 {
     let mut new_proof = *proof;
 
     if proof_index == changed_index {

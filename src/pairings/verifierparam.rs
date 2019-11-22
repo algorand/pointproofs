@@ -3,6 +3,7 @@ use super::err::*;
 use super::VerifierParams;
 use pairing::bls12_381::*;
 use pairing::serdes::SerDes;
+use pairings::*;
 
 type Compressed = bool;
 
@@ -82,9 +83,9 @@ impl SerDes for VerifierParams {
         // };
 
         // write the generators
-        let mut generators: Vec<G2Affine> = vec![];
+        let mut generators: Vec<VeccomG2Affine> = vec![];
         for _i in 0..n {
-            let g = G2Affine::deserialize(reader, compressed)?;
+            let g = VeccomG2Affine::deserialize(reader, compressed)?;
             generators.push(g);
         }
         let gt_elt = Fq12::deserialize(reader, compressed)?;

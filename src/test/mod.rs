@@ -13,12 +13,12 @@ use veccom_paramgen::VeccomParams;
 //     assert!(false)
 // }
 
-#[test]
-fn test_read_param() {
-    let mut f = std::fs::File::open("default.param").unwrap();
-
-    let _t = VeccomParams::deserialize(&mut f, true);
-}
+// #[test]
+// fn test_read_param() {
+//     let mut f = std::fs::File::open("default.param").unwrap();
+//
+//     let _t = VeccomParams::deserialize(&mut f, true);
+// }
 
 #[test]
 fn test_aggregation_small() {
@@ -119,9 +119,8 @@ fn test_aggregation_large() {
     for i in &test_dim {
         let n = *i;
         // read the parameters
-        let file_name = format!("benches/pre-gen-param/{}.param", n);
-        let mut file = std::fs::File::open(file_name).unwrap();
-        let (pp, vp) = paramgen::read_param(&mut file).unwrap();
+        let (pp, vp) =
+            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, n).unwrap();
 
         let mut init_values = Vec::with_capacity(n);
         for i in 0..n {
@@ -161,9 +160,9 @@ fn test_cross_commit_aggregation_large() {
     for i in &test_dim {
         let n = *i;
         // read the parameters
-        let file_name = format!("benches/pre-gen-param/{}.param", n);
-        let mut file = std::fs::File::open(file_name).unwrap();
-        let (pp, vp) = paramgen::read_param(&mut file).unwrap();
+        let (pp, vp) =
+            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, n).unwrap();
+
 
         let mut values: Vec<Vec<Vec<u8>>> = vec![];
         let mut commits: Vec<Commitment> = vec![];

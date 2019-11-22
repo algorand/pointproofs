@@ -3,6 +3,7 @@ use pairings::hash_to_field_veccom::hash_to_field_veccom;
 //use pairing::Wnaf;
 use super::VerifierParams;
 use ff::Field;
+use pairings::*;
 //use pairing::hash_to_field::HashToField;
 
 /**
@@ -10,8 +11,8 @@ use ff::Field;
  */
 pub fn verify(
     verifier_params: &VerifierParams,
-    com: &G1,
-    proof: &G1,
+    com: &VeccomG1,
+    proof: &VeccomG1,
     value: &[u8],
     index: usize,
 ) -> bool {
@@ -30,8 +31,8 @@ pub fn verify(
 
 pub fn verify_hash_inverse(
     verifier_params: &VerifierParams,
-    com: &G1,
-    proof: &G1,
+    com: &VeccomG1,
+    proof: &VeccomG1,
     hash_inverse: Option<Fr>,
     index: usize,
 ) -> bool {
@@ -50,18 +51,21 @@ pub fn verify_hash_inverse(
             com_mut.mul_assign(h_inverse);
             proof_mut.mul_assign(h_inverse);
             Bls12::pairing_product(
+                    verifier_params.generators[n - index - 1],
                 com_mut,
-                verifier_params.generators[n - index - 1],
+
+                    VeccomG2Affine::one(),
                 proof_mut,
-                G2Affine::one(),
+
             ) == verifier_params.gt_elt
         }
         None => {
             Bls12::pairing_product(
-                com_mut,
                 verifier_params.generators[n - index - 1],
+                com_mut,
+                VeccomG2Affine::one(),
                 proof_mut,
-                G2Affine::one(),
+
             ) == Fq12::one()
         }
     }

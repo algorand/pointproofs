@@ -3,13 +3,14 @@ use super::err::*;
 use super::ProverParams;
 use pairing::serdes::SerDes;
 use pairing::{bls12_381::*, CurveAffine};
+use pairings::*;
 
 impl ProverParams {
     /// pre-process the public parameters with precomputation value set to 3
     pub fn precomp_3(&mut self) {
         self.ciphersuite = 1;
         let twice_n = self.generators.len();
-        self.precomp = vec![G1Affine::zero(); 3 * twice_n];
+        self.precomp = vec![VeccomG1Affine::zero(); 3 * twice_n];
         for i in 0..twice_n {
             self.generators[i].precomp_3(&mut self.precomp[i * 3..(i + 1) * 3]);
         }
@@ -20,7 +21,7 @@ impl ProverParams {
     pub fn precomp_256(&mut self) {
         self.ciphersuite = 2;
         let twice_n = self.generators.len();
-        self.precomp = vec![G1Affine::zero(); 256 * twice_n];
+        self.precomp = vec![VeccomG1Affine::zero(); 256 * twice_n];
         for i in 0..twice_n {
             self.generators[i].precomp_256(&mut self.precomp[i * 256..(i + 1) * 256]);
         }
@@ -108,11 +109,11 @@ impl SerDes for ProverParams {
         // };
 
         // write csid
-        let mut generators: Vec<G1Affine> = vec![];
+        let mut generators: Vec<VeccomG1Affine> = vec![];
 
         // write the generators
         for _i in 0..n * 2 {
-            let g = G1Affine::deserialize(reader, compressed)?;
+            let g = VeccomG1Affine::deserialize(reader, compressed)?;
             generators.push(g);
         }
 
@@ -120,9 +121,9 @@ impl SerDes for ProverParams {
         reader.read_exact(&mut buf)?;
         let pp_len = usize::from_le_bytes(buf);
 
-        let mut precomp: Vec<G1Affine> = vec![];
+        let mut precomp: Vec<VeccomG1Affine> = vec![];
         for _i in 0..pp_len {
-            let g = G1Affine::deserialize(reader, compressed)?;
+            let g = VeccomG1Affine::deserialize(reader, compressed)?;
             precomp.push(g);
         }
 

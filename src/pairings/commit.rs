@@ -7,6 +7,7 @@ use pairings::hash_to_field_veccom::hash_to_field_repr_veccom;
 //use pairing::hash_to_field::HashToField;
 use pairing::serdes::SerDes;
 use pairing::{bls12_381::*, CurveAffine, CurveProjective};
+use pairings::*;
 
 impl Commitment {
     pub fn new<Blob: AsRef<[u8]>>(
@@ -113,7 +114,7 @@ impl SerDes for Commitment {
         }
 
         // read into commit
-        let commit = G1::deserialize(reader, compressed)?;
+        let commit = VeccomG1::deserialize(reader, compressed)?;
 
         // finished
         Ok(Commitment {
@@ -130,7 +131,7 @@ fn commit<Blob: AsRef<[u8]>>(
     //    sp: &SystemParam,
     prover_params: &ProverParams,
     values: &[Blob],
-) -> G1 {
+) -> VeccomG1 {
     // TODO: hashing is now a noticeable portion of commit time. Need rethink hashing.
     let n = values.len();
 
@@ -140,13 +141,13 @@ fn commit<Blob: AsRef<[u8]>>(
         .collect();
     let scalars_u64: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
     if prover_params.precomp.len() == 512 * n {
-        G1Affine::sum_of_products_precomp_256(
+        VeccomG1Affine::sum_of_products_precomp_256(
             &prover_params.generators[0..n],
             &scalars_u64,
             &prover_params.precomp,
         )
     } else {
-        G1Affine::sum_of_products(&prover_params.generators[0..n], &scalars_u64)
+        VeccomG1Affine::sum_of_products(&prover_params.generators[0..n], &scalars_u64)
     }
 }
 
@@ -155,11 +156,11 @@ fn commit<Blob: AsRef<[u8]>>(
  */
 fn commit_update(
     prover_params: &ProverParams,
-    com: &G1,
+    com: &VeccomG1,
     changed_index: usize,
     value_before: &[u8],
     value_after: &[u8],
-) -> G1 {
+) -> VeccomG1 {
     let mut multiplier = hash_to_field_veccom(&value_before);
     multiplier.negate();
     multiplier.add_assign(&hash_to_field_veccom(&value_after));
