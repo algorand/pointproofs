@@ -58,3 +58,33 @@ Check `veccom-paramgen`
 | batch verify 128 proofs | 25.7 ms | 25.3 ms| hash to 128 scalars + sum of 128 product in G2|
 | batch verify 256 proofs | 42.9 ms | 42.8 ms| hash to 256 scalars + sum of 256 product in G2|
 | batch verify n proofs | 71.9 ms | 119.4 ms| hash to n scalars +sum of n product in G2|
+
+
+
+## new benchmark data
+
+Cross commit, AWS (Slower than MBP)
+
+### Aggregate, n = 16, data in _ms_
+
+
+|# commit | 2 proof per commit  | 4 proof per commit | 8 proof per commit | 16 proof per commit |
+|---|---:|---:|---:|---:|
+| 2 | 2.25 | 2.95 | 4.13 | 6.22 |
+| 4 | 4.12 | 5.56 | 7.98 | 12.06 |
+| 8 | 7.65 | 10.54 | 15.40 | 23.55 |
+| 16 | 14.69 | 20.59 | 30.04 | 46.65 |
+| 32 | 28.67 | 40.38 | 59.11 | 92.28 |
+| 64 | 55.96 | 79.02 | | |
+
+### Batch verify, n = 16, data in _ms_
+
+
+|# commit | 2 proof per commit  | 4 proof per commit | 8 proof per commit | 16 proof per commit |
+|---|---:|---:|---:|---:|
+| 2 | 9.17 | 11.43 | 15.00 | 20.95 |
+| 4 | 15.01 | 19.87 | 26.69 | 38.72 |
+| 8 | 26.68 | 35.89 | 49.98 |  73.58 |
+| 16 | 50.54 | 68.21 | 96.42 | 143.25 |
+| 32 | 98.27 | 133.59 | 188.95 | 283.71 |
+| 64 | 192.22 | | | |
