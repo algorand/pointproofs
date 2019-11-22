@@ -140,6 +140,11 @@ impl Proof {
         if proofs.len() != set.len() || proofs.len() != value_sub_vector.len() {
             return Err(ERR_INDEX_PROOF_NOT_MATCH.to_owned());
         }
+        // if len == 1, then return the proof
+        if proofs.len() == 1 {
+            return Ok(proofs[0].clone());
+        }
+
         // get the list of scalas
         let ti = hash_to_ti_repr(commit, set, value_sub_vector, n)?;
         let scalars_u64: Vec<&[u64; 4]> = ti.iter().map(|s| &s.0).collect();
@@ -244,6 +249,10 @@ impl Proof {
             }
         }
 
+        // if the length == 1, call normal verification method
+        if set.len() == 1 {
+            return self.verify(&verifier_params, &com, value_sub_vector[0].as_ref(), set[0]);
+        }
         // 1. compute tmp
         // 1.1 get the list of scalas, return false if this failed
         let ti = match hash_to_ti_repr(com, set, value_sub_vector, verifier_params.n) {

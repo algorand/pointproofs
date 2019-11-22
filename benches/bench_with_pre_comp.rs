@@ -13,15 +13,15 @@ use veccom::pairings::*;
 
 // const N_ARRAY: [usize; 6] = [256, 1024, 4096, 16384, 65536, 262144];
 // const N_ARRAY: [usize; 3] = [256, 1024, 4096];
-const N_ARRAY: [usize; 1] = [256];
-const MAX_P: usize = 16;
-const MAX_C: usize = 16;
+const N_ARRAY: [usize; 2] = [256, 1024];
+const MAX_P: usize = 1;
+const MAX_C: usize = 1024;
 criterion_group!(
     benches,
-    bench_veccom_commit,
-    bench_veccom_proof,
-    bench_veccom_commit_update,
-    bench_veccom_proof_update,
+    // bench_veccom_commit,
+    // bench_veccom_proof,
+    // bench_veccom_commit_update,
+    // bench_veccom_proof_update,
     bench_veccom_aggregate,
     bench_veccom_batch_verify,
     bench_veccom_cross_commit_aggregate,
