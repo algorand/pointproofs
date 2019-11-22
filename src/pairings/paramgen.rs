@@ -2,11 +2,10 @@ use super::ciphersuite::*;
 use super::err::*;
 use super::{ProverParams, VerifierParams};
 use ff::Field;
-use pairing::serdes::SerDes;
 use pairing::{bls12_381::*, CurveAffine, CurveProjective, Engine};
 use pairings::hash_to_field_veccom::hash_to_field_veccom;
 use pairings::*;
-use veccom_paramgen::*;
+
 // /// this function reads the default parameter
 // /// it should not be used other than for testing/benchmarking purpose
 // #[cfg(test)]

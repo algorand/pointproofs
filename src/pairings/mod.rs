@@ -1,18 +1,10 @@
 use self::ciphersuite::Ciphersuite;
 use pairing::bls12_381::*;
 
-// #[derive(Clone, Debug)]
-// pub struct SystemParam {
-//     ciphersuite: Ciphersuite,
-//     pub n: usize,
-//     pp_len: usize,
-// }
-
 type VeccomG1 = G2;
 type VeccomG2 = G1;
 type VeccomG1Affine = G2Affine;
 type VeccomG2Affine = G1Affine;
-
 
 #[derive(Clone, Debug)]
 pub struct ProverParams {
@@ -52,9 +44,6 @@ pub mod paramgen;
 pub mod prove;
 mod proverparam;
 mod verifierparam;
-mod verify;
+
 
 pub use self::paramgen::paramgen_from_seed;
-
-#[cfg(test)]
-mod tests;

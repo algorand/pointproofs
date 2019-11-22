@@ -18,13 +18,13 @@ impl SerDes for VerifierParams {
         mut writer: &mut W,
         compressed: Compressed,
     ) -> std::io::Result<()> {
-        // get the system parameter, which implicitly
-        // checks the ciphersuite id
-        // let sp = match get_system_paramter(self.ciphersuite) {
-        //     Err(e) => return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, e)),
-        //     Ok(p) => p,
-        // };
-
+        if compressed == false {
+            // we only support compress == true mode
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                ERR_COMPRESS,
+            ));
+        }
         // check that #generators matches sp
         if self.n != self.generators.len() {
             return Err(std::io::Error::new(
@@ -36,18 +36,12 @@ impl SerDes for VerifierParams {
         writer.write_all(&[self.ciphersuite])?;
         writer.write_all(&self.n.to_le_bytes())?;
 
-        // write csid
-        //        let mut buf: Vec<u8> = vec![self.ciphersuite];
-
         // write the generators
         for e in self.generators.iter() {
-            e.serialize(&mut writer, compressed)?;
+            e.serialize(&mut writer, true)?;
         }
 
-        self.gt_elt.serialize(&mut writer, compressed)?;
-
-        // format the output
-        //    writer.write_all(&buf)?;
+        self.gt_elt.serialize(&mut writer, true)?;
 
         Ok(())
     }
@@ -60,6 +54,13 @@ impl SerDes for VerifierParams {
         reader: &mut R,
         compressed: Compressed,
     ) -> std::io::Result<Self> {
+        if compressed == false {
+            // we only support compress == true mode
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                ERR_COMPRESS,
+            ));
+        }
         // read into buf of compressed size
         let mut csid = vec![0u8; 1];
         reader.read_exact(&mut csid)?;
@@ -71,24 +72,25 @@ impl SerDes for VerifierParams {
             ));
         }
 
+        // read n
         let mut buf = [0u8; 8];
         reader.read_exact(&mut buf)?;
         let n = usize::from_le_bytes(buf);
-
-        // get the system parameter, which implicitly
-        // checks the ciphersuite id
-        // let sp = match get_system_paramter(csid[0]) {
-        //     Err(e) => return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, e)),
-        //     Ok(p) => p,
-        // };
-
+        if n > 655365 && n == 0 {
+            // set an upper bounded of n
+            // to prevent potential DoS kind of attacks
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                ERR_MAX_N,
+            ));
+        }
         // write the generators
         let mut generators: Vec<VeccomG2Affine> = vec![];
         for _i in 0..n {
-            let g = VeccomG2Affine::deserialize(reader, compressed)?;
+            let g = VeccomG2Affine::deserialize(reader, true)?;
             generators.push(g);
         }
-        let gt_elt = Fq12::deserialize(reader, compressed)?;
+        let gt_elt = Fq12::deserialize(reader, true)?;
 
         // format the output
         Ok(Self {

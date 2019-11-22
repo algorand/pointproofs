@@ -3,10 +3,9 @@ use super::err::*;
 use super::hash_to_field_veccom::hash_to_field_veccom;
 use super::{Commitment, ProverParams};
 use ff::Field;
-use pairings::hash_to_field_veccom::hash_to_field_repr_veccom;
-//use pairing::hash_to_field::HashToField;
 use pairing::serdes::SerDes;
 use pairing::{bls12_381::*, CurveAffine, CurveProjective};
+use pairings::hash_to_field_veccom::hash_to_field_repr_veccom;
 use pairings::*;
 
 impl Commitment {
@@ -14,8 +13,7 @@ impl Commitment {
         prover_params: &ProverParams,
         values: &[Blob],
     ) -> Result<Self, String> {
-        // implicitly checks that cipersuite is supported
-        //let sp = get_system_paramter(prover_params.ciphersuite)?;
+        // checks that cipersuite is supported
         assert!(
             check_ciphersuite(prover_params.ciphersuite),
             ERR_CIPHERSUITE.to_owned()
@@ -42,8 +40,7 @@ impl Commitment {
         value_before: Blob,
         value_after: Blob,
     ) -> Result<(), String> {
-        // implicitly checks that cipersuite is supported
-        // let sp = get_system_paramter(prover_params.ciphersuite)?;
+        // checks that cipersuite is supported
         assert!(
             check_ciphersuite(prover_params.ciphersuite),
             ERR_CIPHERSUITE.to_owned()
@@ -132,7 +129,6 @@ fn commit<Blob: AsRef<[u8]>>(
     prover_params: &ProverParams,
     values: &[Blob],
 ) -> VeccomG1 {
-    // TODO: hashing is now a noticeable portion of commit time. Need rethink hashing.
     let n = values.len();
 
     let scalars_fr_repr: Vec<FrRepr> = values
@@ -183,31 +179,6 @@ fn commit_update(
     new_com.add_assign(&res);
     new_com
 }
-//
-// /**
-//  * convert a commitment (which is a projective G1 element) into a string of 48 bytes
-//  * Copied from the bls library
-//  */
-// fn convert_commitment_to_bytes(commitment: &G1) -> [u8; 48] {
-//     let s = pairing::bls12_381::G1Compressed::from_affine(commitment.into_affine());
-//     let mut out: [u8; 48] = [0; 48];
-//     out.copy_from_slice(s.as_ref());
-//     out
-// }
-//
-// /**
-//  * Take an array of 48 bytes and output a commitment
-//  * Copied from the bls library
-//  * In case bytes don't convert to a meaningful element of G1, defaults to the group generator
-//  */
-// fn convert_bytes_to_commitment(input: &[u8; 48]) -> G1 {
-//     let mut commitment_compressed = G1Compressed::empty();
-//     commitment_compressed.as_mut().copy_from_slice(input);
-//     match commitment_compressed.into_affine() {
-//         Ok(commitment_affine) => commitment_affine.into_projective(),
-//         Err(_) => G1::zero(),
-//     }
-// }
 
 #[cfg(test)]
 /**
@@ -215,6 +186,7 @@ fn commit_update(
  * Needed for testing only (in order to test verify, which handles the case of hash ==  0 separately)
  * Assumes prover_params are correctly generated for n such that changed_index<n
  */
+// no longer needed since the hash_to_field_veccom will never output 0
 pub fn update_to_zero_hash(
     prover_params: &ProverParams,
     com: &Commitment,

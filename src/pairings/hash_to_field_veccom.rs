@@ -24,7 +24,7 @@ pub fn hash_to_tj<Blob: AsRef<[u8]>>(
     if commits.len() != set.len() || commits.len() != value_sub_vector.len() {
         return Err(ERR_X_COM_SIZE.to_owned());
     };
-    //    println!("{} {} {}", commits.len(), set.len(), value_sub_vector.len());
+
     // check the ciphersuite is supported
     for e in commits {
         if !check_ciphersuite(e.ciphersuite) {
@@ -59,7 +59,6 @@ pub fn hash_to_tj<Blob: AsRef<[u8]>>(
             tmp.append(&mut t.to_vec());
         }
     }
-    //    println!("{:?}", tmp);
 
     let mut hasher = Sha512::new();
     hasher.input(tmp);

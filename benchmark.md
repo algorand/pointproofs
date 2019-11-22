@@ -63,7 +63,7 @@ Check `veccom-paramgen`
 
 ## new benchmark data
 
-Cross commit, AWS (Slower than MBP)
+Cross commit, AWS Intel(R) Xeon(R) CPU E5-2686 v4 @ 2.30GHz (Slower than MBP)
 
 ### Aggregate, n = 16, data in _ms_
 
