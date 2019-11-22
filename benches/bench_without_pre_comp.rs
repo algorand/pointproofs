@@ -17,7 +17,7 @@ use veccom::pairings::*;
 
 // const N_ARRAY: [usize; 6] = [256, 1024, 4096, 16384, 65536, 262144];
 // const N_ARRAY: [usize; 3] = [256, 1024, 4096];
-const N_ARRAY: [usize; 3] = [8, 256, 1024];
+const N_ARRAY: [usize; 4] = [16, 64, 256, 1024];
 const P_ARRAY: [usize; 4] = [2, 4, 8, 16];
 const C_ARRAY: [usize; 9] = [2, 4, 8, 16, 32, 64, 128, 256, 1024];
 //const PWD: &str = "/home/ubuntu/pre-com/";
@@ -57,9 +57,15 @@ fn bench_x_com_helper(c: &mut Criterion, n: usize, num_commit: usize, num_proof:
             ));
         }
         for proof_index in 0..num_proof {
-            proofs_per_commit.push(Proof::new(&pp, &value_per_commit, proof_index).unwrap());
+            proofs_per_commit.push(match Proof::new(&pp, &value_per_commit, proof_index) {
+                Err(e) => panic!(e),
+                Ok(p) => p,
+            });
         }
-        commits.push(Commitment::new(&pp, &value_per_commit).unwrap());
+        commits.push(match Commitment::new(&pp, &value_per_commit) {
+            Err(e) => panic!(e),
+            Ok(p) => p,
+        });
         value.push(value_per_commit);
         proofs.push(proofs_per_commit);
     }
@@ -95,19 +101,21 @@ fn bench_x_com_helper(c: &mut Criterion, n: usize, num_commit: usize, num_proof:
     let value_sub_vector_clone = value_sub_vector.clone();
     c.bench_function(&bench_str, move |b| {
         let file_name = format!(
-            "benches/x-com-aggregate-c{}-p{}.proof",
-            num_commit, num_proof
+            "benches/x-com-aggregate-n{}-c{}-p{}.proof",
+            n, num_commit, num_proof
         );
         let mut file = std::fs::File::create(file_name).unwrap();
         b.iter(|| {
-            let agg_proof = Proof::cross_commit_aggregate(
+            let agg_proof = match Proof::cross_commit_aggregate(
                 &commits_clone,
                 &proofs,
                 &index_clone,
                 &value_sub_vector_clone,
                 n,
-            )
-            .unwrap();
+            ) {
+                Ok(p) => p,
+                Err(e) => panic!(e),
+            };
 
             agg_proof.serialize(&mut file, true).unwrap();
         })
@@ -119,8 +127,8 @@ fn bench_x_com_helper(c: &mut Criterion, n: usize, num_commit: usize, num_proof:
     );
     c.bench_function(&bench_str, move |b| {
         let file_name = format!(
-            "benches/x-com-aggregate-c{}-p{}.proof",
-            num_commit, num_proof
+            "benches/x-com-aggregate-n{}-c{}-p{}.proof",
+            n, num_commit, num_proof
         );
         let mut file = std::fs::File::open(file_name).unwrap();
         let agg_proof = Proof::deserialize(&mut file, true).unwrap();
