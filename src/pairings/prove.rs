@@ -140,10 +140,10 @@ impl Proof {
         if proofs.len() != set.len() || proofs.len() != value_sub_vector.len() {
             return Err(ERR_INDEX_PROOF_NOT_MATCH.to_owned());
         }
-        // if len == 1, then return the proof
-        if proofs.len() == 1 {
-            return Ok(proofs[0].clone());
-        }
+        // // if len == 1, then return the proof
+        // if proofs.len() == 1 {
+        //     return Ok(proofs[0].clone());
+        // }
 
         // get the list of scalas
         let ti = hash_to_ti_repr(commit, set, value_sub_vector, n)?;

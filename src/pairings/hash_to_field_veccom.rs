@@ -108,6 +108,15 @@ pub fn hash_to_ti_repr<Blob: AsRef<[u8]>>(
     if !check_ciphersuite(commit.ciphersuite) {
         return Err(ERR_CIPHERSUITE.to_owned());
     }
+    if set.len() != value_sub_vector.len() {
+        return Err(ERR_INVALID_INDEX.to_owned());
+    }
+
+    // handle the case where there is only one input
+    // in this case, simply return FrRepr::one()
+    if set.len() == 1 {
+        return Ok(vec![FrRepr([1, 0, 0, 0])]);
+    }
 
     // tmp = C | S | m[S]
     let mut tmp: Vec<u8> = vec![];
