@@ -95,7 +95,7 @@ Cross commit, AWS (Slower than MBP)
 
 |# commit  |1 proof per commit | 2 proof per commit  | 4 proof per commit | 8 proof per commit | 16 proof per commit |
 |---|---:|---:|---:|---:|---:|
-| 1024 | 0.098 | 0.85 | 1227.6 | 1.82 | |
+| 1024 | 0.098 | 0.85 | 1.23 | 1.82 | 2.89 |
 
 ### Batch verify, n = 1024, data in _s_
 
