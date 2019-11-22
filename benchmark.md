@@ -88,3 +88,18 @@ Cross commit, AWS (Slower than MBP)
 | 16 | 50.54 | 68.21 | 96.42 | 143.25 |
 | 32 | 98.27 | 133.59 | 188.95 | 283.71 |
 | 64 | 192.22 | | | |
+
+
+### Aggregate, n = 16, data in _ms_
+
+
+|# commit  |1 proof per commit | 2 proof per commit  | 4 proof per commit | 8 proof per commit | 16 proof per commit |
+|---|---:|---:|---:|---:|---:|
+| 1024 | 98.50 | 849.5 | 1227.6 |  | |
+
+### Batch verify, n = 16, data in _s_
+
+
+|# commit | 1 proof per commit | 2 proof per commit  | 4 proof per commit | 8 proof per commit | 16 proof per commit |
+|---|---:|---:|---:|---:|---:|
+| 1024 | 1.99 | 3.07 |  |  | |
