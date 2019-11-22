@@ -18,7 +18,7 @@ use veccom::pairings::*;
 // const N_ARRAY: [usize; 6] = [256, 1024, 4096, 16384, 65536, 262144];
 // const N_ARRAY: [usize; 3] = [256, 1024, 4096];
 const N_ARRAY: [usize; 4] = [16, 64, 256, 1024];
-const P_ARRAY: [usize; 4] = [2, 4, 8, 16];
+const P_ARRAY: [usize; 5] = [1, 2, 4, 8, 16];
 const C_ARRAY: [usize; 9] = [2, 4, 8, 16, 32, 64, 128, 256, 1024];
 //const PWD: &str = "/home/ubuntu/pre-com/";
 
@@ -99,7 +99,8 @@ fn bench_x_com_helper(c: &mut Criterion, n: usize, num_commit: usize, num_proof:
     let commits_clone = commits.clone();
     let index_clone = index.clone();
     let value_sub_vector_clone = value_sub_vector.clone();
-    c.bench_function(&bench_str, move |b| {
+
+    let bench = Benchmark::new(&bench_str, move |b| {
         let file_name = format!(
             "benches/x-com-aggregate-n{}-c{}-p{}.proof",
             n, num_commit, num_proof
@@ -125,7 +126,7 @@ fn bench_x_com_helper(c: &mut Criterion, n: usize, num_commit: usize, num_proof:
         "x-com batch verify: n = {}, c = {}, p = {}",
         n, num_commit, num_proof
     );
-    c.bench_function(&bench_str, move |b| {
+    let bench = bench.with_function(&bench_str, move |b| {
         let file_name = format!(
             "benches/x-com-aggregate-n{}-c{}-p{}.proof",
             n, num_commit, num_proof
@@ -139,6 +140,12 @@ fn bench_x_com_helper(c: &mut Criterion, n: usize, num_commit: usize, num_proof:
             );
         })
     });
+
+    let bench = bench.warm_up_time(Duration::from_millis(1000));
+    let bench = bench.measurement_time(Duration::from_millis(5000));
+    let bench = bench.sample_size(20);
+
+    c.bench("pairings", bench);
 }
 
 fn bench_main(mut c: &mut Criterion) {
