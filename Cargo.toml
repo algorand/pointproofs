@@ -22,7 +22,7 @@
   itoa = "0.4"
   typenum = "1.10.0"
   bigint = { version = "4", default-features = false }
-  veccom-paramgen = { git = "ssh://git@github.com/algorand/veccom-paramgen", branch = "potential_bug"}
+  # veccom-paramgen = { git = "ssh://git@github.com/algorand/veccom-paramgen", branch = "potential_bug"}
   # veccom-paramgen = { path = "../veccom-paramgen"}
 
 [build-dependencies]
