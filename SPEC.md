@@ -88,7 +88,7 @@ This file is still under construction
   * Error: serialization fails
   * Steps: serialize the parameters into a blob
     1. For `ProverParams`, convert `|ciphersuite id | n | generators | pp_len | [pre_compute]` to bytes
-    2. For `VerifierParam`, convert  `|ciphersuite id | n | generators | pp_len | [pre_compute]` to bytes
+    2. For `VerifierParam`, convert  `|ciphersuite id | n | generators |` to bytes
 
 
   ``` rust
@@ -103,7 +103,7 @@ This file is still under construction
   * Error: deserialization fails
   * Steps: deserialize the blob into parameters
     1. For `ProverParams`, convert bytes to `|ciphersuite id | n | generators | pp_len | [pre_compute]`
-    2. For `VerifierParam`, convert bytes to `|ciphersuite id | n | generators | pp_len | [pre_compute]`
+    2. For `VerifierParam`, convert bytes to `|ciphersuite id | n | generators |`
 
 ## Commitment    
 
