@@ -10,6 +10,8 @@ This file is still under construction
 
 ## Ciphersuites
 
+* Definitions
+
   ``` rust
   /// Ciphersuite is a wrapper of u8
   pub type Ciphersuite = u8;
@@ -26,6 +28,8 @@ This file is still under construction
 
 ## Groups
 
+* Definitions
+
   ``` rust
   /// the VeccomG1 and VeccomG2 are switched to improve verification speed
   /// VeccomG1 represents G1 in the paper, and is mapped to bls12-381::G2
@@ -38,6 +42,7 @@ This file is still under construction
 
 ## ProverParam and VerifierParam
 
+* Definitions
   ``` rust
   pub struct ProverParams {
       pub ciphersuite: Ciphersuite,
@@ -102,6 +107,7 @@ This file is still under construction
 
 ## Commitment    
 
+* Definitions
   ``` rust
   pub struct Commitment {
       ciphersuite: Ciphersuite,
@@ -169,7 +175,7 @@ This file is still under construction
 
 ## hashes
 
-### veccom's hash to field
+* veccom's hash to field
 
   ``` rust
   // hash_to_field_veccom use SHA 512 to hash a blob into a non-zero field element
@@ -182,7 +188,7 @@ This file is still under construction
     4. if `t == 0` return 1, else return `t`
   * Note: always returns a non-zero field element. The output should be IND from uniform.
 
-### hash to t_j
+* hash to t_j
 
   ``` rust
   pub fn hash_to_tj<Blob: AsRef<[u8]>>(
@@ -204,7 +210,7 @@ This file is still under construction
     3. for `0 <= i < commits.len()`, `res[i] = hash_to_field_veccom(i, digest)`
 
 
-### hash to t_i
+* hash to t_i
 
   ``` rust
   pub fn hash_to_ti_fr<Blob: AsRef<[u8]>>(
