@@ -31,6 +31,13 @@ pub fn hash_to_tj<Blob: AsRef<[u8]>>(
             return Err(ERR_CIPHERSUITE.to_owned());
         }
     }
+
+    // handle the case where there is only one input
+    // in this case, simply return FrRepr::one()
+    if commits.len() == 1 {
+        return Ok(vec![FrRepr([1, 0, 0, 0])]);
+    }
+
     // tmp = {C | S | m[S]} for i \in [0 .. commit.len-1]
     let mut tmp: Vec<u8> = vec![];
     for i in 0..commits.len() {
@@ -75,6 +82,10 @@ pub fn hash_to_tj<Blob: AsRef<[u8]>>(
 
     Ok(res)
 }
+// input: the commitment
+// input: a list of indices, for which we need to generate t_i
+// input: Value: the messages that is commited to
+// output: a list of field elements
 pub fn hash_to_ti_fr<Blob: AsRef<[u8]>>(
     commit: &Commitment,
     set: &[usize],

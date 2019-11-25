@@ -5,13 +5,13 @@ use super::hash_to_field_veccom::{
 };
 use super::{Commitment, Proof, ProverParams, VerifierParams};
 use ff::{Field, PrimeField};
-use pairing::serdes::SerDes;
 use pairing::Engine;
 use pairing::{bls12_381::*, CurveAffine, CurveProjective};
 use pairings::hash_to_field_veccom::hash_to_field_repr_veccom;
 use pairings::*;
 
 impl Proof {
+    /// generate a new proof
     pub fn new<Blob: AsRef<[u8]>>(
         prover_params: &ProverParams,
         values: &[Blob],
@@ -34,6 +34,7 @@ impl Proof {
         })
     }
 
+    /// update the proof
     pub fn update<Blob: AsRef<[u8]>>(
         &mut self,
         prover_params: &ProverParams,
@@ -65,6 +66,7 @@ impl Proof {
         Ok(())
     }
 
+    /// Verify the proof
     pub fn verify<Blob: AsRef<[u8]>>(
         &self,
         verifier_params: &VerifierParams,
@@ -97,7 +99,7 @@ impl Proof {
         )
     }
 
-    /// Aggregates a vector of commitments into a single one
+    /// Aggregates a vector of proofs into a single one
     /// Note: the aggregator does not check the validity of
     /// individual commits. The caller may need to check them
     /// if they care for it.
@@ -133,7 +135,8 @@ impl Proof {
         })
     }
 
-    /// TODO: description
+    /// Aggregate a 2-dim array of proofs, each row corresponding to a
+    /// commit, into a single proof
     pub fn cross_commit_aggregate<Blob: AsRef<[u8]>>(
         commits: &Vec<Commitment>,
         proofs: &Vec<Vec<Self>>,
@@ -208,7 +211,7 @@ impl Proof {
         })
     }
 
-    /// TODO: description
+    /// batch verify a proof for a list of values/indices
     pub fn batch_verify<Blob: AsRef<[u8]>>(
         &self,
         verifier_params: &VerifierParams,
@@ -304,6 +307,7 @@ impl Proof {
         ) == verifier_params.gt_elt
     }
 
+    /// verify a proof which was aggregated from 2-dim array of proofs
     pub fn cross_commit_batch_verify<Blob: AsRef<[u8]>>(
         &self,
         verifier_params: &VerifierParams,
@@ -311,8 +315,17 @@ impl Proof {
         set: &Vec<Vec<usize>>,
         value_sub_vector: &Vec<Vec<Blob>>,
     ) -> bool {
-        // TODO: check ciphersuite
+        // check ciphersuite
+        if self.ciphersuite != verifier_params.ciphersuite {
+            return false;
+        }
+        for e in com {
+            if self.ciphersuite != e.ciphersuite {
+                return false;
+            }
+        }
 
+        // check length
         let num_commit = com.len();
         if num_commit != set.len() || num_commit != value_sub_vector.len() || num_commit == 0 {
             // length does not match
@@ -324,6 +337,8 @@ impl Proof {
                 return false;
             }
         }
+
+        // handled the case where there is only 1 commit
         if num_commit == 1 {
             // call normal batch verification
             return self.batch_verify(&verifier_params, &com[0], &set[0], &value_sub_vector[0]);
@@ -433,69 +448,7 @@ impl Proof {
         g2_vec.push(VeccomG2::one().into_affine());
 
         // now check the pairing product ?= verifier_params.Fq12
-
         Bls12::pairing_multi_product(&g2_vec[..], &g1_vec[..]) == verifier_params.gt_elt
-    }
-}
-
-type Compressed = bool;
-impl SerDes for Proof {
-    /// Convert a pop into a blob:
-    ///
-    /// `|ciphersuite id| commit |` => bytes
-    ///
-    /// Returns an error if ciphersuite id is invalid or serialization fails.
-    fn serialize<W: std::io::Write>(
-        &self,
-        writer: &mut W,
-        compressed: Compressed,
-    ) -> std::io::Result<()> {
-        // check the cipher suite id
-        if !check_ciphersuite(self.ciphersuite) {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                ERR_CIPHERSUITE,
-            ));
-        }
-        let mut buf: Vec<u8> = vec![self.ciphersuite];
-        self.proof.serialize(&mut buf, compressed)?;
-
-        // format the output
-        writer.write_all(&buf)?;
-        Ok(())
-    }
-
-    /// Convert a blob into a PoP:
-    ///
-    /// bytes => `|ciphersuite id | commit |`
-    ///
-    /// Returns an error if deserialization fails, or if
-    /// the commit is not compressed.
-    fn deserialize<R: std::io::Read>(
-        reader: &mut R,
-        compressed: Compressed,
-    ) -> std::io::Result<Self> {
-        // constants stores id and the number of ssk-s
-        let mut constants: [u8; 1] = [0u8; 1];
-
-        reader.read_exact(&mut constants)?;
-
-        // check the ciphersuite id in the blob
-        if !check_ciphersuite(constants[0]) {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                ERR_CIPHERSUITE,
-            ));
-        }
-
-        // read into proof
-        let proof = VeccomG1::deserialize(reader, compressed)?;
-
-        // finished
-        Ok(Proof {
-            ciphersuite: constants[0],
-            proof,
-        })
     }
 }
 

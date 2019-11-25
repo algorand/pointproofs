@@ -92,12 +92,14 @@ pub fn paramgen_from_seed<Blob: AsRef<[u8]>>(
         return Err(ERR_SEED_TOO_SHORT.to_owned());
     }
 
-    // get the system parameters, which also implicitly
     // checks the validity of the inputs
-    // let sp = get_system_paramter(ciphersuite)?;
     if !check_ciphersuite(ciphersuite) {
         return Err(ERR_CIPHERSUITE.to_owned());
     }
+    if n > 65536 {
+        return Err(ERR_MAX_N.to_owned());
+    }
+
     // invoke the internal parameter generation function
     Ok(paramgen_from_alpha(
         &hash_to_field_veccom(&seed),
@@ -155,4 +157,99 @@ fn paramgen_from_alpha(
             gt_elt: gt,
         },
     )
+}
+
+
+
+impl ProverParams {
+    /// pre-process the public parameters with precomputation value set to 3
+    pub fn precomp_3(&mut self) {
+        let twice_n = self.generators.len();
+        self.precomp = vec![VeccomG1Affine::zero(); 3 * twice_n];
+        for i in 0..twice_n {
+            self.generators[i].precomp_3(&mut self.precomp[i * 3..(i + 1) * 3]);
+        }
+        self.pp_len = self.n * 6;
+    }
+
+    /// pre-process the public parameters with precomputation value set to 256
+    pub fn precomp_256(&mut self) {
+        let twice_n = self.generators.len();
+        self.precomp = vec![VeccomG1Affine::zero(); 256 * twice_n];
+        for i in 0..twice_n {
+            self.generators[i].precomp_256(&mut self.precomp[i * 256..(i + 1) * 256]);
+        }
+        self.pp_len = self.n * 512;
+    }
+
+    /// check if the parameters are correct
+    pub fn check_parameters(&self, vp: &VerifierParams) -> bool {
+        if self.n != vp.n || self.ciphersuite != vp.ciphersuite {
+            return false;
+        }
+
+        // prover_params.generators[i] should contain the generator of the G1 group raised to the power alpha^{i+1},
+        // except prover_params.generators[n] will contain nothing useful.
+        // verifier_params.generators[j] should contain the generator of the G2 group raised to the power alpha^{j+1}.
+        // gt should contain the generator of the target group raised to the power alpha^{n+1}.
+
+        let mut dh_values = Vec::with_capacity(3 * self.n);
+        // If all is correct, then
+        // dh_values[i] will contains the generator of the target group raised to the power alpha^{i+1}
+        // We will test all possible pairing of the two arrays with each other and with the generators
+        // of the two groups, and see if they all match as appropriate.
+
+        for i in 0..self.n {
+            dh_values.push(Bls12::pairing(VeccomG2::one(), self.generators[i]));
+        }
+        dh_values.push(vp.gt_elt);
+        for i in self.n + 1..2 * self.n {
+            dh_values.push(Bls12::pairing(VeccomG2::one(), self.generators[i]));
+        }
+        for i in 0..self.n {
+            dh_values.push(Bls12::pairing(
+                vp.generators[i],
+                self.generators[2 * self.n - 1],
+            ));
+        }
+
+        for (i, e) in dh_values.iter().enumerate().take(self.n) {
+            if e != &Bls12::pairing(vp.generators[i], VeccomG1::one()) {
+                return false;
+            };
+        }
+
+        for i in 0..2 * self.n {
+            if i != self.n {
+                for j in 0..self.n {
+                    if dh_values[i + j + 1] != Bls12::pairing(vp.generators[j], self.generators[i])
+                    {
+                        return false;
+                    };
+                }
+            }
+        }
+        true
+    }
+}
+
+impl std::cmp::PartialEq for ProverParams {
+    /// Convenient function to compare secret key objects
+    fn eq(&self, other: &Self) -> bool {
+        self.ciphersuite == other.ciphersuite
+            && self.n == other.n
+            && self.generators == other.generators
+            && self.pp_len == other.pp_len
+            && self.precomp == other.precomp
+    }
+}
+
+impl std::cmp::PartialEq for VerifierParams {
+    /// Convenient function to compare secret key objects
+    fn eq(&self, other: &Self) -> bool {
+        self.ciphersuite == other.ciphersuite
+            && self.n == other.n
+            && self.generators == other.generators
+            && self.gt_elt == other.gt_elt
+    }
 }

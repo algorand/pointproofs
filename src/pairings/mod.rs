@@ -42,8 +42,6 @@ mod err;
 pub mod hash_to_field_veccom;
 pub mod paramgen;
 pub mod prove;
-mod proverparam;
-mod verifierparam;
-
+mod serdes;
 
 pub use self::paramgen::paramgen_from_seed;

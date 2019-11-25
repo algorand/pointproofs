@@ -3,7 +3,6 @@ use super::err::*;
 use super::hash_to_field_veccom::hash_to_field_veccom;
 use super::{Commitment, ProverParams};
 use ff::Field;
-use pairing::serdes::SerDes;
 use pairing::{bls12_381::*, CurveAffine, CurveProjective};
 use pairings::hash_to_field_veccom::hash_to_field_repr_veccom;
 use pairings::*;
@@ -24,11 +23,7 @@ impl Commitment {
         };
 
         Ok(Self {
-            // FIXME: there is a potential mismatch of ciphersuite
-            // prover_params.ciphersuite can be 0, 1, 2
-            // while that of commitment and verifier_params are all 0
             ciphersuite: 0,
-            // commit: commit(&sp, &prover_params, values),
             commit: commit(&prover_params, values),
         })
     }
@@ -60,75 +55,11 @@ impl Commitment {
         Ok(())
     }
 }
-type Compressed = bool;
-impl SerDes for Commitment {
-    /// Convert a pop into a blob:
-    ///
-    /// `|ciphersuite id| commit |` => bytes
-    ///
-    /// Returns an error if ciphersuite id is invalid or serialization fails.
-    fn serialize<W: std::io::Write>(
-        &self,
-        writer: &mut W,
-        compressed: Compressed,
-    ) -> std::io::Result<()> {
-        // check the cipher suite id
-        if !check_ciphersuite(self.ciphersuite) {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                ERR_CIPHERSUITE,
-            ));
-        }
-        let mut buf: Vec<u8> = vec![self.ciphersuite];
-        self.commit.serialize(&mut buf, compressed)?;
-
-        // format the output
-        writer.write_all(&buf)?;
-        Ok(())
-    }
-
-    /// Convert a blob into a PoP:
-    ///
-    /// bytes => `|ciphersuite id | commit |`
-    ///
-    /// Returns an error if deserialization fails, or if
-    /// the commit is not compressed.
-    fn deserialize<R: std::io::Read>(
-        reader: &mut R,
-        compressed: Compressed,
-    ) -> std::io::Result<Self> {
-        // constants stores id and the number of ssk-s
-        let mut constants: [u8; 1] = [0u8; 1];
-
-        reader.read_exact(&mut constants)?;
-
-        // check the ciphersuite id in the blob
-        if !check_ciphersuite(constants[0]) {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                ERR_CIPHERSUITE,
-            ));
-        }
-
-        // read into commit
-        let commit = VeccomG1::deserialize(reader, compressed)?;
-
-        // finished
-        Ok(Commitment {
-            ciphersuite: constants[0],
-            commit,
-        })
-    }
-}
 
 /**
  * Assumes prover_params are correctly generated for n = values.len
  */
-fn commit<Blob: AsRef<[u8]>>(
-    //    sp: &SystemParam,
-    prover_params: &ProverParams,
-    values: &[Blob],
-) -> VeccomG1 {
+fn commit<Blob: AsRef<[u8]>>(prover_params: &ProverParams, values: &[Blob]) -> VeccomG1 {
     let n = values.len();
 
     let scalars_fr_repr: Vec<FrRepr> = values
