@@ -137,7 +137,7 @@ impl SerDes for ProverParams {
         mut writer: &mut W,
         compressed: Compressed,
     ) -> std::io::Result<()> {
-        if compressed == false {
+        if !compressed {
             // we only support compress == true mode
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
@@ -179,7 +179,7 @@ impl SerDes for ProverParams {
         reader: &mut R,
         compressed: Compressed,
     ) -> std::io::Result<Self> {
-        if compressed == false {
+        if !compressed {
             // we only support compress == true mode
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
@@ -201,7 +201,7 @@ impl SerDes for ProverParams {
         let mut buf = [0u8; 8];
         reader.read_exact(&mut buf)?;
         let n = usize::from_le_bytes(buf);
-        if n > 655365 && n == 0 {
+        if n > 65536 && n == 0 {
             // set an upper bounded of n
             // to prevent potential DoS kind of attacks
             return Err(std::io::Error::new(
@@ -240,7 +240,6 @@ impl SerDes for ProverParams {
     }
 }
 
-
 impl SerDes for VerifierParams {
     /// Convert a ProverParam into a blob:
     ///
@@ -252,7 +251,7 @@ impl SerDes for VerifierParams {
         mut writer: &mut W,
         compressed: Compressed,
     ) -> std::io::Result<()> {
-        if compressed == false {
+        if !compressed {
             // we only support compress == true mode
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
@@ -288,7 +287,7 @@ impl SerDes for VerifierParams {
         reader: &mut R,
         compressed: Compressed,
     ) -> std::io::Result<Self> {
-        if compressed == false {
+        if !compressed {
             // we only support compress == true mode
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
@@ -310,7 +309,7 @@ impl SerDes for VerifierParams {
         let mut buf = [0u8; 8];
         reader.read_exact(&mut buf)?;
         let n = usize::from_le_bytes(buf);
-        if n > 655365 && n == 0 {
+        if n > 65536 && n == 0 {
             // set an upper bounded of n
             // to prevent potential DoS kind of attacks
             return Err(std::io::Error::new(

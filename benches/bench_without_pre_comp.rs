@@ -4,14 +4,9 @@ extern crate ff;
 extern crate pairing_plus as pairing;
 extern crate veccom;
 
-use criterion::Bencher;
 use criterion::Benchmark;
 use criterion::Criterion;
 use pairing::serdes::SerDes;
-// use pairing::CurveProjective;
-use ff::PrimeField;
-use pairing::bls12_381::*;
-use pairing::CurveProjective;
 use std::time::Duration;
 use veccom::pairings::*;
 

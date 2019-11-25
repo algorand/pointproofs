@@ -15,9 +15,9 @@ use std::ops::Rem;
 // input: Value: a list of k * x messages that is commited to
 // output: a list of k field elements
 pub fn hash_to_tj<Blob: AsRef<[u8]>>(
-    commits: &Vec<Commitment>,
-    set: &Vec<Vec<usize>>,
-    value_sub_vector: &Vec<Vec<Blob>>,
+    commits: &[Commitment],
+    set: &[Vec<usize>],
+    value_sub_vector: &[Vec<Blob>],
     n: usize,
 ) -> Result<Vec<FrRepr>, String> {
     // check the length are correct

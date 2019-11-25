@@ -138,17 +138,17 @@ impl Proof {
     /// Aggregate a 2-dim array of proofs, each row corresponding to a
     /// commit, into a single proof
     pub fn cross_commit_aggregate<Blob: AsRef<[u8]>>(
-        commits: &Vec<Commitment>,
-        proofs: &Vec<Vec<Self>>,
-        set: &Vec<Vec<usize>>,
-        value_sub_vector: &Vec<Vec<Blob>>,
+        commits: &[Commitment],
+        proofs: &[Vec<Self>],
+        set: &[Vec<usize>],
+        value_sub_vector: &[Vec<Blob>],
         n: usize,
     ) -> Result<Self, String> {
         // check the length are correct
         if commits.len() != proofs.len()
             || commits.len() != set.len()
             || commits.len() != value_sub_vector.len()
-            || commits.len() == 0
+            || commits.is_empty()
         {
             println!(
                 "commit: {}, proofs: {}, set: {}, value_sub_vector: {}",
@@ -311,9 +311,9 @@ impl Proof {
     pub fn cross_commit_batch_verify<Blob: AsRef<[u8]>>(
         &self,
         verifier_params: &VerifierParams,
-        com: &Vec<Commitment>,
-        set: &Vec<Vec<usize>>,
-        value_sub_vector: &Vec<Vec<Blob>>,
+        com: &[Commitment],
+        set: &[Vec<usize>],
+        value_sub_vector: &[Vec<Blob>],
     ) -> bool {
         // check ciphersuite
         if self.ciphersuite != verifier_params.ciphersuite {
@@ -397,8 +397,8 @@ impl Proof {
         // g1_vec stores the g1 components for the pairing product
         // for j \in [num_commit], store com[j]
         let mut g1_vec: Vec<VeccomG1Affine> = vec![];
-        for j in 0..num_commit {
-            g1_vec.push(com[j].commit.into_affine());
+        for c in com {
+            g1_vec.push(c.commit.into_affine());
             // let mut tmp2 = com[j].commit;
             // let mut scalar = match Fr::from_repr(tj[j]) {
             //     Ok(p) => p,
@@ -418,7 +418,7 @@ impl Proof {
         // for j \in [num_commit], g2^{\sum alpha^{n + 1 - i} * t_i,j} * tj/tmp )
         let mut g2_vec: Vec<VeccomG2Affine> = vec![];
         for j in 0..num_commit {
-            let mut tmp3 = tmp_inverse.clone();
+            let mut tmp3 = tmp_inverse;
             let scalar = match Fr::from_repr(tj[j]) {
                 Ok(p) => p,
                 Err(_e) => return false,
@@ -430,14 +430,14 @@ impl Proof {
             for i in 0..ti_s[j].len() {
                 bases.push(verifier_params.generators[verifier_params.n - set[j][i] - 1]);
 
-                let mut t = ti_s[j][i].clone();
+                let mut t = ti_s[j][i];
                 t.mul_assign(&tmp3);
                 scalars_u64.push(t.into_repr().0);
             }
 
             let mut scalars_u64_ref: Vec<&[u64; 4]> = vec![];
-            for i in 0..ti_s[j].len() {
-                scalars_u64_ref.push(&scalars_u64[i]);
+            for e in scalars_u64.iter().take(ti_s[j].len())  {
+                scalars_u64_ref.push(&e);
             }
 
             let param_subset_sum = VeccomG2Affine::sum_of_products(&bases, &scalars_u64_ref);
