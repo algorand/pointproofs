@@ -24,7 +24,7 @@ See `veccom-paramgen`
 
 ## Proof
 
-|Function| n = 512 | n = 1024 | main cost |
+|Function| n = 1024 | main cost |
 |---|---:|:---|
 | new proof without pre-computation |   169.49 ms|  sum of n product |
 | new proof with pre-computation = 3 |   169.93 ms | sum of n product |
