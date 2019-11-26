@@ -18,26 +18,26 @@ See `veccom-paramgen`
 | new commitment without pre-computation |   169.38 ms | sum of n product |
 | new commitment with pre-computation = 3 |   168.45 ms  | sum of n product |
 | new commitment with pre-computation = 256 |  127.35 ms | sum of n product |
-| commitment update without pre-computation |  ms| 2 hash_to_field + g1_mul |
-| commitment update with pre-computation = 3 |   ms| 2 hash_to_field + g1_mul |
-| commitment update with pre-computation = 256 |   ms| 2 hash_to_field + g1_mul |
+| commitment update without pre-computation | 1.03 ms | 2 hash_to_field + g1_mul |
+| commitment update with pre-computation = 3 | 0.51 ms | 2 hash_to_field + g1_mul |
+| commitment update with pre-computation = 256 |  0.20 ms | 2 hash_to_field + g1_mul |
 
 ## Proof
 
 |Function| n = 1024 | main cost |
 |---|---:|:---|
-| new proof without pre-computation |   169.49 ms|  sum of n product |
+| new proof without pre-computation |   169.49 ms |  sum of n product |
 | new proof with pre-computation = 3 |   169.93 ms | sum of n product |
-| new proof with pre-computation = 256 |  132.14  ms |  sum of n product |
-| proof update without pre-computation |  ms| hash_to_field + g1_mul |
-| proof update with pre-computation = 3 |   ms| hash_to_field + g1_mul |
-| proof update with pre-computation = 256 |  ms| hash_to_field + g1_mul |
+| new proof with pre-computation = 256 |  132.14 ms |  sum of n product |
+| proof update without pre-computation |  1.09 ms | hash_to_field + g1_mul |
+| proof update with pre-computation = 3 |  0.49 ms | hash_to_field + g1_mul |
+| proof update with pre-computation = 256 |  0.21 ms | hash_to_field + g1_mul |
 
 ## Verify
 
 |Function|  n = 1024 | main cost |
 |---|---:|---:|
-|Verify|  ms| hash_to_field + 2 g1_mul + pairing_product |
+|Verify| 7.43 ms | hash_to_field + 2 g1_mul + pairing_product |
 
 
 
