@@ -159,8 +159,6 @@ fn paramgen_from_alpha(
     )
 }
 
-
-
 impl ProverParams {
     /// pre-process the public parameters with precomputation value set to 3
     pub fn precomp_3(&mut self) {

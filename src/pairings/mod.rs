@@ -1,10 +1,10 @@
 use self::ciphersuite::Ciphersuite;
 use pairing::bls12_381::*;
 
-type VeccomG1 = G2;
-type VeccomG2 = G1;
-type VeccomG1Affine = G2Affine;
-type VeccomG2Affine = G1Affine;
+pub type VeccomG1 = G2;
+pub type VeccomG2 = G1;
+pub type VeccomG1Affine = G2Affine;
+pub type VeccomG2Affine = G1Affine;
 
 #[derive(Clone, Debug)]
 pub struct ProverParams {

@@ -436,7 +436,7 @@ impl Proof {
             }
 
             let mut scalars_u64_ref: Vec<&[u64; 4]> = vec![];
-            for e in scalars_u64.iter().take(ti_s[j].len())  {
+            for e in scalars_u64.iter().take(ti_s[j].len()) {
                 scalars_u64_ref.push(&e);
             }
 
