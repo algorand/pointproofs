@@ -18,3 +18,4 @@ benches/pre-gen-param/target
 benches/pre-gen-com-and-proof/target
 *.proof
 *.commit
+data/process_data/target

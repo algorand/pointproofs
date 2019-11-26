@@ -1,0 +1,720 @@
+pairings/x-com aggregate: n = 1024, c = 1024, p = 1
+                        time:   [226.15 ms 226.19 ms 226.23 ms]
+pairings/x-com batch verify: n = 1024, c = 1024, p = 1
+                        time:   [1.1253 s 1.1255 s 1.1257 s]
+pairings/x-com aggregate: n = 1024, c = 1024, p = 2
+                        time:   [2.5088 s 2.5090 s 2.5091 s]
+pairings/x-com batch verify: n = 1024, c = 1024, p = 2
+                        time:   [1.4680 s 1.4682 s 1.4683 s]
+pairings/x-com aggregate: n = 1024, c = 1024, p = 4
+                        time:   [3.6812 s 3.6813 s 3.6814 s]
+pairings/x-com batch verify: n = 1024, c = 1024, p = 4
+                        time:   [1.8174 s 1.8176 s 1.8178 s]
+pairings/x-com aggregate: n = 1024, c = 1024, p = 8
+                        time:   [5.4954 s 5.4959 s 5.4965 s]
+pairings/x-com batch verify: n = 1024, c = 1024, p = 8
+                        time:   [2.3738 s 2.3741 s 2.3743 s]
+pairings/x-com aggregate: n = 1024, c = 1024, p = 16
+                        time:   [8.6009 s 8.6015 s 8.6021 s]
+pairings/x-com batch verify: n = 1024, c = 1024, p = 16
+                        time:   [3.3466 s 3.3469 s 3.3472 s]
+pairings/x-com aggregate: n = 1024, c = 2, p = 1
+                        time:   [2.3508 ms 2.3516 ms 2.3526 ms]
+pairings/x-com batch verify: n = 1024, c = 2, p = 1
+                        time:   [6.2638 ms 6.2661 ms 6.2686 ms]
+pairings/x-com aggregate: n = 1024, c = 2, p = 2
+                        time:   [6.6597 ms 6.6624 ms 6.6654 ms]
+pairings/x-com batch verify: n = 1024, c = 2, p = 2
+                        time:   [7.0104 ms 7.0151 ms 7.0193 ms]
+pairings/x-com aggregate: n = 1024, c = 2, p = 4
+                        time:   [9.2127 ms 9.2198 ms 9.2249 ms]
+pairings/x-com batch verify: n = 1024, c = 2, p = 4
+                        time:   [7.5934 ms 7.5966 ms 7.5998 ms]
+pairings/x-com aggregate: n = 1024, c = 2, p = 8
+                        time:   [12.497 ms 12.504 ms 12.513 ms]
+pairings/x-com batch verify: n = 1024, c = 2, p = 8
+                        time:   [8.7471 ms 8.7508 ms 8.7552 ms]
+pairings/x-com aggregate: n = 1024, c = 2, p = 16
+                        time:   [18.705 ms 18.710 ms 18.715 ms]
+pairings/x-com batch verify: n = 1024, c = 2, p = 16
+                        time:   [10.647 ms 10.651 ms 10.655 ms]
+pairings/x-com aggregate: n = 1024, c = 4, p = 1
+                        time:   [3.5142 ms 3.5158 ms 3.5177 ms]
+pairings/x-com batch verify: n = 1024, c = 4, p = 1
+                        time:   [8.3504 ms 8.3564 ms 8.3614 ms]
+pairings/x-com aggregate: n = 1024, c = 4, p = 2
+                        time:   [12.356 ms 12.362 ms 12.367 ms]
+pairings/x-com batch verify: n = 1024, c = 4, p = 2
+                        time:   [9.7928 ms 9.7969 ms 9.8016 ms]
+pairings/x-com aggregate: n = 1024, c = 4, p = 4
+                        time:   [17.211 ms 17.215 ms 17.219 ms]
+pairings/x-com batch verify: n = 1024, c = 4, p = 4
+                        time:   [11.224 ms 11.229 ms 11.234 ms]
+pairings/x-com aggregate: n = 1024, c = 4, p = 8
+                        time:   [24.103 ms 24.122 ms 24.146 ms]
+pairings/x-com batch verify: n = 1024, c = 4, p = 8
+                        time:   [13.279 ms 13.286 ms 13.293 ms]
+pairings/x-com aggregate: n = 1024, c = 4, p = 16
+                        time:   [36.390 ms 36.409 ms 36.429 ms]
+pairings/x-com batch verify: n = 1024, c = 4, p = 16
+                        time:   [16.990 ms 16.996 ms 17.004 ms]
+pairings/x-com aggregate: n = 1024, c = 8, p = 1
+                        time:   [5.4493 ms 5.4517 ms 5.4547 ms]
+pairings/x-com batch verify: n = 1024, c = 8, p = 1
+                        time:   [12.631 ms 12.640 ms 12.647 ms]
+pairings/x-com aggregate: n = 1024, c = 8, p = 2
+                        time:   [23.386 ms 23.394 ms 23.404 ms]
+pairings/x-com batch verify: n = 1024, c = 8, p = 2
+                        time:   [15.347 ms 15.353 ms 15.358 ms]
+pairings/x-com aggregate: n = 1024, c = 8, p = 4
+                        time:   [32.675 ms 32.687 ms 32.700 ms]
+pairings/x-com batch verify: n = 1024, c = 8, p = 4
+                        time:   [18.053 ms 18.059 ms 18.067 ms]
+pairings/x-com aggregate: n = 1024, c = 8, p = 8
+                        time:   [46.636 ms 46.656 ms 46.681 ms]
+pairings/x-com batch verify: n = 1024, c = 8, p = 8
+                        time:   [22.429 ms 22.434 ms 22.442 ms]
+pairings/x-com aggregate: n = 1024, c = 8, p = 16
+                        time:   [70.655 ms 70.670 ms 70.693 ms]
+pairings/x-com batch verify: n = 1024, c = 8, p = 16
+                        time:   [30.044 ms 30.055 ms 30.071 ms]
+pairings/x-com aggregate: n = 1024, c = 16, p = 1
+                        time:   [8.8517 ms 8.8560 ms 8.8607 ms]
+pairings/x-com batch verify: n = 1024, c = 16, p = 1
+                        time:   [21.164 ms 21.168 ms 21.174 ms]
+pairings/x-com aggregate: n = 1024, c = 16, p = 2
+                        time:   [44.603 ms 44.613 ms 44.624 ms]
+pairings/x-com batch verify: n = 1024, c = 16, p = 2
+                        time:   [26.496 ms 26.512 ms 26.530 ms]
+pairings/x-com aggregate: n = 1024, c = 16, p = 4
+                        time:   [62.959 ms 62.978 ms 62.997 ms]
+pairings/x-com batch verify: n = 1024, c = 16, p = 4
+                        time:   [32.028 ms 32.036 ms 32.043 ms]
+pairings/x-com aggregate: n = 1024, c = 16, p = 8
+                        time:   [90.933 ms 90.965 ms 90.999 ms]
+pairings/x-com batch verify: n = 1024, c = 16, p = 8
+                        time:   [40.588 ms 40.606 ms 40.625 ms]
+pairings/x-com aggregate: n = 1024, c = 16, p = 16
+                        time:   [139.33 ms 139.36 ms 139.39 ms]
+pairings/x-com batch verify: n = 1024, c = 16, p = 16
+                        time:   [55.950 ms 55.966 ms 55.985 ms]
+pairings/x-com aggregate: n = 1024, c = 32, p = 1
+                        time:   [14.413 ms 14.419 ms 14.427 ms]
+pairings/x-com batch verify: n = 1024, c = 32, p = 1
+                        time:   [38.090 ms 38.107 ms 38.127 ms]
+pairings/x-com aggregate: n = 1024, c = 32, p = 2
+                        time:   [85.431 ms 85.447 ms 85.467 ms]
+pairings/x-com batch verify: n = 1024, c = 32, p = 2
+                        time:   [49.030 ms 49.050 ms 49.072 ms]
+pairings/x-com aggregate: n = 1024, c = 32, p = 4
+                        time:   [122.72 ms 122.75 ms 122.79 ms]
+pairings/x-com batch verify: n = 1024, c = 32, p = 4
+                        time:   [59.814 ms 59.832 ms 59.853 ms]
+pairings/x-com aggregate: n = 1024, c = 32, p = 8
+                        time:   [178.75 ms 178.81 ms 178.87 ms]
+pairings/x-com batch verify: n = 1024, c = 32, p = 8
+                        time:   [77.224 ms 77.247 ms 77.270 ms]
+pairings/x-com aggregate: n = 1024, c = 32, p = 16
+                        time:   [275.14 ms 275.19 ms 275.24 ms]
+pairings/x-com batch verify: n = 1024, c = 32, p = 16
+                        time:   [107.42 ms 107.45 ms 107.49 ms]
+pairings/x-com aggregate: n = 1024, c = 64, p = 1
+                        time:   [23.741 ms 23.750 ms 23.758 ms]
+pairings/x-com batch verify: n = 1024, c = 64, p = 1
+                        time:   [72.150 ms 72.167 ms 72.186 ms]
+pairings/x-com aggregate: n = 1024, c = 64, p = 2
+                        time:   [166.51 ms 166.54 ms 166.59 ms]
+pairings/x-com batch verify: n = 1024, c = 64, p = 2
+                        time:   [93.453 ms 93.481 ms 93.516 ms]
+pairings/x-com aggregate: n = 1024, c = 64, p = 4
+                        time:   [239.88 ms 239.94 ms 240.00 ms]
+pairings/x-com batch verify: n = 1024, c = 64, p = 4
+                        time:   [115.40 ms 115.44 ms 115.48 ms]
+pairings/x-com aggregate: n = 1024, c = 64, p = 8
+                        time:   [352.60 ms 352.68 ms 352.74 ms]
+pairings/x-com batch verify: n = 1024, c = 64, p = 8
+                        time:   [149.96 ms 150.00 ms 150.04 ms]
+pairings/x-com aggregate: n = 1024, c = 64, p = 16
+                        time:   [545.32 ms 545.42 ms 545.52 ms]
+pairings/x-com batch verify: n = 1024, c = 64, p = 16
+                        time:   [211.16 ms 211.20 ms 211.24 ms]
+pairings/x-com aggregate: n = 1024, c = 128, p = 1
+                        time:   [40.785 ms 40.804 ms 40.827 ms]
+pairings/x-com batch verify: n = 1024, c = 128, p = 1
+                        time:   [140.21 ms 140.30 ms 140.39 ms]
+pairings/x-com aggregate: n = 1024, c = 128, p = 2
+                        time:   [325.79 ms 325.86 ms 325.95 ms]
+pairings/x-com batch verify: n = 1024, c = 128, p = 2
+                        time:   [182.90 ms 183.03 ms 183.16 ms]
+pairings/x-com aggregate: n = 1024, c = 128, p = 4
+                        time:   [473.55 ms 473.62 ms 473.68 ms]
+pairings/x-com batch verify: n = 1024, c = 128, p = 4
+                        time:   [226.89 ms 227.01 ms 227.14 ms]
+pairings/x-com aggregate: n = 1024, c = 128, p = 8
+                        time:   [698.47 ms 698.58 ms 698.68 ms]
+pairings/x-com batch verify: n = 1024, c = 128, p = 8
+                        time:   [296.57 ms 296.67 ms 296.78 ms]
+pairings/x-com aggregate: n = 1024, c = 128, p = 16
+                        time:   [1.0860 s 1.0861 s 1.0862 s]
+pairings/x-com batch verify: n = 1024, c = 128, p = 16
+                        time:   [418.60 ms 418.67 ms 418.75 ms]
+pairings/x-com aggregate: n = 1024, c = 256, p = 1
+                        time:   [71.153 ms 71.169 ms 71.183 ms]
+pairings/x-com batch verify: n = 1024, c = 256, p = 1
+                        time:   [278.13 ms 278.45 ms 278.81 ms]
+pairings/x-com aggregate: n = 1024, c = 256, p = 2
+                        time:   [643.51 ms 643.56 ms 643.60 ms]
+pairings/x-com batch verify: n = 1024, c = 256, p = 2
+                        time:   [363.64 ms 363.90 ms 364.23 ms]
+pairings/x-com aggregate: n = 1024, c = 256, p = 4
+                        time:   [936.31 ms 936.40 ms 936.52 ms]
+pairings/x-com batch verify: n = 1024, c = 256, p = 4
+                        time:   [451.47 ms 451.67 ms 451.86 ms]
+pairings/x-com aggregate: n = 1024, c = 256, p = 8
+                        time:   [1.3864 s 1.3865 s 1.3867 s]
+pairings/x-com batch verify: n = 1024, c = 256, p = 8
+                        time:   [589.06 ms 589.26 ms 589.49 ms]
+pairings/x-com aggregate: n = 1024, c = 256, p = 16
+                        time:   [2.1623 s 2.1624 s 2.1626 s]
+pairings/x-com batch verify: n = 1024, c = 256, p = 16
+                        time:   [833.14 ms 833.27 ms 833.41 ms]
+pairings/x-com aggregate: n = 16, c = 1024, p = 1
+                        time:   [225.17 ms 225.20 ms 225.24 ms]
+pairings/x-com batch verify: n = 16, c = 1024, p = 1
+                        time:   [1.1141 s 1.1143 s 1.1146 s]
+pairings/x-com aggregate: n = 16, c = 1024, p = 2
+                        time:   [2.5123 s 2.5125 s 2.5128 s]
+pairings/x-com batch verify: n = 16, c = 1024, p = 2
+                        time:   [1.4562 s 1.4566 s 1.4570 s]
+pairings/x-com aggregate: n = 16, c = 1024, p = 4
+                        time:   [3.6852 s 3.6854 s 3.6857 s]
+pairings/x-com batch verify: n = 16, c = 1024, p = 4
+                        time:   [1.8040 s 1.8042 s 1.8044 s]
+pairings/x-com aggregate: n = 16, c = 1024, p = 8
+                        time:   [5.4855 s 5.4858 s 5.4861 s]
+pairings/x-com batch verify: n = 16, c = 1024, p = 8
+                        time:   [2.3110 s 2.3274 s 2.3389 s]
+pairings/x-com aggregate: n = 16, c = 1024, p = 16
+                        time:   [8.2771 s 8.2926 s 8.3150 s]
+pairings/x-com batch verify: n = 16, c = 1024, p = 16
+                        time:   [3.1905 s 3.1981 s 3.2057 s]
+pairings/x-com aggregate: n = 16, c = 2, p = 1
+                        time:   [2.2601 ms 2.2754 ms 2.2984 ms]
+pairings/x-com batch verify: n = 16, c = 2, p = 1
+                        time:   [5.9297 ms 6.0039 ms 6.0870 ms]
+pairings/x-com aggregate: n = 16, c = 2, p = 2
+                        time:   [6.3870 ms 6.4782 ms 6.5519 ms]
+pairings/x-com batch verify: n = 16, c = 2, p = 2
+                        time:   [6.5584 ms 6.5925 ms 6.6287 ms]
+pairings/x-com aggregate: n = 16, c = 2, p = 4
+                        time:   [8.9347 ms 9.0132 ms 9.0886 ms]
+pairings/x-com batch verify: n = 16, c = 2, p = 4
+                        time:   [7.4288 ms 7.4894 ms 7.5419 ms]
+pairings/x-com aggregate: n = 16, c = 2, p = 8
+                        time:   [12.046 ms 12.102 ms 12.177 ms]
+pairings/x-com batch verify: n = 16, c = 2, p = 8
+                        time:   [8.4047 ms 8.4499 ms 8.5037 ms]
+pairings/x-com aggregate: n = 16, c = 2, p = 16
+                        time:   [17.896 ms 18.043 ms 18.198 ms]
+pairings/x-com batch verify: n = 16, c = 2, p = 16
+                        time:   [10.167 ms 10.259 ms 10.348 ms]
+pairings/x-com aggregate: n = 16, c = 4, p = 1
+                        time:   [3.3863 ms 3.4240 ms 3.4535 ms]
+pairings/x-com batch verify: n = 16, c = 4, p = 1
+                        time:   [8.0535 ms 8.1267 ms 8.2034 ms]
+pairings/x-com aggregate: n = 16, c = 4, p = 2
+                        time:   [11.872 ms 11.987 ms 12.128 ms]
+pairings/x-com batch verify: n = 16, c = 4, p = 2
+                        time:   [9.2282 ms 9.2930 ms 9.3522 ms]
+pairings/x-com aggregate: n = 16, c = 4, p = 4
+                        time:   [16.235 ms 16.399 ms 16.562 ms]
+pairings/x-com batch verify: n = 16, c = 4, p = 4
+                        time:   [10.626 ms 10.708 ms 10.818 ms]
+pairings/x-com aggregate: n = 16, c = 4, p = 8
+                        time:   [22.678 ms 22.862 ms 23.084 ms]
+pairings/x-com batch verify: n = 16, c = 4, p = 8
+                        time:   [12.531 ms 12.590 ms 12.670 ms]
+pairings/x-com aggregate: n = 16, c = 4, p = 16
+                        time:   [34.638 ms 34.824 ms 35.106 ms]
+pairings/x-com batch verify: n = 16, c = 4, p = 16
+                        time:   [16.254 ms 16.372 ms 16.535 ms]
+pairings/x-com aggregate: n = 16, c = 8, p = 1
+                        time:   [5.3092 ms 5.3665 ms 5.4327 ms]
+pairings/x-com batch verify: n = 16, c = 8, p = 1
+                        time:   [12.119 ms 12.206 ms 12.284 ms]
+pairings/x-com aggregate: n = 16, c = 8, p = 2
+                        time:   [22.552 ms 22.724 ms 22.886 ms]
+pairings/x-com batch verify: n = 16, c = 8, p = 2
+                        time:   [14.803 ms 14.915 ms 15.060 ms]
+pairings/x-com aggregate: n = 16, c = 8, p = 4
+                        time:   [31.184 ms 31.374 ms 31.636 ms]
+pairings/x-com batch verify: n = 16, c = 8, p = 4
+                        time:   [17.633 ms 17.861 ms 18.009 ms]
+pairings/x-com aggregate: n = 16, c = 8, p = 8
+                        time:   [44.022 ms 44.314 ms 44.655 ms]
+pairings/x-com batch verify: n = 16, c = 8, p = 8
+                        time:   [21.284 ms 21.431 ms 21.616 ms]
+pairings/x-com aggregate: n = 16, c = 8, p = 16
+                        time:   [68.036 ms 68.379 ms 68.716 ms]
+pairings/x-com batch verify: n = 16, c = 8, p = 16
+                        time:   [28.621 ms 28.855 ms 29.078 ms]
+pairings/x-com aggregate: n = 16, c = 16, p = 1
+                        time:   [8.5098 ms 8.5402 ms 8.5686 ms]
+pairings/x-com batch verify: n = 16, c = 16, p = 1
+                        time:   [20.519 ms 20.608 ms 20.724 ms]
+pairings/x-com aggregate: n = 16, c = 16, p = 2
+                        time:   [42.570 ms 42.790 ms 43.125 ms]
+pairings/x-com batch verify: n = 16, c = 16, p = 2
+                        time:   [25.317 ms 25.458 ms 25.674 ms]
+pairings/x-com aggregate: n = 16, c = 16, p = 4
+                        time:   [60.594 ms 60.802 ms 60.954 ms]
+pairings/x-com batch verify: n = 16, c = 16, p = 4
+                        time:   [31.129 ms 31.355 ms 31.574 ms]
+pairings/x-com aggregate: n = 16, c = 16, p = 8
+                        time:   [86.729 ms 87.166 ms 87.758 ms]
+pairings/x-com batch verify: n = 16, c = 16, p = 8
+                        time:   [38.737 ms 38.949 ms 39.231 ms]
+pairings/x-com aggregate: n = 16, c = 16, p = 16
+                        time:   [133.75 ms 134.64 ms 135.60 ms]
+pairings/x-com batch verify: n = 16, c = 16, p = 16
+                        time:   [53.221 ms 53.569 ms 54.014 ms]
+pairings/x-com aggregate: n = 16, c = 32, p = 1
+                        time:   [13.593 ms 13.662 ms 13.742 ms]
+pairings/x-com batch verify: n = 16, c = 32, p = 1
+                        time:   [37.237 ms 37.431 ms 37.665 ms]
+pairings/x-com aggregate: n = 16, c = 32, p = 2
+                        time:   [81.453 ms 81.808 ms 82.295 ms]
+pairings/x-com batch verify: n = 16, c = 32, p = 2
+                        time:   [46.020 ms 46.296 ms 46.703 ms]
+pairings/x-com aggregate: n = 16, c = 32, p = 4
+                        time:   [116.39 ms 117.25 ms 118.20 ms]
+pairings/x-com batch verify: n = 16, c = 32, p = 4
+                        time:   [58.198 ms 58.414 ms 58.658 ms]
+pairings/x-com aggregate: n = 16, c = 32, p = 8
+                        time:   [171.11 ms 171.88 ms 172.57 ms]
+pairings/x-com batch verify: n = 16, c = 32, p = 8
+                        time:   [72.781 ms 73.212 ms 73.734 ms]
+pairings/x-com aggregate: n = 16, c = 32, p = 16
+                        time:   [263.47 ms 264.20 ms 264.93 ms]
+pairings/x-com batch verify: n = 16, c = 32, p = 16
+                        time:   [102.33 ms 102.95 ms 103.52 ms]
+pairings/x-com aggregate: n = 16, c = 64, p = 1
+                        time:   [22.649 ms 22.766 ms 22.951 ms]
+pairings/x-com batch verify: n = 16, c = 64, p = 1
+                        time:   [69.969 ms 70.365 ms 70.782 ms]
+pairings/x-com aggregate: n = 16, c = 64, p = 2
+                        time:   [161.57 ms 162.26 ms 162.97 ms]
+pairings/x-com batch verify: n = 16, c = 64, p = 2
+                        time:   [89.566 ms 90.358 ms 90.942 ms]
+pairings/x-com aggregate: n = 16, c = 64, p = 4
+                        time:   [228.72 ms 229.76 ms 231.04 ms]
+pairings/x-com batch verify: n = 16, c = 64, p = 4
+                        time:   [109.97 ms 110.67 ms 111.54 ms]
+pairings/x-com aggregate: n = 16, c = 64, p = 8
+                        time:   [336.53 ms 338.09 ms 340.14 ms]
+pairings/x-com batch verify: n = 16, c = 64, p = 8
+                        time:   [143.36 ms 144.29 ms 145.50 ms]
+pairings/x-com aggregate: n = 16, c = 64, p = 16
+                        time:   [524.07 ms 526.07 ms 528.53 ms]
+pairings/x-com batch verify: n = 16, c = 64, p = 16
+                        time:   [202.75 ms 203.80 ms 204.70 ms]
+pairings/x-com aggregate: n = 16, c = 128, p = 1
+                        time:   [38.713 ms 39.129 ms 39.575 ms]
+pairings/x-com batch verify: n = 16, c = 128, p = 1
+                        time:   [133.74 ms 134.86 ms 135.89 ms]
+pairings/x-com aggregate: n = 16, c = 128, p = 2
+                        time:   [311.59 ms 313.29 ms 315.61 ms]
+pairings/x-com batch verify: n = 16, c = 128, p = 2
+                        time:   [174.43 ms 175.44 ms 176.88 ms]
+pairings/x-com aggregate: n = 16, c = 128, p = 4
+                        time:   [452.76 ms 454.76 ms 456.79 ms]
+pairings/x-com batch verify: n = 16, c = 128, p = 4
+                        time:   [216.53 ms 217.12 ms 217.71 ms]
+pairings/x-com aggregate: n = 16, c = 128, p = 8
+                        time:   [669.01 ms 671.85 ms 674.82 ms]
+pairings/x-com batch verify: n = 16, c = 128, p = 8
+                        time:   [285.19 ms 287.97 ms 290.37 ms]
+pairings/x-com aggregate: n = 16, c = 128, p = 16
+                        time:   [1.0402 s 1.0438 s 1.0475 s]
+pairings/x-com batch verify: n = 16, c = 128, p = 16
+                        time:   [398.57 ms 400.66 ms 403.21 ms]
+pairings/x-com aggregate: n = 16, c = 256, p = 1
+                        time:   [67.178 ms 67.745 ms 68.431 ms]
+pairings/x-com batch verify: n = 16, c = 256, p = 1
+                        time:   [266.33 ms 267.60 ms 268.81 ms]
+pairings/x-com aggregate: n = 16, c = 256, p = 2
+                        time:   [618.91 ms 621.47 ms 624.63 ms]
+pairings/x-com batch verify: n = 16, c = 256, p = 2
+                        time:   [345.74 ms 347.07 ms 348.80 ms]
+pairings/x-com aggregate: n = 16, c = 256, p = 4
+                        time:   [897.55 ms 901.82 ms 905.83 ms]
+pairings/x-com batch verify: n = 16, c = 256, p = 4
+                        time:   [430.81 ms 432.33 ms 434.22 ms]
+pairings/x-com aggregate: n = 16, c = 256, p = 8
+                        time:   [1.3309 s 1.3351 s 1.3398 s]
+pairings/x-com batch verify: n = 16, c = 256, p = 8
+                        time:   [563.40 ms 565.24 ms 567.15 ms]
+pairings/x-com aggregate: n = 16, c = 256, p = 16
+                        time:   [2.0756 s 2.0813 s 2.0868 s]
+pairings/x-com batch verify: n = 16, c = 256, p = 16
+                        time:   [794.23 ms 796.58 ms 798.79 ms]
+pairings/x-com aggregate: n = 64, c = 1024, p = 1
+                        time:   [214.95 ms 215.89 ms 217.01 ms]
+pairings/x-com batch verify: n = 64, c = 1024, p = 1
+                        time:   [1.0655 s 1.0716 s 1.0779 s]
+pairings/x-com aggregate: n = 64, c = 1024, p = 2
+                        time:   [2.4133 s 2.4163 s 2.4209 s]
+pairings/x-com batch verify: n = 64, c = 1024, p = 2
+                        time:   [1.3949 s 1.4009 s 1.4071 s]
+pairings/x-com aggregate: n = 64, c = 1024, p = 4
+                        time:   [3.5330 s 3.5408 s 3.5490 s]
+pairings/x-com batch verify: n = 64, c = 1024, p = 4
+                        time:   [1.7553 s 1.7662 s 1.7730 s]
+pairings/x-com aggregate: n = 64, c = 1024, p = 8
+                        time:   [5.2679 s 5.2752 s 5.2836 s]
+pairings/x-com batch verify: n = 64, c = 1024, p = 8
+                        time:   [2.2581 s 2.2646 s 2.2714 s]
+pairings/x-com aggregate: n = 64, c = 1024, p = 16
+                        time:   [8.2569 s 8.2705 s 8.2831 s]
+pairings/x-com batch verify: n = 64, c = 1024, p = 16
+                        time:   [3.2002 s 3.2075 s 3.2161 s]
+pairings/x-com aggregate: n = 64, c = 2, p = 1
+                        time:   [2.2274 ms 2.2528 ms 2.2730 ms]
+pairings/x-com batch verify: n = 64, c = 2, p = 1
+                        time:   [5.9248 ms 5.9693 ms 6.0238 ms]
+pairings/x-com aggregate: n = 64, c = 2, p = 2
+                        time:   [6.5199 ms 6.5642 ms 6.6242 ms]
+pairings/x-com batch verify: n = 64, c = 2, p = 2
+                        time:   [6.5350 ms 6.5691 ms 6.6131 ms]
+pairings/x-com aggregate: n = 64, c = 2, p = 4
+                        time:   [8.5940 ms 8.6771 ms 8.7603 ms]
+pairings/x-com batch verify: n = 64, c = 2, p = 4
+                        time:   [7.3394 ms 7.3698 ms 7.4101 ms]
+pairings/x-com aggregate: n = 64, c = 2, p = 8
+                        time:   [12.301 ms 12.402 ms 12.503 ms]
+pairings/x-com batch verify: n = 64, c = 2, p = 8
+                        time:   [8.3063 ms 8.3815 ms 8.4846 ms]
+pairings/x-com aggregate: n = 64, c = 2, p = 16
+                        time:   [18.006 ms 18.157 ms 18.283 ms]
+pairings/x-com batch verify: n = 64, c = 2, p = 16
+                        time:   [10.109 ms 10.219 ms 10.365 ms]
+pairings/x-com aggregate: n = 64, c = 4, p = 1
+                        time:   [3.3582 ms 3.3735 ms 3.3907 ms]
+pairings/x-com batch verify: n = 64, c = 4, p = 1
+                        time:   [8.0253 ms 8.0678 ms 8.1273 ms]
+pairings/x-com aggregate: n = 64, c = 4, p = 2
+                        time:   [12.029 ms 12.121 ms 12.195 ms]
+pairings/x-com batch verify: n = 64, c = 4, p = 2
+                        time:   [9.3495 ms 9.3997 ms 9.4594 ms]
+pairings/x-com aggregate: n = 64, c = 4, p = 4
+                        time:   [16.486 ms 16.574 ms 16.663 ms]
+pairings/x-com batch verify: n = 64, c = 4, p = 4
+                        time:   [10.448 ms 10.502 ms 10.567 ms]
+pairings/x-com aggregate: n = 64, c = 4, p = 8
+                        time:   [22.717 ms 22.853 ms 23.052 ms]
+pairings/x-com batch verify: n = 64, c = 4, p = 8
+                        time:   [12.679 ms 12.806 ms 12.955 ms]
+pairings/x-com aggregate: n = 64, c = 4, p = 16
+                        time:   [34.525 ms 34.901 ms 35.316 ms]
+pairings/x-com batch verify: n = 64, c = 4, p = 16
+                        time:   [16.214 ms 16.348 ms 16.473 ms]
+pairings/x-com aggregate: n = 64, c = 8, p = 1
+                        time:   [5.2937 ms 5.3183 ms 5.3433 ms]
+pairings/x-com batch verify: n = 64, c = 8, p = 1
+                        time:   [12.185 ms 12.301 ms 12.433 ms]
+pairings/x-com aggregate: n = 64, c = 8, p = 2
+                        time:   [22.209 ms 22.395 ms 22.616 ms]
+pairings/x-com batch verify: n = 64, c = 8, p = 2
+                        time:   [14.415 ms 14.520 ms 14.671 ms]
+pairings/x-com aggregate: n = 64, c = 8, p = 4
+                        time:   [30.569 ms 30.849 ms 31.171 ms]
+pairings/x-com batch verify: n = 64, c = 8, p = 4
+                        time:   [17.221 ms 17.317 ms 17.398 ms]
+pairings/x-com aggregate: n = 64, c = 8, p = 8
+                        time:   [44.066 ms 44.294 ms 44.484 ms]
+pairings/x-com batch verify: n = 64, c = 8, p = 8
+                        time:   [21.593 ms 21.794 ms 21.994 ms]
+pairings/x-com aggregate: n = 64, c = 8, p = 16
+                        time:   [68.102 ms 68.581 ms 69.116 ms]
+pairings/x-com batch verify: n = 64, c = 8, p = 16
+                        time:   [28.598 ms 28.920 ms 29.264 ms]
+pairings/x-com aggregate: n = 64, c = 16, p = 1
+                        time:   [8.2659 ms 8.3123 ms 8.3601 ms]
+pairings/x-com batch verify: n = 64, c = 16, p = 1
+                        time:   [20.151 ms 20.329 ms 20.484 ms]
+pairings/x-com aggregate: n = 64, c = 16, p = 2
+                        time:   [42.543 ms 42.807 ms 43.135 ms]
+pairings/x-com batch verify: n = 64, c = 16, p = 2
+                        time:   [25.075 ms 25.471 ms 25.853 ms]
+pairings/x-com aggregate: n = 64, c = 16, p = 4
+                        time:   [59.654 ms 60.053 ms 60.424 ms]
+pairings/x-com batch verify: n = 64, c = 16, p = 4
+                        time:   [30.308 ms 30.450 ms 30.630 ms]
+pairings/x-com aggregate: n = 64, c = 16, p = 8
+                        time:   [86.127 ms 87.061 ms 87.834 ms]
+pairings/x-com batch verify: n = 64, c = 16, p = 8
+                        time:   [38.644 ms 38.975 ms 39.445 ms]
+pairings/x-com aggregate: n = 64, c = 16, p = 16
+                        time:   [135.55 ms 136.44 ms 137.30 ms]
+pairings/x-com batch verify: n = 64, c = 16, p = 16
+                        time:   [53.179 ms 53.495 ms 53.808 ms]
+pairings/x-com aggregate: n = 64, c = 32, p = 1
+                        time:   [13.705 ms 13.848 ms 13.981 ms]
+pairings/x-com batch verify: n = 64, c = 32, p = 1
+                        time:   [36.359 ms 36.729 ms 37.149 ms]
+pairings/x-com aggregate: n = 64, c = 32, p = 2
+                        time:   [82.229 ms 82.784 ms 83.479 ms]
+pairings/x-com batch verify: n = 64, c = 32, p = 2
+                        time:   [46.137 ms 46.645 ms 47.234 ms]
+pairings/x-com aggregate: n = 64, c = 32, p = 4
+                        time:   [116.76 ms 117.97 ms 118.93 ms]
+pairings/x-com batch verify: n = 64, c = 32, p = 4
+                        time:   [57.926 ms 58.272 ms 58.644 ms]
+pairings/x-com aggregate: n = 64, c = 32, p = 8
+                        time:   [169.34 ms 170.21 ms 171.07 ms]
+pairings/x-com batch verify: n = 64, c = 32, p = 8
+                        time:   [75.253 ms 76.012 ms 76.500 ms]
+pairings/x-com aggregate: n = 64, c = 32, p = 16
+                        time:   [265.08 ms 267.66 ms 269.85 ms]
+pairings/x-com batch verify: n = 64, c = 32, p = 16
+                        time:   [102.67 ms 103.34 ms 104.04 ms]
+pairings/x-com aggregate: n = 64, c = 64, p = 1
+                        time:   [22.736 ms 22.838 ms 22.969 ms]
+pairings/x-com batch verify: n = 64, c = 64, p = 1
+                        time:   [69.531 ms 70.151 ms 70.678 ms]
+pairings/x-com aggregate: n = 64, c = 64, p = 2
+                        time:   [158.64 ms 159.27 ms 160.02 ms]
+pairings/x-com batch verify: n = 64, c = 64, p = 2
+                        time:   [90.414 ms 90.967 ms 91.544 ms]
+pairings/x-com aggregate: n = 64, c = 64, p = 4
+                        time:   [227.70 ms 228.92 ms 230.24 ms]
+pairings/x-com batch verify: n = 64, c = 64, p = 4
+                        time:   [110.86 ms 111.58 ms 112.44 ms]
+pairings/x-com aggregate: n = 64, c = 64, p = 8
+                        time:   [337.18 ms 338.75 ms 340.69 ms]
+pairings/x-com batch verify: n = 64, c = 64, p = 8
+                        time:   [142.90 ms 143.58 ms 144.30 ms]
+pairings/x-com aggregate: n = 64, c = 64, p = 16
+                        time:   [522.35 ms 524.19 ms 526.51 ms]
+pairings/x-com batch verify: n = 64, c = 64, p = 16
+                        time:   [201.05 ms 202.29 ms 203.50 ms]
+pairings/x-com aggregate: n = 64, c = 128, p = 1
+                        time:   [39.196 ms 39.366 ms 39.523 ms]
+pairings/x-com batch verify: n = 64, c = 128, p = 1
+                        time:   [133.68 ms 134.88 ms 135.88 ms]
+pairings/x-com aggregate: n = 64, c = 128, p = 2
+                        time:   [313.11 ms 314.92 ms 316.60 ms]
+pairings/x-com batch verify: n = 64, c = 128, p = 2
+                        time:   [175.06 ms 176.63 ms 178.15 ms]
+pairings/x-com aggregate: n = 64, c = 128, p = 4
+                        time:   [453.62 ms 455.88 ms 458.02 ms]
+pairings/x-com batch verify: n = 64, c = 128, p = 4
+                        time:   [217.79 ms 218.80 ms 219.83 ms]
+pairings/x-com aggregate: n = 64, c = 128, p = 8
+                        time:   [666.97 ms 668.87 ms 671.24 ms]
+pairings/x-com batch verify: n = 64, c = 128, p = 8
+                        time:   [283.24 ms 285.42 ms 287.03 ms]
+pairings/x-com aggregate: n = 64, c = 128, p = 16
+                        time:   [1.0395 s 1.0425 s 1.0460 s]
+pairings/x-com batch verify: n = 64, c = 128, p = 16
+                        time:   [400.49 ms 401.86 ms 403.30 ms]
+pairings/x-com aggregate: n = 64, c = 256, p = 1
+                        time:   [67.535 ms 67.711 ms 67.900 ms]
+pairings/x-com batch verify: n = 64, c = 256, p = 1
+                        time:   [266.59 ms 268.23 ms 269.93 ms]
+pairings/x-com aggregate: n = 64, c = 256, p = 2
+                        time:   [616.09 ms 618.16 ms 620.62 ms]
+pairings/x-com batch verify: n = 64, c = 256, p = 2
+                        time:   [347.73 ms 350.19 ms 352.57 ms]
+pairings/x-com aggregate: n = 64, c = 256, p = 4
+                        time:   [896.35 ms 898.23 ms 900.82 ms]
+pairings/x-com batch verify: n = 64, c = 256, p = 4
+                        time:   [432.41 ms 434.90 ms 437.23 ms]
+pairings/x-com aggregate: n = 64, c = 256, p = 8
+                        time:   [1.3247 s 1.3296 s 1.3340 s]
+pairings/x-com batch verify: n = 64, c = 256, p = 8
+                        time:   [562.72 ms 565.42 ms 567.72 ms]
+pairings/x-com aggregate: n = 64, c = 256, p = 16
+                        time:   [2.0701 s 2.0760 s 2.0833 s]
+pairings/x-com batch verify: n = 64, c = 256, p = 16
+                        time:   [798.78 ms 801.12 ms 804.31 ms]
+pairings/x-com aggregate: n = 256, c = 1024, p = 1
+                        time:   [213.80 ms 215.77 ms 217.65 ms]
+pairings/x-com batch verify: n = 256, c = 1024, p = 1
+                        time:   [1.0621 s 1.0675 s 1.0734 s]
+pairings/x-com aggregate: n = 256, c = 1024, p = 2
+                        time:   [2.4197 s 2.4451 s 2.4733 s]
+pairings/x-com batch verify: n = 256, c = 1024, p = 2
+                        time:   [1.4631 s 1.4647 s 1.4667 s]
+pairings/x-com aggregate: n = 256, c = 1024, p = 4
+                        time:   [3.7044 s 3.7092 s 3.7136 s]
+pairings/x-com batch verify: n = 256, c = 1024, p = 4
+                        time:   [1.8136 s 1.8166 s 1.8205 s]
+pairings/x-com aggregate: n = 256, c = 1024, p = 8
+                        time:   [5.5277 s 5.5321 s 5.5363 s]
+pairings/x-com batch verify: n = 256, c = 1024, p = 8
+                        time:   [2.3705 s 2.3743 s 2.3782 s]
+pairings/x-com aggregate: n = 256, c = 1024, p = 16
+                        time:   [8.6616 s 8.6676 s 8.6735 s]
+pairings/x-com batch verify: n = 256, c = 1024, p = 16
+                        time:   [3.3527 s 3.3557 s 3.3586 s]
+pairings/x-com aggregate: n = 256, c = 2, p = 1
+                        time:   [2.2280 ms 2.2356 ms 2.2434 ms]
+pairings/x-com batch verify: n = 256, c = 2, p = 1
+                        time:   [6.2695 ms 6.2872 ms 6.3064 ms]
+pairings/x-com aggregate: n = 256, c = 2, p = 2
+                        time:   [6.7912 ms 6.8124 ms 6.8396 ms]
+pairings/x-com batch verify: n = 256, c = 2, p = 2
+                        time:   [6.9863 ms 7.0224 ms 7.0576 ms]
+pairings/x-com aggregate: n = 256, c = 2, p = 4
+                        time:   [9.1880 ms 9.2305 ms 9.2723 ms]
+pairings/x-com batch verify: n = 256, c = 2, p = 4
+                        time:   [7.6679 ms 7.6953 ms 7.7242 ms]
+pairings/x-com aggregate: n = 256, c = 2, p = 8
+                        time:   [12.819 ms 12.872 ms 12.923 ms]
+pairings/x-com batch verify: n = 256, c = 2, p = 8
+                        time:   [8.7158 ms 8.7488 ms 8.7871 ms]
+pairings/x-com aggregate: n = 256, c = 2, p = 16
+                        time:   [19.097 ms 19.174 ms 19.237 ms]
+pairings/x-com batch verify: n = 256, c = 2, p = 16
+                        time:   [10.772 ms 10.794 ms 10.818 ms]
+pairings/x-com aggregate: n = 256, c = 4, p = 1
+                        time:   [3.6084 ms 3.6251 ms 3.6453 ms]
+pairings/x-com batch verify: n = 256, c = 4, p = 1
+                        time:   [8.3997 ms 8.4477 ms 8.5025 ms]
+pairings/x-com aggregate: n = 256, c = 4, p = 2
+                        time:   [12.560 ms 12.600 ms 12.643 ms]
+pairings/x-com batch verify: n = 256, c = 4, p = 2
+                        time:   [9.7245 ms 9.7681 ms 9.8257 ms]
+pairings/x-com aggregate: n = 256, c = 4, p = 4
+                        time:   [17.309 ms 17.384 ms 17.454 ms]
+pairings/x-com batch verify: n = 256, c = 4, p = 4
+                        time:   [11.163 ms 11.215 ms 11.275 ms]
+pairings/x-com aggregate: n = 256, c = 4, p = 8
+                        time:   [24.306 ms 24.397 ms 24.495 ms]
+pairings/x-com batch verify: n = 256, c = 4, p = 8
+                        time:   [13.375 ms 13.467 ms 13.540 ms]
+pairings/x-com aggregate: n = 256, c = 4, p = 16
+                        time:   [36.861 ms 37.000 ms 37.180 ms]
+pairings/x-com batch verify: n = 256, c = 4, p = 16
+                        time:   [17.193 ms 17.259 ms 17.311 ms]
+pairings/x-com aggregate: n = 256, c = 8, p = 1
+                        time:   [5.5619 ms 5.6017 ms 5.6518 ms]
+pairings/x-com batch verify: n = 256, c = 8, p = 1
+                        time:   [12.668 ms 12.701 ms 12.740 ms]
+pairings/x-com aggregate: n = 256, c = 8, p = 2
+                        time:   [23.301 ms 23.435 ms 23.544 ms]
+pairings/x-com batch verify: n = 256, c = 8, p = 2
+                        time:   [15.611 ms 15.663 ms 15.711 ms]
+pairings/x-com aggregate: n = 256, c = 8, p = 4
+                        time:   [33.063 ms 33.161 ms 33.257 ms]
+pairings/x-com batch verify: n = 256, c = 8, p = 4
+                        time:   [18.124 ms 18.242 ms 18.340 ms]
+pairings/x-com aggregate: n = 256, c = 8, p = 8
+                        time:   [47.009 ms 47.220 ms 47.430 ms]
+pairings/x-com batch verify: n = 256, c = 8, p = 8
+                        time:   [22.687 ms 22.788 ms 22.892 ms]
+pairings/x-com aggregate: n = 256, c = 8, p = 16
+                        time:   [70.996 ms 71.258 ms 71.497 ms]
+pairings/x-com batch verify: n = 256, c = 8, p = 16
+                        time:   [30.056 ms 30.175 ms 30.274 ms]
+pairings/x-com aggregate: n = 256, c = 16, p = 1
+                        time:   [8.8054 ms 8.8335 ms 8.8596 ms]
+pairings/x-com batch verify: n = 256, c = 16, p = 1
+                        time:   [21.199 ms 21.248 ms 21.295 ms]
+pairings/x-com aggregate: n = 256, c = 16, p = 2
+                        time:   [44.329 ms 44.480 ms 44.626 ms]
+pairings/x-com batch verify: n = 256, c = 16, p = 2
+                        time:   [26.480 ms 26.554 ms 26.618 ms]
+pairings/x-com aggregate: n = 256, c = 16, p = 4
+                        time:   [63.045 ms 63.310 ms 63.598 ms]
+pairings/x-com batch verify: n = 256, c = 16, p = 4
+                        time:   [32.164 ms 32.277 ms 32.398 ms]
+pairings/x-com aggregate: n = 256, c = 16, p = 8
+                        time:   [90.907 ms 91.168 ms 91.453 ms]
+pairings/x-com batch verify: n = 256, c = 16, p = 8
+                        time:   [41.046 ms 41.257 ms 41.449 ms]
+pairings/x-com aggregate: n = 256, c = 16, p = 16
+                        time:   [140.39 ms 140.68 ms 140.97 ms]
+pairings/x-com batch verify: n = 256, c = 16, p = 16
+                        time:   [55.906 ms 56.107 ms 56.317 ms]
+pairings/x-com aggregate: n = 256, c = 32, p = 1
+                        time:   [14.327 ms 14.373 ms 14.422 ms]
+pairings/x-com batch verify: n = 256, c = 32, p = 1
+                        time:   [38.473 ms 38.590 ms 38.727 ms]
+pairings/x-com aggregate: n = 256, c = 32, p = 2
+                        time:   [86.197 ms 86.515 ms 86.776 ms]
+pairings/x-com batch verify: n = 256, c = 32, p = 2
+                        time:   [49.390 ms 49.539 ms 49.697 ms]
+pairings/x-com aggregate: n = 256, c = 32, p = 4
+                        time:   [123.37 ms 123.65 ms 123.93 ms]
+pairings/x-com batch verify: n = 256, c = 32, p = 4
+                        time:   [59.723 ms 59.926 ms 60.115 ms]
+pairings/x-com aggregate: n = 256, c = 32, p = 8
+                        time:   [179.20 ms 179.66 ms 180.20 ms]
+pairings/x-com batch verify: n = 256, c = 32, p = 8
+                        time:   [77.259 ms 77.611 ms 77.932 ms]
+pairings/x-com aggregate: n = 256, c = 32, p = 16
+                        time:   [278.07 ms 278.77 ms 279.57 ms]
+pairings/x-com batch verify: n = 256, c = 32, p = 16
+                        time:   [107.87 ms 108.05 ms 108.25 ms]
+pairings/x-com aggregate: n = 256, c = 64, p = 1
+                        time:   [23.965 ms 24.105 ms 24.268 ms]
+pairings/x-com batch verify: n = 256, c = 64, p = 1
+                        time:   [72.530 ms 72.844 ms 73.113 ms]
+pairings/x-com aggregate: n = 256, c = 64, p = 2
+                        time:   [167.89 ms 168.27 ms 168.62 ms]
+pairings/x-com batch verify: n = 256, c = 64, p = 2
+                        time:   [94.766 ms 94.984 ms 95.288 ms]
+pairings/x-com aggregate: n = 256, c = 64, p = 4
+                        time:   [241.25 ms 241.66 ms 242.15 ms]
+pairings/x-com batch verify: n = 256, c = 64, p = 4
+                        time:   [116.16 ms 116.42 ms 116.73 ms]
+pairings/x-com aggregate: n = 256, c = 64, p = 8
+                        time:   [355.04 ms 356.34 ms 357.46 ms]
+pairings/x-com batch verify: n = 256, c = 64, p = 8
+                        time:   [150.30 ms 150.73 ms 151.26 ms]
+pairings/x-com aggregate: n = 256, c = 64, p = 16
+                        time:   [550.19 ms 551.35 ms 552.48 ms]
+pairings/x-com batch verify: n = 256, c = 64, p = 16
+                        time:   [212.32 ms 212.84 ms 213.48 ms]
+pairings/x-com aggregate: n = 256, c = 128, p = 1
+                        time:   [40.722 ms 40.821 ms 40.964 ms]
+pairings/x-com batch verify: n = 256, c = 128, p = 1
+                        time:   [141.17 ms 141.45 ms 141.71 ms]
+pairings/x-com aggregate: n = 256, c = 128, p = 2
+                        time:   [328.13 ms 328.90 ms 329.78 ms]
+pairings/x-com batch verify: n = 256, c = 128, p = 2
+                        time:   [183.61 ms 184.01 ms 184.45 ms]
+pairings/x-com aggregate: n = 256, c = 128, p = 4
+                        time:   [474.12 ms 475.04 ms 476.12 ms]
+pairings/x-com batch verify: n = 256, c = 128, p = 4
+                        time:   [228.62 ms 229.37 ms 230.12 ms]
+pairings/x-com aggregate: n = 256, c = 128, p = 8
+                        time:   [702.31 ms 703.99 ms 705.66 ms]
+pairings/x-com batch verify: n = 256, c = 128, p = 8
+                        time:   [297.69 ms 298.52 ms 299.51 ms]
+pairings/x-com aggregate: n = 256, c = 128, p = 16
+                        time:   [1.0950 s 1.0963 s 1.0976 s]
+pairings/x-com batch verify: n = 256, c = 128, p = 16
+                        time:   [419.44 ms 420.11 ms 420.82 ms]
+pairings/x-com aggregate: n = 256, c = 256, p = 1
+                        time:   [71.884 ms 72.029 ms 72.168 ms]
+pairings/x-com batch verify: n = 256, c = 256, p = 1
+                        time:   [278.37 ms 278.91 ms 279.57 ms]
+pairings/x-com aggregate: n = 256, c = 256, p = 2
+                        time:   [648.71 ms 649.98 ms 651.20 ms]
+pairings/x-com batch verify: n = 256, c = 256, p = 2
+                        time:   [365.30 ms 366.12 ms 367.04 ms]
+pairings/x-com aggregate: n = 256, c = 256, p = 4
+                        time:   [942.65 ms 944.50 ms 946.38 ms]
+pairings/x-com batch verify: n = 256, c = 256, p = 4
+                        time:   [451.59 ms 452.43 ms 453.19 ms]
+pairings/x-com aggregate: n = 256, c = 256, p = 8
+                        time:   [1.3945 s 1.3965 s 1.3986 s]
+pairings/x-com batch verify: n = 256, c = 256, p = 8
+                        time:   [591.96 ms 593.43 ms 595.28 ms]
+pairings/x-com aggregate: n = 256, c = 256, p = 16
+                        time:   [2.1803 s 2.1831 s 2.1857 s]
+pairings/x-com batch verify: n = 256, c = 256, p = 16
+                        time:   [841.62 ms 843.39 ms 844.71 ms]
