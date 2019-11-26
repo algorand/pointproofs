@@ -61,7 +61,7 @@ Check `veccom-paramgen`
 
 
 
-## new benchmark data, Groups unswitched
+## Commitments in G1, optimize for Aggregation
 
 Cross commit, AWS Intel(R) Xeon(R) CPU E5-2686 v4 @ 2.30GHz (Slower than MBP)
 
@@ -105,9 +105,9 @@ Cross commit, AWS Intel(R) Xeon(R) CPU E5-2686 v4 @ 2.30GHz (Slower than MBP)
 | 1024 | 1.99 | 3.07 | 4.23 | 6.00 | |
 
 
-## new benchmark data, Groups switched
+## Commitments in G2, optimize for verification
 
-Cross commit, AWS Intel(R) Xeon(R) CPU E5-2686 v4 @ 2.30GHz (Slower than MBP),
+### Cross commit, AWS Intel(R) Xeon(R) CPU E5-2686 v4 @ 2.30GHz (Slower than MBP),
 
 
 
