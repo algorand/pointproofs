@@ -1,46 +1,49 @@
 # benchmark results on vector commitment scheme
 
-## basics
+__To be completed.__
+## Setup
 
-| Function | Timing |
-|---|---:|
-| g1_mul             |    0.237 ms |
-| g2_mul             |     0.841 ms |
-| pairing            |   1.931 ms |
-
+* AWS Intel(R) Xeon(R) CPU E5-2686 v4 @ __2.30__ GHz (Slower than MBP).
+* Public parameter `n` (size of the vector) is 1024 (unless specified).
+* Commitment lies in `bls::G2`. This allows for faster verification.
 
 ## Parameter Generation
-Check `veccom-paramgen`
+See `veccom-paramgen`
 
 ## Commit
 
 
-|Function| n = 512 | n = 1024 | main cost |
-|---|---:|---:|:---|
-| new commitment without pre-computation | 19.6 ms |  35.9 ms | sum of n product |
-| new commitment with pre-computation = 3 | 19.6 ms |   35.5 ms | sum of n product |
-| new commitment with pre-computation = 256 | 14.4 ms |  32.0 ms | sum of n product |
-| commitment update without pre-computation | 0.2 ms| 0.2 ms| 2 hash_to_field + g1_mul |
-| commitment update with pre-computation = 3 | 0.1 ms| 0.1 ms| 2 hash_to_field + g1_mul |
-| commitment update with pre-computation = 256 | 0.05 ms| 0.05 ms| 2 hash_to_field + g1_mul |
+|Function|  n = 1024 | main cost |
+|---|---:|:---|
+| new commitment without pre-computation |   169.38 ms | sum of n product |
+| new commitment with pre-computation = 3 |   168.45 ms  | sum of n product |
+| new commitment with pre-computation = 256 |  127.35 ms | sum of n product |
+| commitment update without pre-computation |  ms| 2 hash_to_field + g1_mul |
+| commitment update with pre-computation = 3 |   ms| 2 hash_to_field + g1_mul |
+| commitment update with pre-computation = 256 |   ms| 2 hash_to_field + g1_mul |
 
 ## Proof
 
 |Function| n = 512 | n = 1024 | main cost |
-|---|---:|---:|:---|
-| new proof without pre-computation | 19.6 ms|  34.7 ms |  sum of n product |
-| new proof with pre-computation = 3 | 19.9 ms|   34.6 ms | sum of n product |
-| new proof with pre-computation = 256 | 16.6 ms |  34.0 ms |  sum of n product |
-| proof update without pre-computation | 0.2 ms| 0.2 ms| hash_to_field + g1_mul |
-| proof update with pre-computation = 3 | 0.1 ms| 0.1 ms| hash_to_field + g1_mul |
-| proof update with pre-computation = 256 | 0.05 ms| 0.05 ms| hash_to_field + g1_mul |
+|---|---:|:---|
+| new proof without pre-computation |   169.49 ms|  sum of n product |
+| new proof with pre-computation = 3 |   169.93 ms | sum of n product |
+| new proof with pre-computation = 256 |  132.14  ms |  sum of n product |
+| proof update without pre-computation |  ms| hash_to_field + g1_mul |
+| proof update with pre-computation = 3 |   ms| hash_to_field + g1_mul |
+| proof update with pre-computation = 256 |  ms| hash_to_field + g1_mul |
 
 ## Verify
 
-|Function| n = 512 | n = 1024 | main cost |
-|---|---:|---:|---:|
-|Verify| 3.1 ms| 3.1 ms| hash_to_field + 2 g1_mul + pairing_product |
+|Function|  n = 1024 | main cost |
+|---|---:|---:|
+|Verify|  ms| hash_to_field + 2 g1_mul + pairing_product |
 
+
+
+
+
+<!---
 ## aggregation
 
 | Function| 128 scalars |  256 scalars |  512 scalars | 1024 scalars |
@@ -109,7 +112,8 @@ Cross commit, AWS Intel(R) Xeon(R) CPU E5-2686 v4 @ 2.30GHz (Slower than MBP)
 
 ### Cross commit, AWS Intel(R) Xeon(R) CPU E5-2686 v4 @ 2.30GHz (Slower than MBP),
 
-
+--->
+## Aggregation and batch verification
 
 Aggregate, n = 1024,
 
