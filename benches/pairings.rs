@@ -7,10 +7,14 @@ use criterion::Bencher;
 use criterion::Benchmark;
 use criterion::Criterion;
 use pairing::serdes::SerDes;
+use pairing::CurveProjective;
 use std::time::Duration;
+use veccom::pairings::VeccomG1;
 use veccom::pairings::*;
 
-criterion_group!(benches, bench_pairings);
+// criterion_group!(benches, bench_ti);
+// criterion_group!(benches, bench_ti, bench_aggregation);
+criterion_group!(benches, bench_ti, bench_pairings); //, bench_aggregation);
 criterion_main!(benches);
 
 fn bench_commit_helper(prover_params: &ProverParams, n: usize, b: &mut Bencher) {
@@ -73,7 +77,8 @@ fn bench_commit_update_helper(prover_params: &ProverParams, n: usize, b: &mut Be
     let mut i: usize = 0;
     b.iter(|| {
         let mut tmp = com.clone();
-        tmp.update(prover_params, i, &old_values[i], &new_values[i]).unwrap();
+        tmp.update(prover_params, i, &old_values[i], &new_values[i])
+            .unwrap();
         i = (i + 1) % n;
     });
 }
@@ -121,78 +126,101 @@ fn bench_proof_update_helper(prover_params: &ProverParams, n: usize, b: &mut Ben
 }
 
 fn bench_pairings(c: &mut Criterion) {
+    const N: usize = 1024;
+
     let bench = Benchmark::new("commit_no_precomp", |b| {
         // Does not include a to_bytes conversion for the commitment, because you normally
         // would store this yourself rather than send it on the network
-        let n = 32;
+
         let prover_params =
-            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0)
+            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, N)
                 .unwrap()
                 .0;
-        bench_commit_helper(&prover_params, n, b);
+        bench_commit_helper(&prover_params, N, b);
     });
 
+    let bench = bench.with_function("commit_precomp_3", |b| {
+        // Does not include a to_bytes conversion for the commitment, because you normally
+        // would store this yourself rather than send it on the network
+
+        let mut prover_params =
+            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, N)
+                .unwrap()
+                .0;
+        prover_params.precomp_3();
+
+        bench_commit_helper(&prover_params, N, b);
+    });
     let bench = bench.with_function("commit_precomp_256", |b| {
         // Does not include a to_bytes conversion for the commitment, because you normally
         // would store this yourself rather than send it on the network
-        let n = 32;
+
         let mut prover_params =
-            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0)
+            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, N)
                 .unwrap()
                 .0;
         prover_params.precomp_256();
 
-        bench_commit_helper(&prover_params, n, b);
+        bench_commit_helper(&prover_params, N, b);
     });
 
     let bench = bench.with_function("prove_no_precomp", |b| {
         // includes to_bytes conversion for the proof, because this is supposed to measure what it takes
         // to produce a proof you will send on the network
-        let n = 32usize;
 
         let prover_params =
-            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0)
+            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, N)
                 .unwrap()
                 .0;
 
-        bench_prove_helper(&prover_params, n, b);
+        bench_prove_helper(&prover_params, N, b);
+    });
+
+    let bench = bench.with_function("prove_precomp_3", |b| {
+        // includes to_bytes conversion for the proof, because this is supposed to measure what it takes
+        // to produce a proof you will send on the network
+        let mut prover_params =
+            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, N)
+                .unwrap()
+                .0;
+        prover_params.precomp_3();
+
+        bench_prove_helper(&prover_params, N, b);
     });
 
     let bench = bench.with_function("prove_precomp_256", |b| {
         // includes to_bytes conversion for the proof, because this is supposed to measure what it takes
         // to produce a proof you will send on the network
-        let n = 32usize;
 
         let mut prover_params =
-            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0)
+            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, N)
                 .unwrap()
                 .0;
         prover_params.precomp_256();
 
-        bench_prove_helper(&prover_params, n, b);
+        bench_prove_helper(&prover_params, N, b);
     });
 
     let bench = bench.with_function("verify", |b| {
         // includes from_bytes conversion for the proof, because you would normally get the proof from the network
-        let n = 32usize;
 
         let (prover_params, verifier_params) =
-            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0).unwrap();
+            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, N).unwrap();
 
-        let mut init_values = Vec::with_capacity(n);
-        for i in 0..n {
+        let mut init_values = Vec::with_capacity(N);
+        for i in 0..N {
             let s = format!("this is message number {}", i);
             init_values.push(s.into_bytes());
         }
 
-        let mut values: Vec<&[u8]> = Vec::with_capacity(n);
-        for e in init_values.iter().take(n) {
+        let mut values: Vec<&[u8]> = Vec::with_capacity(N);
+        for e in init_values.iter().take(N) {
             values.push(&e);
         }
 
         let com = Commitment::new(&prover_params, &values).unwrap();
         let mut proofs: Vec<Vec<u8>> = vec![];
-        for i in 0..n {
+        for i in 0..N {
             let mut buf: Vec<u8> = vec![];
             let p = Proof::new(&prover_params, &values, i).unwrap();
             assert!(p.serialize(&mut buf, true).is_ok());
@@ -203,79 +231,181 @@ fn bench_pairings(c: &mut Criterion) {
         b.iter(|| {
             let p = Proof::deserialize::<&[u8]>(&mut proofs[i][..].as_ref(), true).unwrap();
             assert!(p.verify(&verifier_params, &com, &values[i], i));
-            i = (i + 1) % n;
+            i = (i + 1) % N;
         });
     });
 
     let bench = bench.with_function("commit_update_no_precomp", |b| {
         // Does not include to/from bytes conversion, because this is supposed to be a local operation
-        let n = 32usize;
+
         let prover_params =
-            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0)
+            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, N)
                 .unwrap()
                 .0;
-        bench_commit_update_helper(&prover_params, n, b);
+        bench_commit_update_helper(&prover_params, N, b);
     });
 
     let bench = bench.with_function("commit_update_precomp_3", |b| {
         // Does not include to/from bytes conversion, because this is supposed to be a local operation
-        let n = 32usize;
 
         let mut prover_params =
-            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0)
+            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, N)
                 .unwrap()
                 .0;
         prover_params.precomp_3();
-        bench_commit_update_helper(&prover_params, n, b);
+        bench_commit_update_helper(&prover_params, N, b);
     });
 
     let bench = bench.with_function("commit_update_precomp_256", |b| {
         // Does not include to/from bytes conversion, because this is supposed to be a local operation
-        let n = 32usize;
 
         let mut prover_params =
-            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0)
+            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, N)
                 .unwrap()
                 .0;
         prover_params.precomp_256();
-        bench_commit_update_helper(&prover_params, n, b);
+        bench_commit_update_helper(&prover_params, N, b);
     });
 
     let bench = bench.with_function("proof_update_no_precomp", |b| {
         // Does not include to/from bytes conversion, because this is supposed to be a local operation
-        let n = 32usize;
 
         let prover_params =
-            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0)
+            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, N)
                 .unwrap()
                 .0;
-        bench_proof_update_helper(&prover_params, n, b);
+        bench_proof_update_helper(&prover_params, N, b);
     });
 
     let bench = bench.with_function("proof_update_precomp_3", |b| {
         // Does not include to/from bytes conversion, because this is supposed to be a local operation
-        let n = 32usize;
 
         let mut prover_params =
-            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0)
+            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, N)
                 .unwrap()
                 .0;
         prover_params.precomp_3();
-        bench_proof_update_helper(&prover_params, n, b);
+        bench_proof_update_helper(&prover_params, N, b);
     });
 
     let bench = bench.with_function("proof_update_precomp_256", |b| {
         // Does not include to/from bytes conversion, because this is supposed to be a local operation
-        let n = 32usize;
 
         let mut prover_params =
-            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0)
+            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, N)
                 .unwrap()
                 .0;
         prover_params.precomp_256();
-        bench_proof_update_helper(&prover_params, n, b);
+        bench_proof_update_helper(&prover_params, N, b);
     });
 
+    let bench = bench.warm_up_time(Duration::from_millis(1000));
+    let bench = bench.measurement_time(Duration::from_millis(5000));
+    let bench = bench.sample_size(10);
+
+    c.bench("pairings", bench);
+}
+
+fn bench_ti(c: &mut Criterion) {
+    let bench = Benchmark::new("bench_ti_new_128", move |b| {
+        let commit = Commitment {
+            ciphersuite: 0,
+            commit: VeccomG1::one(),
+        };
+        let n = 1024;
+        // values
+        let mut init_values = Vec::with_capacity(n);
+        let mut index: Vec<usize> = vec![];
+        for i in 0..n {
+            let s = format!("this is message number {}", i);
+            init_values.push(s.into_bytes());
+            index.push(i);
+        }
+
+        let mut values: Vec<&[u8]> = Vec::with_capacity(n);
+        for e in init_values.iter().take(n) {
+            values.push(&e);
+        }
+        b.iter(|| {
+            let _t =
+                veccom::pairings::hash_to_field_veccom::hash_to_ti_fr(&commit, &index, &values, n);
+        });
+    });
+
+    let bench = bench.with_function("bench_ti_new_256", move |b| {
+        let commit = Commitment {
+            ciphersuite: 0,
+            commit: VeccomG1::one(),
+        };
+        let n = 256;
+        // values
+        let mut init_values = Vec::with_capacity(n);
+        let mut index: Vec<usize> = vec![];
+        for i in 0..n {
+            let s = format!("this is message number {}", i);
+            init_values.push(s.into_bytes());
+            index.push(i);
+        }
+
+        let mut values: Vec<&[u8]> = Vec::with_capacity(n);
+        for e in init_values.iter().take(n) {
+            values.push(&e);
+        }
+        b.iter(|| {
+            let _t =
+                veccom::pairings::hash_to_field_veccom::hash_to_ti_fr(&commit, &index, &values, n);
+        });
+    });
+
+    let bench = bench.with_function("bench_ti_new_512", move |b| {
+        let commit = Commitment {
+            ciphersuite: 0,
+            commit: VeccomG1::one(),
+        };
+        let n = 512;
+        // values
+        let mut init_values = Vec::with_capacity(n);
+        let mut index: Vec<usize> = vec![];
+        for i in 0..n {
+            let s = format!("this is message number {}", i);
+            init_values.push(s.into_bytes());
+            index.push(i);
+        }
+
+        let mut values: Vec<&[u8]> = Vec::with_capacity(n);
+        for e in init_values.iter().take(n) {
+            values.push(&e);
+        }
+        b.iter(|| {
+            let _t =
+                veccom::pairings::hash_to_field_veccom::hash_to_ti_fr(&commit, &index, &values, n);
+        });
+    });
+
+    let bench = bench.with_function("bench_ti_new_1024", move |b| {
+        let commit = Commitment {
+            ciphersuite: 0,
+            commit: VeccomG1::one(),
+        };
+        let n = 1024;
+        // values
+        let mut init_values = Vec::with_capacity(n);
+        let mut index: Vec<usize> = vec![];
+        for i in 0..n {
+            let s = format!("this is message number {}", i);
+            init_values.push(s.into_bytes());
+            index.push(i);
+        }
+
+        let mut values: Vec<&[u8]> = Vec::with_capacity(n);
+        for e in init_values.iter().take(n) {
+            values.push(&e);
+        }
+        b.iter(|| {
+            let _t =
+                veccom::pairings::hash_to_field_veccom::hash_to_ti_fr(&commit, &index, &values, n);
+        });
+    });
     let bench = bench.warm_up_time(Duration::from_millis(1000));
     let bench = bench.measurement_time(Duration::from_millis(5000));
     let bench = bench.sample_size(10);

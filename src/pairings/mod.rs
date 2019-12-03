@@ -1,50 +1,47 @@
 use self::ciphersuite::Ciphersuite;
 use pairing::bls12_381::*;
 
-#[derive(Clone, Debug)]
-pub struct SystemParam {
-    ciphersuite: Ciphersuite,
-    n: usize,
-    pp_len: usize,
-}
+pub type VeccomG1 = G2;
+pub type VeccomG2 = G1;
+pub type VeccomG1Affine = G2Affine;
+pub type VeccomG2Affine = G1Affine;
 
 #[derive(Clone, Debug)]
 pub struct ProverParams {
-    ciphersuite: Ciphersuite,
-    pub generators: Vec<G1Affine>,
-    pub precomp: Vec<G1Affine>,
+    pub ciphersuite: Ciphersuite,
+    pub n: usize,
+    pub generators: Vec<VeccomG1Affine>,
+    pub pp_len: usize,
+    pub precomp: Vec<VeccomG1Affine>,
 }
 #[derive(Clone, Debug)]
 pub struct VerifierParams {
     ciphersuite: Ciphersuite,
-    generators: Vec<G2Affine>,
+    pub n: usize,
+    generators: Vec<VeccomG2Affine>,
     gt_elt: Fq12,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Commitment {
-    ciphersuite: Ciphersuite,
-    commit: G1,
+    pub ciphersuite: Ciphersuite,
+    pub commit: VeccomG1,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Proof {
     ciphersuite: Ciphersuite,
-    proof: G1,
+    proof: VeccomG1,
 }
 
 // TODO: refactor what's public and what's not
 pub mod c_api;
-mod ciphersuite;
-mod commit;
+pub mod ciphersuite;
+pub mod commit;
 mod err;
-mod paramgen;
-mod prove;
-mod proverparam;
-mod verifierparam;
-mod verify;
+pub mod hash_to_field_veccom;
+pub mod paramgen;
+pub mod prove;
+mod serdes;
 
 pub use self::paramgen::paramgen_from_seed;
-
-#[cfg(test)]
-mod tests;
