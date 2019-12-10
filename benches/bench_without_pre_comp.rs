@@ -31,7 +31,7 @@ criterion_main!(benches);
 
 fn bench_x_com_helper(c: &mut Criterion, n: usize, num_commit: usize, num_proof: usize) {
     // generate parameter for dimension n
-    let (pp, vp) = paramgen::paramgen_from_seed(
+    let (pp, vp) = param::paramgen_from_seed(
         "This is a very very long seed for vector commitment benchmarking",
         0,
         n,

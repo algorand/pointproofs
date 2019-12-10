@@ -1,5 +1,5 @@
 use pairing::serdes::SerDes;
-use pairings::paramgen::paramgen_from_seed;
+use pairings::param::paramgen_from_seed;
 use pairings::{ProverParams, VerifierParams};
 
 #[test]
