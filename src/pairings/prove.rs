@@ -1,13 +1,9 @@
-use super::err::*;
-use super::hash_to_field_veccom::{
-    hash_to_field_veccom, hash_to_ti_fr, hash_to_ti_repr, hash_to_tj,
-};
-use super::param::*;
-use super::{Commitment, Proof, ProverParams, VerifierParams};
 use ff::{Field, PrimeField};
 use pairing::Engine;
 use pairing::{bls12_381::*, CurveAffine, CurveProjective};
-use pairings::hash_to_field_veccom::hash_to_field_repr_veccom;
+use pairings::err::*;
+use pairings::hash_to_field_veccom::*;
+use pairings::param::*;
 use pairings::*;
 
 impl Proof {
@@ -58,7 +54,7 @@ impl Proof {
 
         Ok(Self {
             ciphersuite: prover_params.ciphersuite,
-            proof: proof,
+            proof,
         })
     }
 
@@ -400,7 +396,7 @@ impl Proof {
         }
         for j in 0..num_commit {
             if set[j].len() != value_sub_vector[j].len()
-                || set[j].len() == 0
+                || set[j].is_empty()
                 || set[j].len() > verifier_params.n
             {
                 // length does not match

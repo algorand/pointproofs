@@ -1,12 +1,12 @@
-/// this mod defines the hash_to_field functions that are more efficient than
-/// simply using bls::hash_to_field
-use super::err::*;
-use super::param::*;
-use super::Commitment;
+//! this mod defines the hash_to_field functions that are more efficient than
+//! simply using bls::hash_to_field
 use bigint::U512;
 use ff::PrimeField;
 use pairing::bls12_381::*;
 use pairing::serdes::SerDes;
+use pairings::err::*;
+use pairings::param::*;
+use pairings::Commitment;
 use sha2::{Digest, Sha512};
 use std::ops::Rem;
 

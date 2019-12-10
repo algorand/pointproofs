@@ -1,4 +1,4 @@
-/// A list of error messages.
+//! A list of error messages.
 
 pub(crate) const ERR_SEED_TOO_SHORT: &str = "The seed length is too short";
 pub(crate) const ERR_CIPHERSUITE: &str = "Invalid ciphersuite ID";

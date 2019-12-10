@@ -15,15 +15,15 @@ pub struct vcp_value {
     buflen: libc::size_t,
 }
 
-#[repr(C)]
-pub struct vcp_commit {
-    commit: *mut ffi::c_void,
-}
-
-#[repr(C)]
-pub struct vcp_proof {
-    proof: *mut ffi::c_void,
-}
+// #[repr(C)]
+// pub struct vcp_commit {
+//     commit: *mut ffi::c_void,
+// }
+//
+// #[repr(C)]
+// pub struct vcp_proof {
+//     proof: *mut ffi::c_void,
+// }
 
 /// # Safety
 #[no_mangle]

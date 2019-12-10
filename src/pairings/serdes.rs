@@ -1,8 +1,7 @@
-use super::err::*;
-use super::param::*;
-use super::VerifierParams;
 use pairing::bls12_381::*;
 use pairing::serdes::SerDes;
+use pairings::err::*;
+use pairings::param::*;
 use pairings::*;
 
 type Compressed = bool;

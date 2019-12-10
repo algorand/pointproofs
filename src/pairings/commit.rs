@@ -1,10 +1,8 @@
-use super::err::*;
-use super::hash_to_field_veccom::hash_to_field_veccom;
-use super::param::*;
-use super::{Commitment, ProverParams};
 use ff::Field;
 use pairing::{bls12_381::*, CurveAffine, CurveProjective};
-use pairings::hash_to_field_veccom::hash_to_field_repr_veccom;
+use pairings::err::*;
+use pairings::hash_to_field_veccom::*;
+use pairings::param::*;
 use pairings::*;
 
 impl Commitment {

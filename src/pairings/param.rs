@@ -1,7 +1,6 @@
-use super::err::*;
-use super::{ProverParams, VerifierParams};
 use ff::Field;
 use pairing::{bls12_381::*, CurveAffine, CurveProjective, Engine};
+use pairings::err::*;
 use pairings::hash_to_field_veccom::hash_to_field_veccom;
 use pairings::*;
 
