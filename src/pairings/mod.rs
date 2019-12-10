@@ -1,4 +1,5 @@
-use self::ciphersuite::Ciphersuite;
+pub use self::param::paramgen_from_seed;
+pub use self::param::Ciphersuite;
 use pairing::bls12_381::*;
 
 pub type VeccomG1 = G2;
@@ -36,12 +37,9 @@ pub struct Proof {
 
 // TODO: refactor what's public and what's not
 pub mod c_api;
-pub mod ciphersuite;
 pub mod commit;
 mod err;
 pub mod hash_to_field_veccom;
-pub mod paramgen;
+pub mod param;
 pub mod prove;
 mod serdes;
-
-pub use self::paramgen::paramgen_from_seed;

@@ -1,10 +1,18 @@
-use super::ciphersuite::*;
 use super::err::*;
 use super::{ProverParams, VerifierParams};
 use ff::Field;
 use pairing::{bls12_381::*, CurveAffine, CurveProjective, Engine};
 use pairings::hash_to_field_veccom::hash_to_field_veccom;
 use pairings::*;
+
+const VALID_CIPHERSUITE: [u8; 1] = [0u8];
+
+pub type Ciphersuite = u8;
+
+/// Checks if csid is supported. Currently only support csid = 0.
+pub fn check_ciphersuite(csid: Ciphersuite) -> bool {
+    VALID_CIPHERSUITE.contains(&csid)
+}
 
 // /// this function reads the default parameter
 // /// it should not be used other than for testing/benchmarking purpose

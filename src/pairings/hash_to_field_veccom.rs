@@ -1,7 +1,7 @@
+use super::err::*;
 /// this mod defines the hash_to_field functions that are more efficient than
 /// simply using bls::hash_to_field
-use super::ciphersuite::*;
-use super::err::*;
+use super::param::*;
 use super::Commitment;
 use bigint::U512;
 use ff::PrimeField;

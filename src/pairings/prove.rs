@@ -1,8 +1,8 @@
-use super::ciphersuite::*;
 use super::err::*;
 use super::hash_to_field_veccom::{
     hash_to_field_veccom, hash_to_ti_fr, hash_to_ti_repr, hash_to_tj,
 };
+use super::param::*;
 use super::{Commitment, Proof, ProverParams, VerifierParams};
 use ff::{Field, PrimeField};
 use pairing::Engine;
@@ -28,9 +28,30 @@ impl Proof {
             return Err(ERR_INVALID_INDEX.to_owned());
         };
 
+        let n = values.len();
+        let scalars_fr_repr: Vec<FrRepr> = values
+            .iter()
+            .map(|s| hash_to_field_repr_veccom(&s.as_ref()))
+            .collect();
+        let scalars_u64: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        let proof = {
+            if prover_params.precomp.len() == 512 * n {
+                VeccomG1Affine::sum_of_products_precomp_256(
+                    &prover_params.generators[n - index..2 * n - index],
+                    &scalars_u64,
+                    &prover_params.precomp[(n - index) * 256..(2 * n - index) * 256],
+                )
+            } else {
+                VeccomG1Affine::sum_of_products(
+                    &prover_params.generators[n - index..2 * n - index],
+                    &scalars_u64,
+                )
+            }
+        };
+
         Ok(Self {
             ciphersuite: 0,
-            proof: prove(prover_params, values, index),
+            proof: proof,
         })
     }
 
@@ -55,14 +76,35 @@ impl Proof {
         }
 
         // update the proof
-        self.proof = proof_update(
-            prover_params,
-            &self.proof,
-            proof_index,
-            changed_index,
-            value_before.as_ref(),
-            value_after.as_ref(),
-        );
+        // For updating your proof when someone else's value changes
+        // Not for updating your own proof when your value changes -- because then the proof does not change!
+        // Assumes prover_params are correctly generated for n such that changed_index<n and proof_index<n
+
+        if proof_index != changed_index {
+            let n = prover_params.generators.len() / 2;
+
+            let mut multiplier = hash_to_field_veccom(&value_before);
+            multiplier.negate();
+            multiplier.add_assign(&hash_to_field_veccom(&value_after));
+
+            let param_index = changed_index + n - proof_index;
+
+            let res = if prover_params.precomp.len() == 6 * n {
+                prover_params.generators[param_index].mul_precomp_3(
+                    multiplier,
+                    &prover_params.precomp[param_index * 3..(param_index + 1) * 3],
+                )
+            } else if prover_params.precomp.len() == 512 * n {
+                prover_params.generators[param_index].mul_precomp_256(
+                    multiplier,
+                    &prover_params.precomp[param_index * 256..(param_index + 1) * 256],
+                )
+            } else {
+                prover_params.generators[param_index].mul(multiplier)
+            };
+
+            self.proof.add_assign(&res);
+        }
         Ok(())
     }
 
@@ -90,13 +132,36 @@ impl Proof {
             return false;
         }
 
-        verify(
-            verifier_params,
-            &com.commit,
-            &self.proof,
-            value.as_ref(),
-            index,
-        )
+        // verification formula: e(com, param[n-index-1]) = gt_elt ^ hash(value) * e(proof, generator_of_g2)
+        // We modify the formula in order to avoid slow exponentation in the target group (which is Fq12)
+        // and perform two scalar multiplication by to 1/hash(value) in G1 instead, which is considerably faster.
+        // We also move the pairing from the right-hand-side to the left-hand-side in order
+        // to take advantage of the pairing product computation, which is faster than two pairings.
+        let hash = hash_to_field_veccom(&value);
+        let hash_inverse = match hash.inverse() {
+            Some(p) => p,
+            // should not arrive here since hash to field will never return 0
+            None => panic!("hash_to_field_veccom failed"),
+        };
+
+        let n = verifier_params.generators.len();
+        let mut com_mut = com.commit;
+        let mut proof_mut = self.proof;
+        proof_mut.negate();
+
+        // The following may be a tiny bit faster -- not enough to show up on a benchmark
+        /*let mut w = Wnaf::new();
+        let mut wnaf = w.scalar(h_inverse.into());
+        let com_mut = wnaf.base(com_mut);
+        let proof_mut = wnaf.base(proof_mut);*/
+        com_mut.mul_assign(hash_inverse);
+        proof_mut.mul_assign(hash_inverse);
+        Bls12::pairing_product(
+            verifier_params.generators[n - index - 1],
+            com_mut,
+            VeccomG2Affine::one(),
+            proof_mut,
+        ) == verifier_params.gt_elt
     }
 
     /// Aggregates a vector of proofs into a single one
@@ -452,117 +517,117 @@ impl Proof {
     }
 }
 
-/**
- * Assumes prover_params are correctly generated for n = values.len and that index<n
- */
-fn prove<Blob: AsRef<[u8]>>(
-    prover_params: &ProverParams,
-    values: &[Blob],
-    index: usize,
-) -> VeccomG1 {
-    let n = values.len();
-    let scalars_fr_repr: Vec<FrRepr> = values
-        .iter()
-        .map(|s| hash_to_field_repr_veccom(&s.as_ref()))
-        .collect();
-    let scalars_u64: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
-    if prover_params.precomp.len() == 512 * n {
-        VeccomG1Affine::sum_of_products_precomp_256(
-            &prover_params.generators[n - index..2 * n - index],
-            &scalars_u64,
-            &prover_params.precomp[(n - index) * 256..(2 * n - index) * 256],
-        )
-    } else {
-        VeccomG1Affine::sum_of_products(
-            &prover_params.generators[n - index..2 * n - index],
-            &scalars_u64,
-        )
-    }
-}
+// /**
+//  * Assumes prover_params are correctly generated for n = values.len and that index<n
+//  */
+// fn prove<Blob: AsRef<[u8]>>(
+//     prover_params: &ProverParams,
+//     values: &[Blob],
+//     index: usize,
+// ) -> VeccomG1 {
+//     let n = values.len();
+//     let scalars_fr_repr: Vec<FrRepr> = values
+//         .iter()
+//         .map(|s| hash_to_field_repr_veccom(&s.as_ref()))
+//         .collect();
+//     let scalars_u64: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+//     if prover_params.precomp.len() == 512 * n {
+//         VeccomG1Affine::sum_of_products_precomp_256(
+//             &prover_params.generators[n - index..2 * n - index],
+//             &scalars_u64,
+//             &prover_params.precomp[(n - index) * 256..(2 * n - index) * 256],
+//         )
+//     } else {
+//         VeccomG1Affine::sum_of_products(
+//             &prover_params.generators[n - index..2 * n - index],
+//             &scalars_u64,
+//         )
+//     }
+// }
 
-/**
- * For updating your proof when someone else's value changes
- * Not for updating your own proof when your value changes -- because then the proof does not change!
- * Assumes prover_params are correctly generated for n such that changed_index<n and proof_index<n
- */
-fn proof_update(
-    prover_params: &ProverParams,
-    proof: &VeccomG1,
-    proof_index: usize,
-    changed_index: usize,
-    value_before: &[u8],
-    value_after: &[u8],
-) -> VeccomG1 {
-    let mut new_proof = *proof;
+// /**
+//  * For updating your proof when someone else's value changes
+//  * Not for updating your own proof when your value changes -- because then the proof does not change!
+//  * Assumes prover_params are correctly generated for n such that changed_index<n and proof_index<n
+//  */
+// fn proof_update(
+//     prover_params: &ProverParams,
+//     proof: &VeccomG1,
+//     proof_index: usize,
+//     changed_index: usize,
+//     value_before: &[u8],
+//     value_after: &[u8],
+// ) -> VeccomG1 {
+//     let mut new_proof = *proof;
+//
+//     if proof_index == changed_index {
+//         new_proof
+//     } else {
+//         let n = prover_params.generators.len() / 2;
+//
+//         let mut multiplier = hash_to_field_veccom(&value_before);
+//         multiplier.negate();
+//         multiplier.add_assign(&hash_to_field_veccom(&value_after));
+//
+//         let param_index = changed_index + n - proof_index;
+//
+//         let res = if prover_params.precomp.len() == 6 * n {
+//             prover_params.generators[param_index].mul_precomp_3(
+//                 multiplier,
+//                 &prover_params.precomp[param_index * 3..(param_index + 1) * 3],
+//             )
+//         } else if prover_params.precomp.len() == 512 * n {
+//             prover_params.generators[param_index].mul_precomp_256(
+//                 multiplier,
+//                 &prover_params.precomp[param_index * 256..(param_index + 1) * 256],
+//             )
+//         } else {
+//             prover_params.generators[param_index].mul(multiplier)
+//         };
+//
+//         new_proof.add_assign(&res);
+//         new_proof
+//     }
+// }
 
-    if proof_index == changed_index {
-        new_proof
-    } else {
-        let n = prover_params.generators.len() / 2;
-
-        let mut multiplier = hash_to_field_veccom(&value_before);
-        multiplier.negate();
-        multiplier.add_assign(&hash_to_field_veccom(&value_after));
-
-        let param_index = changed_index + n - proof_index;
-
-        let res = if prover_params.precomp.len() == 6 * n {
-            prover_params.generators[param_index].mul_precomp_3(
-                multiplier,
-                &prover_params.precomp[param_index * 3..(param_index + 1) * 3],
-            )
-        } else if prover_params.precomp.len() == 512 * n {
-            prover_params.generators[param_index].mul_precomp_256(
-                multiplier,
-                &prover_params.precomp[param_index * 256..(param_index + 1) * 256],
-            )
-        } else {
-            prover_params.generators[param_index].mul(multiplier)
-        };
-
-        new_proof.add_assign(&res);
-        new_proof
-    }
-}
-
-/**
- * Assumes verifier_params are correctly generated for n such that index<n
- */
-fn verify(
-    verifier_params: &VerifierParams,
-    com: &VeccomG1,
-    proof: &VeccomG1,
-    value: &[u8],
-    index: usize,
-) -> bool {
-    // verification formula: e(com, param[n-index-1]) = gt_elt ^ hash(value) * e(proof, generator_of_g2)
-    // We modify the formula in order to avoid slow exponentation in the target group (which is Fq12)
-    // and perform two scalar multiplication by to 1/hash(value) in G1 instead, which is considerably faster.
-    // We also move the pairing from the right-hand-side to the left-hand-side in order
-    // to take advantage of the pairing product computation, which is faster than two pairings.
-    let hash = hash_to_field_veccom(&value);
-    let hash_inverse = match hash.inverse() {
-        Some(p) => p,
-        // should not arrive here since hash to field will never return 0
-        None => panic!("hash_to_field_veccom failed"),
-    };
-
-    let n = verifier_params.generators.len();
-    let mut com_mut = *com;
-    let mut proof_mut = *proof;
-    proof_mut.negate();
-
-    // The following may be a tiny bit faster -- not enough to show up on a benchmark
-    /*let mut w = Wnaf::new();
-    let mut wnaf = w.scalar(h_inverse.into());
-    let com_mut = wnaf.base(com_mut);
-    let proof_mut = wnaf.base(proof_mut);*/
-    com_mut.mul_assign(hash_inverse);
-    proof_mut.mul_assign(hash_inverse);
-    Bls12::pairing_product(
-        verifier_params.generators[n - index - 1],
-        com_mut,
-        VeccomG2Affine::one(),
-        proof_mut,
-    ) == verifier_params.gt_elt
-}
+// /**
+//  * Assumes verifier_params are correctly generated for n such that index<n
+//  */
+// fn verify(
+//     verifier_params: &VerifierParams,
+//     com: &VeccomG1,
+//     proof: &VeccomG1,
+//     value: &[u8],
+//     index: usize,
+// ) -> bool {
+//     // verification formula: e(com, param[n-index-1]) = gt_elt ^ hash(value) * e(proof, generator_of_g2)
+//     // We modify the formula in order to avoid slow exponentation in the target group (which is Fq12)
+//     // and perform two scalar multiplication by to 1/hash(value) in G1 instead, which is considerably faster.
+//     // We also move the pairing from the right-hand-side to the left-hand-side in order
+//     // to take advantage of the pairing product computation, which is faster than two pairings.
+//     let hash = hash_to_field_veccom(&value);
+//     let hash_inverse = match hash.inverse() {
+//         Some(p) => p,
+//         // should not arrive here since hash to field will never return 0
+//         None => panic!("hash_to_field_veccom failed"),
+//     };
+//
+//     let n = verifier_params.generators.len();
+//     let mut com_mut = *com;
+//     let mut proof_mut = *proof;
+//     proof_mut.negate();
+//
+//     // The following may be a tiny bit faster -- not enough to show up on a benchmark
+//     /*let mut w = Wnaf::new();
+//     let mut wnaf = w.scalar(h_inverse.into());
+//     let com_mut = wnaf.base(com_mut);
+//     let proof_mut = wnaf.base(proof_mut);*/
+//     com_mut.mul_assign(hash_inverse);
+//     proof_mut.mul_assign(hash_inverse);
+//     Bls12::pairing_product(
+//         verifier_params.generators[n - index - 1],
+//         com_mut,
+//         VeccomG2Affine::one(),
+//         proof_mut,
+//     ) == verifier_params.gt_elt
+// }

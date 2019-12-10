@@ -54,7 +54,12 @@ void vcp_free_verifier_params(void *vp);
 /**
  * # Safety
  */
-vcp_params vcp_paramgen(const uint8_t *seedbuf, size_t seedlen, uint8_t ciphersuite, uintptr_t n);
+vcp_params vcp_paramgen(const uint8_t *seedbuf, size_t seedlen, uint8_t ciphersuite, size_t n);
+
+/**
+ * # Safety
+ */
+uint8_t *vcp_pp_serial(const void *prover);
 
 /**
  * # Safety
@@ -79,3 +84,8 @@ bool vcp_verify(const void *verifier,
                 const void *proof,
                 vcp_value val,
                 size_t idx);
+
+/**
+ * # Safety
+ */
+uint8_t *vcp_vp_serial(const void *verifier);

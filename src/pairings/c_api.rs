@@ -1,5 +1,5 @@
 extern crate libc;
-
+use pairing::serdes::SerDes;
 use std::ffi;
 use std::slice;
 
@@ -15,16 +15,52 @@ pub struct vcp_value {
     buflen: libc::size_t,
 }
 
+#[repr(C)]
+pub struct vcp_commit {
+    commit: *mut ffi::c_void,
+}
+
+#[repr(C)]
+pub struct vcp_proof {
+    proof: *mut ffi::c_void,
+}
+
+/// # Safety
+#[no_mangle]
+pub unsafe extern "C" fn vcp_pp_serial(prover: *const ffi::c_void) -> *mut u8 {
+    let pprover = &*(prover as *const super::ProverParams);
+    let mut buf: Vec<u8> = vec![];
+    assert!(
+        pprover.serialize(&mut buf, true).is_ok(),
+        "prover parameter serialization failed"
+    );
+    buf.shrink_to_fit();
+    buf.as_mut_ptr()
+}
+
+/// # Safety
+#[no_mangle]
+pub unsafe extern "C" fn vcp_vp_serial(verifier: *const ffi::c_void) -> *mut u8 {
+    let pverifier = &*(verifier as *const super::VerifierParams);
+    let mut buf: Vec<u8> = vec![];
+    assert!(
+        pverifier.serialize(&mut buf, true).is_ok(),
+        "prover parameter serialization failed"
+    );
+    buf.shrink_to_fit();
+    buf.as_mut_ptr()
+}
+
 /// # Safety
 #[no_mangle]
 pub unsafe extern "C" fn vcp_paramgen(
     seedbuf: *const u8,
     seedlen: libc::size_t,
     ciphersuite: u8,
-    n: usize,
+    n: libc::size_t,
 ) -> vcp_params {
     let seed = slice::from_raw_parts(seedbuf, seedlen);
-    let (pp, vp) = super::paramgen::paramgen_from_seed(seed, ciphersuite, n).unwrap();
+    let (pp, vp) = super::param::paramgen_from_seed(seed, ciphersuite, n).unwrap();
     let boxpp = Box::new(pp);
     let boxvp = Box::new(vp);
     vcp_params {
