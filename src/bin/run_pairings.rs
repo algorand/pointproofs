@@ -1,6 +1,7 @@
 extern crate pairing_plus as pairing;
 extern crate veccom;
 use pairing::serdes::SerDes;
+use veccom::pairings::param::paramgen_from_seed;
 use veccom::pairings::*;
 
 fn main() {
