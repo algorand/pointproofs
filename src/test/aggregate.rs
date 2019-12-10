@@ -92,7 +92,7 @@ fn test_cross_commit_aggregation_small() {
 
 #[test]
 fn test_same_commit_aggregation_large() {
-    let test_dim = [256usize, 1024, 4096];
+    let test_dim = [256usize, 1024];
 
     for i in &test_dim {
         let n = *i;
@@ -133,7 +133,7 @@ fn test_same_commit_aggregation_large() {
 
 #[test]
 fn test_cross_commit_aggregation_large() {
-    let test_dim = [256usize, 1024, 4096];
+    let test_dim = [256usize, 1024];
 
     for i in &test_dim {
         let n = *i;

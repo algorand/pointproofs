@@ -23,6 +23,15 @@ impl SerDes for Commitment {
                 ERR_CIPHERSUITE,
             ));
         }
+
+        // compressed must be false
+        if !compressed {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                ERR_COMPRESS,
+            ));
+        }
+
         let mut buf: Vec<u8> = vec![self.ciphersuite];
         self.commit.serialize(&mut buf, compressed)?;
 
@@ -41,6 +50,13 @@ impl SerDes for Commitment {
         reader: &mut R,
         compressed: Compressed,
     ) -> std::io::Result<Self> {
+        // compressed must be false
+        if !compressed {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                ERR_COMPRESS,
+            ));
+        }
         // constants stores id and the number of ssk-s
         let mut constants: [u8; 1] = [0u8; 1];
 
@@ -76,6 +92,13 @@ impl SerDes for Proof {
         writer: &mut W,
         compressed: Compressed,
     ) -> std::io::Result<()> {
+        // compressed must be false
+        if !compressed {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                ERR_COMPRESS,
+            ));
+        }
         // check the cipher suite id
         if !check_ciphersuite(self.ciphersuite) {
             return Err(std::io::Error::new(
@@ -101,6 +124,13 @@ impl SerDes for Proof {
         reader: &mut R,
         compressed: Compressed,
     ) -> std::io::Result<Self> {
+        // compressed must be false
+        if !compressed {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                ERR_COMPRESS,
+            ));
+        }
         // constants stores id and the number of ssk-s
         let mut constants: [u8; 1] = [0u8; 1];
 

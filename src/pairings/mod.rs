@@ -24,14 +24,14 @@ pub struct VerifierParams {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Commitment {
-    ciphersuite: Ciphersuite,
-    commit: VeccomG1,
+    pub(crate) ciphersuite: Ciphersuite,
+    pub(crate) commit: VeccomG1,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Proof {
-    ciphersuite: Ciphersuite,
-    proof: VeccomG1,
+    pub(crate) ciphersuite: Ciphersuite,
+    pub(crate) proof: VeccomG1,
 }
 
 pub mod commit;
