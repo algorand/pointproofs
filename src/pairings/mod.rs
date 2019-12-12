@@ -50,6 +50,6 @@ pub mod prove;
 
 pub(crate) mod hash_to_field_veccom;
 
-mod c_api;
+//mod c_api;
 mod err;
 mod serdes;

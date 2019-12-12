@@ -12,9 +12,9 @@ use veccom::pairings::*;
 
 // const N_ARRAY: [usize; 6] = [256, 1024, 4096, 16384, 65536, 262144];
 // const N_ARRAY: [usize; 3] = [256, 1024, 4096];
-const N_ARRAY: [usize; 4] = [16, 64, 256, 1024];
-const P_ARRAY: [usize; 5] = [1, 2, 4, 8, 16];
-const C_ARRAY: [usize; 9] = [2, 4, 8, 16, 32, 64, 128, 256, 1024];
+const N_ARRAY: [usize; 2] = [1024, 32768];
+const P_ARRAY: [usize; 4] = [1, 8, 16, 32];
+const C_ARRAY: [usize; 4] = [64, 256, 1024, 4096];
 //const PWD: &str = "/home/ubuntu/pre-com/";
 
 criterion_group!(
