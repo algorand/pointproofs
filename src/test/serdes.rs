@@ -13,6 +13,7 @@ fn test_serdes_prover_param() {
         let mut buf: Vec<u8> = vec![];
         assert!(prover_params.serialize(&mut buf, false).is_err());
         assert!(prover_params.serialize(&mut buf, true).is_ok());
+        assert_eq!(buf.len(), 17 + n * 192);
         let mut invalid_buf = buf.clone();
         let mut valid_buf = buf.clone();
         for i in 0u8..8 {
@@ -54,7 +55,7 @@ fn test_serdes_verifier_param() {
         assert!(verifier_params.serialize(&mut buf, false).is_err());
         assert!(verifier_params.serialize(&mut buf, true).is_ok());
         let len = buf.len();
-
+        assert_eq!(len, 585 + n * 48);
         assert!(VerifierParams::deserialize(&mut buf[..].as_ref(), false).is_err());
         let verifier_params_recover =
             VerifierParams::deserialize(&mut buf[..].as_ref(), true).unwrap();

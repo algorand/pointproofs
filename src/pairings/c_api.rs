@@ -1,55 +1,121 @@
 extern crate libc;
 use pairing::serdes::SerDes;
+use pairings::*;
 use std::ffi;
 use std::slice;
-
+// non-serialized
 #[repr(C)]
 pub struct vcp_params {
-    prover: *mut ffi::c_void,
-    verifier: *mut ffi::c_void,
+    prover: vcp_pp,
+    verifier: vcp_vp,
 }
 
 #[repr(C)]
 pub struct vcp_value {
-    buf: *const u8,
-    buflen: libc::size_t,
+    data: *const u8,
+    len: libc::size_t,
 }
 
-// #[repr(C)]
-// pub struct vcp_commit {
-//     commit: *mut ffi::c_void,
+#[repr(C)]
+pub struct vcp_commitment {
+    data: [u8; COMMIT_LEN],
+}
+
+#[repr(C)]
+pub struct vcp_proof {
+    data: [u8; PROOF_LEN]
+}
+
+/// serelized prover parameter struct
+#[repr(C)]
+pub struct vcp_pp {
+    data: [u8;RAW_PP_LEN],
+}
+
+/// serelized verifer parameter struct
+#[repr(C)]
+pub struct vcp_vp {
+    data: [u8;VP_LEN],
+}
+
+/// deserelized prover parameter struct
+#[repr(C)]
+pub struct vcp_pp_deserialized {
+    data: *const u8,
+    len: libc::size_t,
+}
+
+/// deserelized verifier parameter struct
+#[repr(C)]
+pub struct vcp_vp_deserialized {
+    data: *const u8,
+    len: libc::size_t,
+}
+
+//
+// // #[repr(C)]
+// // pub struct vcp_commit {
+// //     commit: *mut ffi::c_void,
+// // }
+// //
+// // #[repr(C)]
+// // pub struct vcp_proof {
+// //     proof: *mut ffi::c_void,
+// // }
+//
+// /// # Safety
+// #[no_mangle]
+// pub unsafe extern "C" fn vcp_pp_serial(prover: VcpDeserializedPp) -> vcp_serialized_pp {
+//     let pprover = &*(prover as *const super::ProverParams);
+//     let mut buf: Vec<u8> = vec![];
+//     assert!(
+//         pprover.serialize(&mut buf, true).is_ok(),
+//         "prover parameter serialization failed"
+//     );
+//     buf.shrink_to_fit();
+//     vcp_serialized_pp {
+//         data: buf.as_mut_ptr(),
+//         len: buf.len(),
+//     }
 // }
 //
-// #[repr(C)]
-// pub struct vcp_proof {
-//     proof: *mut ffi::c_void,
+// /// # Safety
+// #[no_mangle]
+// pub unsafe extern "C" fn vcp_pp_deserial(prover: vcp_serialized_pp) -> VcpDeserializedPp {
+//     let mut buf = slice::from_raw_parts(prover.data, prover.len);
+//     let prover = match ProverParams::deserialize(&mut buf, true) {
+//         Ok(p) => p,
+//         Err(e) => panic!("C wrapper: pp deserialization: {}", e),
+//     };
+//     Box::into_raw(Box::new(prover)) as VcpDeserializedPp
 // }
-
-/// # Safety
-#[no_mangle]
-pub unsafe extern "C" fn vcp_pp_serial(prover: *const ffi::c_void) -> *mut u8 {
-    let pprover = &*(prover as *const super::ProverParams);
-    let mut buf: Vec<u8> = vec![];
-    assert!(
-        pprover.serialize(&mut buf, true).is_ok(),
-        "prover parameter serialization failed"
-    );
-    buf.shrink_to_fit();
-    buf.as_mut_ptr()
-}
-
-/// # Safety
-#[no_mangle]
-pub unsafe extern "C" fn vcp_vp_serial(verifier: *const ffi::c_void) -> *mut u8 {
-    let pverifier = &*(verifier as *const super::VerifierParams);
-    let mut buf: Vec<u8> = vec![];
-    assert!(
-        pverifier.serialize(&mut buf, true).is_ok(),
-        "prover parameter serialization failed"
-    );
-    buf.shrink_to_fit();
-    buf.as_mut_ptr()
-}
+//
+// /// # Safety
+// #[no_mangle]
+// pub unsafe extern "C" fn vcp_vp_serial(pverifier: VcpDeserializedPp) -> vcp_serialized_vp {
+//     let pverifier = &*(pverifier as *const super::VerifierParams);
+//     let mut buf: Vec<u8> = vec![];
+//     assert!(
+//         pverifier.serialize(&mut buf, true).is_ok(),
+//         "prover parameter serialization failed"
+//     );
+//     buf.shrink_to_fit();
+//     vcp_serialized_vp {
+//         data: buf.as_mut_ptr(),
+//         len: buf.len(),
+//     }
+// }
+//
+// /// # Safety
+// #[no_mangle]
+// pub unsafe extern "C" fn vcp_vp_deserial(verifier: vcp_serialized_pp) -> VcpDeserializedPp {
+//     let mut buf = slice::from_raw_parts(verifier.data, verifier.len);
+//     let verifier = match VerifierParams::deserialize(&mut buf, true) {
+//         Ok(p) => p,
+//         Err(e) => panic!("C wrapper: pp deserialization: {}", e),
+//     };
+//     Box::into_raw(Box::new(verifier)) as VcpDeserializedPp
+// }
 
 /// # Safety
 #[no_mangle]
@@ -61,51 +127,64 @@ pub unsafe extern "C" fn vcp_paramgen(
 ) -> vcp_params {
     let seed = slice::from_raw_parts(seedbuf, seedlen);
     let (pp, vp) = super::param::paramgen_from_seed(seed, ciphersuite, n).unwrap();
-    let boxpp = Box::new(pp);
-    let boxvp = Box::new(vp);
+
+    let mut pp_buf: Vec<u8> = vec![];
+    assert!(vp.serialize(&mut pp_buf, true).is_ok());
+    let mut pp_array = [0u8; RAW_PP_LEN];
+    pp_array.copy_from_slice(&pp_buf);
+
+    let mut vp_buf: Vec<u8> = vec![];
+    assert!(vp.serialize(&mut vp_buf, true).is_ok());
+    let mut vp_array = [0u8; VP_LEN];
+    vp_array.copy_from_slice(&vp_buf);
+
     vcp_params {
-        prover: Box::into_raw(boxpp) as *mut ffi::c_void,
-        verifier: Box::into_raw(boxvp) as *mut ffi::c_void,
+        prover: vcp_pp {
+            data: pp_array
+        },
+        verifier: vcp_vp {
+            data: vp_array
+        },
     }
 }
-
-/// # Safety
-#[no_mangle]
-pub unsafe extern "C" fn vcp_free_prover_params(pp: *mut ffi::c_void) {
-    Box::from_raw(pp);
-}
-
-/// # Safety
-#[no_mangle]
-pub unsafe extern "C" fn vcp_free_verifier_params(vp: *mut ffi::c_void) {
-    Box::from_raw(vp);
-}
-
-/// # Safety
-#[no_mangle]
-fn return_commit(commit: &super::Commitment) -> *mut ffi::c_void {
-    let buf_box = Box::new(commit);
-    Box::into_raw(buf_box) as *mut ffi::c_void
-}
-
-/// # Safety
-#[no_mangle]
-pub unsafe extern "C" fn vcp_free_commit(commit: *mut ffi::c_void) {
-    Box::from_raw(commit);
-}
-
-/// # Safety
-#[no_mangle]
-fn return_proof(proof: &super::Proof) -> *mut ffi::c_void {
-    let buf_box = Box::new(proof);
-    Box::into_raw(buf_box) as *mut ffi::c_void
-}
-
-/// # Safety
-#[no_mangle]
-pub unsafe extern "C" fn vcp_free_proof(proof: *mut ffi::c_void) {
-    Box::from_raw(proof);
-}
+//
+// /// # Safety
+// #[no_mangle]
+// pub unsafe extern "C" fn vcp_free_prover_params(pp: *mut ffi::c_void) {
+//     Box::from_raw(pp);
+// }
+//
+// /// # Safety
+// #[no_mangle]
+// pub unsafe extern "C" fn vcp_free_verifier_params(vp: *mut ffi::c_void) {
+//     Box::from_raw(vp);
+// }
+//
+// /// # Safety
+// #[no_mangle]
+// fn return_commit(commit: &super::Commitment) -> *mut ffi::c_void {
+//     let buf_box = Box::new(commit);
+//     Box::into_raw(buf_box) as *mut ffi::c_void
+// }
+//
+// /// # Safety
+// #[no_mangle]
+// pub unsafe extern "C" fn vcp_free_commit(commit: *mut ffi::c_void) {
+//     Box::from_raw(commit);
+// }
+//
+// /// # Safety
+// #[no_mangle]
+// fn return_proof(proof: &super::Proof) -> *mut ffi::c_void {
+//     let buf_box = Box::new(proof);
+//     Box::into_raw(buf_box) as *mut ffi::c_void
+// }
+//
+// /// # Safety
+// #[no_mangle]
+// pub unsafe extern "C" fn vcp_free_proof(proof: *mut ffi::c_void) {
+//     Box::from_raw(proof);
+// }
 
 // /// # Safety
 // #[no_mangle]
@@ -137,38 +216,54 @@ pub unsafe extern "C" fn vcp_free_proof(proof: *mut ffi::c_void) {
 // }
 //
 fn vcp_value_slice<'a>(vv: &vcp_value) -> &'a [u8] {
-    unsafe { slice::from_raw_parts(vv.buf, vv.buflen) }
+    unsafe { slice::from_raw_parts(vv.data, vv.len) }
 }
 
 /// # Safety
 #[no_mangle]
 pub unsafe extern "C" fn vcp_commit(
-    prover: *const ffi::c_void,
+    prover: vcp_pp_deserialized,
     values: *const vcp_value,
     nvalues: libc::size_t,
-) -> *mut ffi::c_void {
-    let pprover = &*(prover as *const super::ProverParams);
+) -> vcp_commitment {
+    let pprover = &*(prover.data as *const super::ProverParams);
     let pvalues = slice::from_raw_parts(values, nvalues);
     let vvalues: Vec<_> = pvalues.iter().map(vcp_value_slice).collect();
 
     let com = super::Commitment::new(pprover, &vvalues).unwrap();
-    return_commit(&com)
+
+    let mut buf: Vec<u8> = vec![];
+    assert!(com.serialize(&mut buf, true).is_ok());
+    let mut commit_array = [0u8; COMMIT_LEN];
+    commit_array.copy_from_slice(&buf);
+
+    vcp_commitment {
+        data: commit_array
+    }
 }
 
 /// # Safety
 #[no_mangle]
 pub unsafe extern "C" fn vcp_prove(
-    prover: *const ffi::c_void,
+    prover: vcp_pp_deserialized,
     values: *const vcp_value,
     nvalues: libc::size_t,
     idx: libc::size_t,
-) -> *mut ffi::c_void {
-    let pprover = &*(prover as *const super::ProverParams);
+) -> vcp_proof {
+    let pprover = &*(prover.data as *const super::ProverParams);
     let pvalues = slice::from_raw_parts(values, nvalues);
     let vvalues: Vec<_> = pvalues.iter().map(vcp_value_slice).collect();
 
     let proof = super::Proof::new(pprover, &vvalues, idx).unwrap();
-    return_proof(&proof)
+
+    let mut buf: Vec<u8> = vec![];
+    assert!(proof.serialize(&mut buf, true).is_ok());
+    let mut proof_array = [0u8; PROOF_LEN];
+    proof_array.copy_from_slice(&buf);
+
+    vcp_proof {
+        data: proof_array
+    }
 }
 
 /// # Safety

@@ -14,6 +14,9 @@ pub struct ProverParams {
     pp_len: usize,
     precomp: Vec<VeccomG1Affine>,
 }
+// ciphersuite (1 byte) + n (8 bytes) + 2n * G2 (96 bytes) + pp_len (8 bytes)
+pub const RAW_PP_LEN: usize = 196625; // n = 1024
+
 #[derive(Clone, Debug)]
 pub struct VerifierParams {
     pub(crate) ciphersuite: Ciphersuite,
@@ -22,17 +25,24 @@ pub struct VerifierParams {
     gt_elt: Fq12,
 }
 
+// ciphersuite (1 byte) + n (8 bytes) + n * G1 (48 bytes) + Gt (576 bytes)
+pub const VP_LEN: usize = 49737; // n = 1024
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct Commitment {
     pub(crate) ciphersuite: Ciphersuite,
     pub(crate) commit: VeccomG1,
 }
 
+pub const COMMIT_LEN: usize = 97;
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct Proof {
     pub(crate) ciphersuite: Ciphersuite,
     pub(crate) proof: VeccomG1,
 }
+
+pub const PROOF_LEN: usize = 97;
 
 pub mod commit;
 pub mod param;
