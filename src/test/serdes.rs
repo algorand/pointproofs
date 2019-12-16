@@ -5,6 +5,53 @@ use pairings::*;
 
 #[test]
 fn test_serdes_prover_param() {
+    let n_array = [16];
+    for n in n_array.iter() {
+        let (mut prover_params, _verifier_params) =
+            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, *n).unwrap();
+
+        let mut buf: Vec<u8> = vec![];
+        assert!(prover_params.serialize(&mut buf, false).is_err());
+        assert!(prover_params.serialize(&mut buf, true).is_ok());
+
+        #[cfg(unswitch_group)]
+        assert_eq!(buf.len(), 17 + n * 96);
+        #[cfg(not(unswitch_group))]
+        assert_eq!(buf.len(), 17 + n * 192);
+
+        let mut invalid_buf = buf.clone();
+        let mut valid_buf = buf.clone();
+        for i in 0u8..8 {
+            invalid_buf[i as usize] = i;
+        }
+        let prover_params_recover = ProverParams::deserialize(&mut buf[..].as_ref(), true).unwrap();
+        assert_eq!(prover_params, prover_params_recover);
+        assert!(ProverParams::deserialize(&mut invalid_buf[..].as_ref(), true).is_err());
+        assert!(ProverParams::deserialize(&mut invalid_buf[..].as_ref(), false).is_err());
+        assert!(ProverParams::deserialize(&mut valid_buf[..].as_ref(), false).is_err());
+
+        prover_params.precomp_3();
+        let mut buf: Vec<u8> = vec![];
+        assert!(prover_params.serialize(&mut buf, false).is_err());
+        assert!(prover_params.serialize(&mut buf, true).is_ok());
+
+        assert!(ProverParams::deserialize(&mut buf[..].as_ref(), false).is_err());
+        let prover_params_recover = ProverParams::deserialize(&mut buf[..].as_ref(), true).unwrap();
+        assert_eq!(prover_params, prover_params_recover);
+
+        prover_params.precomp_256();
+        let mut buf: Vec<u8> = vec![];
+        assert!(prover_params.serialize(&mut buf, false).is_err());
+        assert!(prover_params.serialize(&mut buf, true).is_ok());
+        assert!(ProverParams::deserialize(&mut buf[..].as_ref(), false).is_err());
+        let prover_params_recover = ProverParams::deserialize(&mut buf[..].as_ref(), true).unwrap();
+        assert_eq!(prover_params, prover_params_recover);
+    }
+}
+
+#[test]
+#[ignore]
+fn test_serdes_prover_param_slow() {
     let n_array = [32, 256];
     for n in n_array.iter() {
         let (mut prover_params, _verifier_params) =
@@ -13,7 +60,12 @@ fn test_serdes_prover_param() {
         let mut buf: Vec<u8> = vec![];
         assert!(prover_params.serialize(&mut buf, false).is_err());
         assert!(prover_params.serialize(&mut buf, true).is_ok());
+
+        #[cfg(unswitch_group)]
+        assert_eq!(buf.len(), 17 + n * 96);
+        #[cfg(not(unswitch_group))]
         assert_eq!(buf.len(), 17 + n * 192);
+
         let mut invalid_buf = buf.clone();
         let mut valid_buf = buf.clone();
         for i in 0u8..8 {
@@ -46,6 +98,41 @@ fn test_serdes_prover_param() {
 
 #[test]
 fn test_serdes_verifier_param() {
+    let n_array = [16];
+    for n in n_array.iter() {
+        let (_prover_params, verifier_params) =
+            paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, *n).unwrap();
+
+        let mut buf: Vec<u8> = vec![];
+        assert!(verifier_params.serialize(&mut buf, false).is_err());
+        assert!(verifier_params.serialize(&mut buf, true).is_ok());
+        let len = buf.len();
+
+        #[cfg(unswitch_group)]
+        assert_eq!(len, 585 + n * 96);
+        #[cfg(not(unswitch_group))]
+        assert_eq!(len, 585 + n * 48);
+
+        assert!(VerifierParams::deserialize(&mut buf[..].as_ref(), false).is_err());
+        let verifier_params_recover =
+            VerifierParams::deserialize(&mut buf[..].as_ref(), true).unwrap();
+        assert_eq!(verifier_params, verifier_params_recover);
+
+        // all 0s is a valid encoding for vp with 0 elements
+        let mut valid_buf1 = vec![0; len];
+        assert!(VerifierParams::deserialize(&mut valid_buf1[..].as_ref(), true).is_ok());
+        assert!(VerifierParams::deserialize(&mut valid_buf1[..].as_ref(), false).is_err());
+        let mut invalid_buf1 = vec![1; len];
+        let mut invalid_buf2 = vec![2; len];
+        assert!(VerifierParams::deserialize(&mut invalid_buf1[..].as_ref(), true).is_err());
+        assert!(VerifierParams::deserialize(&mut invalid_buf1[..].as_ref(), false).is_err());
+        assert!(VerifierParams::deserialize(&mut invalid_buf2[..].as_ref(), true).is_err());
+        assert!(VerifierParams::deserialize(&mut invalid_buf2[..].as_ref(), false).is_err());
+    }
+}
+
+#[test]
+fn test_serdes_verifier_param_slow() {
     let n_array = [32, 256];
     for n in n_array.iter() {
         let (_prover_params, verifier_params) =
@@ -55,7 +142,12 @@ fn test_serdes_verifier_param() {
         assert!(verifier_params.serialize(&mut buf, false).is_err());
         assert!(verifier_params.serialize(&mut buf, true).is_ok());
         let len = buf.len();
+
+        #[cfg(unswitch_group)]
+        assert_eq!(len, 585 + n * 96);
+        #[cfg(not(unswitch_group))]
         assert_eq!(len, 585 + n * 48);
+
         assert!(VerifierParams::deserialize(&mut buf[..].as_ref(), false).is_err());
         let verifier_params_recover =
             VerifierParams::deserialize(&mut buf[..].as_ref(), true).unwrap();

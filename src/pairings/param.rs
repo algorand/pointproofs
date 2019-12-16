@@ -1,5 +1,5 @@
 use ff::Field;
-use pairing::{bls12_381::*, CurveAffine, CurveProjective, Engine};
+use pairing::{bls12_381::*, CurveAffine, CurveProjective};
 use pairings::err::*;
 use pairings::hash_to_field_veccom::hash_to_field_veccom;
 use pairings::*;
@@ -73,7 +73,7 @@ fn paramgen_from_alpha(
     }
 
     // verifier also gets gt^{alpha^{n+1}} in the target group
-    let gt = Bls12::pairing(g2_vec[n - 1], g1_vec[0]);
+    let gt = veccom_pairing(g1_vec[0], g2_vec[n - 1]);
 
     (
         ProverParams {
@@ -131,21 +131,21 @@ impl ProverParams {
         // of the two groups, and see if they all match as appropriate.
 
         for i in 0..self.n {
-            dh_values.push(Bls12::pairing(VeccomG2::one(), self.generators[i]));
+            dh_values.push(veccom_pairing(self.generators[i], VeccomG2Affine::one()));
         }
         dh_values.push(vp.gt_elt);
         for i in self.n + 1..2 * self.n {
-            dh_values.push(Bls12::pairing(VeccomG2::one(), self.generators[i]));
+            dh_values.push(veccom_pairing(self.generators[i], VeccomG2Affine::one()));
         }
         for i in 0..self.n {
-            dh_values.push(Bls12::pairing(
-                vp.generators[i],
+            dh_values.push(veccom_pairing(
                 self.generators[2 * self.n - 1],
+                vp.generators[i],
             ));
         }
 
         for (i, e) in dh_values.iter().enumerate().take(self.n) {
-            if e != &Bls12::pairing(vp.generators[i], VeccomG1::one()) {
+            if e != &veccom_pairing(VeccomG1Affine::one(), vp.generators[i]) {
                 return false;
             };
         }
@@ -153,7 +153,7 @@ impl ProverParams {
         for i in 0..2 * self.n {
             if i != self.n {
                 for j in 0..self.n {
-                    if dh_values[i + j + 1] != Bls12::pairing(vp.generators[j], self.generators[i])
+                    if dh_values[i + j + 1] != veccom_pairing(self.generators[i], vp.generators[j])
                     {
                         return false;
                     };

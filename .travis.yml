@@ -9,4 +9,7 @@ before_script:
 
 script:
   - cargo clippy --all-targets --all-features -- -D warnings
-  - travis_wait 360 cargo test
+  - cargo test
+  - cargo test --features=unswitched_group
+  - cargo run
+  - cargo run --features=unswitched_group

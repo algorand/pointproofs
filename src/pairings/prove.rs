@@ -1,5 +1,4 @@
 use ff::{Field, PrimeField};
-use pairing::Engine;
 use pairing::{bls12_381::*, CurveAffine, CurveProjective};
 use pairings::err::*;
 use pairings::hash_to_field_veccom::*;
@@ -153,11 +152,11 @@ impl Proof {
         com_mut.mul_assign(hash_inverse);
         proof_mut.mul_assign(hash_inverse);
 
-        Bls12::pairing_product(
+        veccom_pairing_product(
+            com_mut.into_affine(),
             verifier_params.generators[verifier_params.n - index - 1],
-            com_mut,
+            proof_mut.into_affine(),
             VeccomG2Affine::one(),
-            proof_mut,
         ) == verifier_params.gt_elt
     }
 
@@ -362,11 +361,11 @@ impl Proof {
         proof_mut.mul_assign(tmp);
 
         // 3 pairing product
-        Bls12::pairing_product(
-            param_subset_sum,
-            com_mut,
-            VeccomG2Affine::one().into_projective(),
-            proof_mut,
+        veccom_pairing_product(
+            com_mut.into_affine(),
+            param_subset_sum.into_affine(),
+            proof_mut.into_affine(),
+            VeccomG2Affine::one(),
         ) == verifier_params.gt_elt
     }
 
@@ -509,6 +508,6 @@ impl Proof {
         g2_vec.push(VeccomG2::one().into_affine());
 
         // now check the pairing product ?= verifier_params.Fq12
-        Bls12::pairing_multi_product(&g2_vec[..], &g1_vec[..]) == verifier_params.gt_elt
+        veccom_pairing_multi_product(&g1_vec[..], &g2_vec[..]) == verifier_params.gt_elt
     }
 }

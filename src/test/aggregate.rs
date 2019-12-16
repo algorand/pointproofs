@@ -91,6 +91,7 @@ fn test_cross_commit_aggregation_small() {
 }
 
 #[test]
+#[ignore]
 fn test_same_commit_aggregation_large() {
     let test_dim = [256usize, 1024];
 
@@ -132,6 +133,7 @@ fn test_same_commit_aggregation_large() {
 }
 
 #[test]
+#[ignore]
 fn test_cross_commit_aggregation_large() {
     let test_dim = [256usize, 1024];
 

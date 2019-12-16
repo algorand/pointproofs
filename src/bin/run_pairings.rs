@@ -5,7 +5,7 @@ use veccom::pairings::param::paramgen_from_seed;
 use veccom::pairings::*;
 
 fn main() {
-    let n = 32usize;
+    let n = 16usize;
     let update_index = n / 2;
 
     // generate the parameters, and performs pre_computation
@@ -47,11 +47,11 @@ fn main() {
         assert!(proofs[i].verify(&verifier_params, &old_com, &init_values[i], i));
     }
 
-    let new_value = format!("\"this is new message number {}\"", update_index).to_owned();
+    let new_value = format!("\"this is new message number {}\"", update_index);
     println!("\nUpdating string {} to {}\n", update_index, new_value);
 
     // update the commitment to the new value, and (de)serialize it
-    let mut new_com = old_com.clone();
+    let mut new_com = old_com;
     new_com
         .update(
             &prover_params,
