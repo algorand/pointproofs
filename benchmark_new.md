@@ -14,7 +14,7 @@ See `veccom-paramgen`
 
 
 |Function|  n = 1024, groups unswitched | n = 1024, groups switched | n = 100k, groups unswitched | n = 100k, groups switched | main cost |
-|---|---:|:---|
+|---|---:|---:|---:|---:|:---|
 | new commitment without pre-computation |  55.5 ms | 169.38 ms ||  | sum of n product |
 | new commitment with pre-computation = 3 | 54.7 ms | 168.45 ms  ||  | sum of n product |
 | new commitment with pre-computation = 256 | 43.1 ms | 127.35 ms | |  |sum of n product |
@@ -25,7 +25,7 @@ See `veccom-paramgen`
 ## Proof
 
 |Function| n = 1024, groups unswitched | n = 1024, groups switched | n = 100k, groups unswitched | n = 100k, groups switched | main cost |
-|---|---:|:---|
+|---|---:|---:|---:|---:|:---|
 | new proof without pre-computation | 55.3 ms |  169.49 ms || |  sum of n product |
 | new proof with pre-computation = 3 | 55.1 ms|  169.93 ms || | sum of n product |
 | new proof with pre-computation = 256 | 45.9 ms |  132.14 ms || |  sum of n product |
@@ -36,7 +36,7 @@ See `veccom-paramgen`
 ## Verify
 
 |Function|  n = 1024, groups unswitched | n = 1024, groups switched | n = 100k, groups unswitched | n = 100k, groups switched | main cost |
-|---|---:|---:|
+|---|---:|---:|---:|---:|---:|
 |Verify| |7.43 ms|| | hash_to_field + 2 g1_mul + pairing_product |
 
 
