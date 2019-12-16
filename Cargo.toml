@@ -4,6 +4,7 @@
   license = "MIT/Apache-2.0"
   authors = [
     "Leo Reyzin <leo@algorand.com>",
+    "Zhenfei Zhang <zhenfei@algorand.com>"
   ]
   build = "build.rs"
 
@@ -32,11 +33,6 @@
 [[bench]]
   name = "pairings"
   harness = false
-
-
-# [[bench]]
-#   name = "slow"
-#   harness = false
 
 [[bench]]
   name = "bench_without_pre_comp"
