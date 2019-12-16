@@ -4,7 +4,7 @@ __To be completed.__
 ## Setup
 
 * AWS Intel(R) Xeon(R) CPU E5-2686 v4 @ __2.30__ GHz (Slower than MBP).
-* Public parameter `n` (size of the vector) is either 1024 or 100k.
+* Public parameter `n` (size of the vector) is either 1024 or 32k.
 * Group unswitched: proof in `G1`
 * Group switched: proof in `G2`
 
@@ -14,29 +14,29 @@ See `veccom-paramgen`
 ## Commit
 
 
-|Function|  n = 1024, groups unswitched | n = 1024, groups switched | n = 100k, groups unswitched | n = 100k, groups switched | main cost |
+|Function|  n = 1024, groups unswitched | n = 1024, groups switched | n = 32768, groups unswitched | n = 32768, groups switched | main cost |
 |---|---:|---:|---:|---:|:---|
 | new commitment without pre-computation |  55.5 ms | 169.38 ms | 1.145 s |  | sum of n product |
-| new commitment with pre-computation = 3 | 54.7 ms | 168.45 ms  ||  | sum of n product |
-| new commitment with pre-computation = 256 | 43.1 ms | 127.35 ms | |  |sum of n product |
+| new commitment with pre-computation = 3 | 54.7 ms | 168.45 ms  |1.145 s |  | sum of n product |
+| new commitment with pre-computation = 256 | 43.1 ms | 127.35 ms | 1.525 s |  |sum of n product |
 | commitment update without pre-computation | 0.335 ms |1.03 ms ||  | 2 hash_to_field + g1_mul |
 | commitment update with pre-computation = 3 | 0.158 ms|0.51 ms ||  |2 hash_to_field + g1_mul |
 | commitment update with pre-computation = 256 | 0.072 ms |0.20 ms ||  | 2 hash_to_field + g1_mul |
 
 ## Proof
 
-|Function| n = 1024, groups unswitched | n = 1024, groups switched | n = 100k, groups unswitched | n = 100k, groups switched | main cost |
+|Function| n = 1024, groups unswitched | n = 1024, groups switched | n = 32768, groups unswitched | n = 32768, groups switched | main cost |
 |---|---:|---:|---:|---:|:---|
-| new proof without pre-computation | 55.3 ms |  169.49 ms || |  sum of n product |
-| new proof with pre-computation = 3 | 55.1 ms|  169.93 ms || | sum of n product |
-| new proof with pre-computation = 256 | 45.9 ms |  132.14 ms || |  sum of n product |
+| new proof without pre-computation | 55.3 ms |  169.49 ms | 1.146 s| |  sum of n product |
+| new proof with pre-computation = 3 | 55.1 ms|  169.93 ms |1.149 s| | sum of n product |
+| new proof with pre-computation = 256 | 45.9 ms |  132.14 ms |1.524 s| |  sum of n product |
 | proof update without pre-computation | 0.355 ms| 1.09 ms || | hash_to_field + g1_mul |
 | proof update with pre-computation = 3 | 0.160 ms | 0.49 ms || | hash_to_field + g1_mul |
 | proof update with pre-computation = 256 | 0.075 ms | 0.21 ms || | hash_to_field + g1_mul |
 
 ## Verify
 
-|Function|  n = 1024, groups unswitched | n = 1024, groups switched | n = 100k, groups unswitched | n = 100k, groups switched | main cost |
+|Function|  n = 1024, groups unswitched | n = 1024, groups switched |  n = 32768, groups unswitched | n = 32768, groups switched | main cost |
 |---|---:|---:|---:|---:|---:|
 |Verify| 4.78 ms |7.43 ms|| | hash_to_field + 2 g1_mul + pairing_product |
 
