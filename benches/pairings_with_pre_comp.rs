@@ -131,17 +131,37 @@ fn bench_pairings(c: &mut Criterion) {
         // parameters
         let (prover_params, verifier_params) =
             paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, *n).unwrap();
+        let mut pp3 = prover_params.clone();
+        pp3.precomp_3();
+        let mut pp256 = prover_params.clone();
+        pp256.precomp_256();
 
         // commitment generation
         let prover_params_clone = prover_params.clone();
         let bench = Benchmark::new(format!("N_{}_commit_no_precomp", *n), move |b| {
             bench_commit_helper(&prover_params_clone, *n, b);
         });
+        let pp3_clone = pp3.clone();
+        let bench = bench.with_function(format!("N_{}_commit_precomp_3", *n), move |b| {
+            bench_commit_helper(&pp3_clone, *n, b);
+        });
+        let pp256_clone = pp256.clone();
+        let bench = bench.with_function(format!("N_{}_commit_precomp_256", *n), move |b| {
+            bench_commit_helper(&pp256_clone, *n, b);
+        });
 
         // proof generation
         let prover_params_clone = prover_params.clone();
         let bench = bench.with_function(format!("N_{}_prove_no_precomp", *n), move |b| {
             bench_prove_helper(&prover_params_clone, *n, b);
+        });
+        let pp3_clone = pp3.clone();
+        let bench = bench.with_function(format!("N_{}_prove_precomp_3", *n), move |b| {
+            bench_prove_helper(&pp3_clone, *n, b);
+        });
+        let pp256_clone = pp256.clone();
+        let bench = bench.with_function(format!("N_{}_prove_precomp_256", *n), move |b| {
+            bench_prove_helper(&pp256_clone, *n, b);
         });
 
         // verification
@@ -159,15 +179,18 @@ fn bench_pairings(c: &mut Criterion) {
             }
 
             let com = Commitment::new(&prover_params_clone, &values).unwrap();
-            let mut proofs: Vec<u8> = vec![];
-
-            let p = Proof::new(&prover_params_clone, &values, 0).unwrap();
-            assert!(p.serialize(&mut proofs, true).is_ok());
+            let mut proofs: Vec<Vec<u8>> = vec![];
+            for i in 0..*n {
+                let mut buf: Vec<u8> = vec![];
+                let p = Proof::new(&prover_params_clone, &values, i).unwrap();
+                assert!(p.serialize(&mut buf, true).is_ok());
+                proofs.push(buf);
+            }
 
             let mut i: usize = 0;
             b.iter(|| {
-                let p = Proof::deserialize::<&[u8]>(&mut proofs[..].as_ref(), true).unwrap();
-                assert!(p.verify(&verifier_params, &com, &values[0], 0));
+                let p = Proof::deserialize::<&[u8]>(&mut proofs[i][..].as_ref(), true).unwrap();
+                assert!(p.verify(&verifier_params, &com, &values[i], i));
                 i = (i + 1) % *n;
             });
         });
@@ -177,11 +200,27 @@ fn bench_pairings(c: &mut Criterion) {
         let bench = bench.with_function(format!("N_{}_commit_update_no_precomp", *n), move |b| {
             bench_commit_update_helper(&prover_params_clone, *n, b);
         });
+        let pp3_clone = pp3.clone();
+        let bench = bench.with_function(format!("N_{}_commit_update_precomp_3", *n), move |b| {
+            bench_commit_update_helper(&pp3_clone, *n, b);
+        });
+        let pp256_clone = pp256.clone();
+        let bench = bench.with_function(format!("N_{}_commit_update_precomp_256", *n), move |b| {
+            bench_commit_update_helper(&pp256_clone, *n, b);
+        });
 
         // proof update
         let prover_params_clone = prover_params.clone();
         let bench = bench.with_function(format!("N_{}_proof_update_no_precomp", *n), move |b| {
             bench_proof_update_helper(&prover_params_clone, *n, b);
+        });
+        let pp3_clone = pp3.clone();
+        let bench = bench.with_function(format!("N_{}_proof_update_precomp_3", *n), move |b| {
+            bench_proof_update_helper(&pp3_clone, *n, b);
+        });
+        let pp256_clone = pp256.clone();
+        let bench = bench.with_function(format!("N_{}_proof_update_precomp_256", *n), move |b| {
+            bench_proof_update_helper(&pp256_clone, *n, b);
         });
 
         let bench = bench.warm_up_time(Duration::from_millis(1000));
