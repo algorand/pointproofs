@@ -72,7 +72,7 @@ pub struct vcp_proof {
 /// Serializing a prove parameter into bytes
 #[no_mangle]
 pub unsafe extern "C" fn vcp_pp_serial(pprover: vcp_pp) -> vcp_pp_bytes {
-    let pprover = &*(pprover.data as *const super::ProverParams);
+    let pprover = &*(pprover.data as *const ProverParams);
     let mut buf: Vec<u8> = vec![];
     assert!(
         pprover.serialize(&mut buf, true).is_ok(),
@@ -99,7 +99,7 @@ pub unsafe extern "C" fn vcp_pp_deserial(mut pprover: vcp_pp_bytes) -> vcp_pp {
 /// Serializing a verifier parameter into bytes
 #[no_mangle]
 pub unsafe extern "C" fn vcp_vp_serial(pverifier: vcp_vp) -> vcp_vp_bytes {
-    let pverifier = &*(pverifier.data as *const super::VerifierParams);
+    let pverifier = &*(pverifier.data as *const VerifierParams);
     let mut buf: Vec<u8> = vec![];
     assert!(
         pverifier.serialize(&mut buf, true).is_ok(),
@@ -190,7 +190,7 @@ pub unsafe extern "C" fn vcp_paramgen(
     n: libc::size_t,
 ) -> vcp_params {
     let seed = slice::from_raw_parts(seedbuf, seedlen);
-    let (pp, vp) = super::param::paramgen_from_seed(seed, ciphersuite, n).unwrap();
+    let (pp, vp) = param::paramgen_from_seed(seed, ciphersuite, n).unwrap();
 
     let buf_box = Box::new(pp);
     let pp_ptr = Box::into_raw(buf_box) as *mut ffi::c_void;
@@ -238,14 +238,14 @@ pub unsafe extern "C" fn vcp_commit(
     values: *const vcp_value,
     n: usize,
 ) -> vcp_commitment {
-    let pprover = &*(prover.data as *const super::ProverParams);
+    let pprover = &*(prover.data as *const ProverParams);
     let tmp = slice::from_raw_parts::<vcp_value>(values, n);
     let mut vvalues: Vec<Vec<u8>> = vec![];
     for e in tmp {
         vvalues.push(vcp_value_slice(&e).to_vec());
     }
 
-    let com = super::Commitment::new(pprover, &vvalues).unwrap();
+    let com = Commitment::new(pprover, &vvalues).unwrap();
     let buf_box = Box::new(com);
 
     vcp_commitment {
@@ -261,14 +261,14 @@ pub unsafe extern "C" fn vcp_prove(
     n: usize,
     idx: libc::size_t,
 ) -> vcp_proof {
-    let pprover = &*(prover.data as *const super::ProverParams);
+    let pprover = &*(prover.data as *const ProverParams);
     let tmp = slice::from_raw_parts::<vcp_value>(values, n);
     let mut vvalues: Vec<Vec<u8>> = vec![];
     for e in tmp {
         vvalues.push(vcp_value_slice(&e).to_vec());
     }
 
-    let proof = super::Proof::new(pprover, &vvalues, idx).unwrap();
+    let proof = Proof::new(pprover, &vvalues, idx).unwrap();
     let buf_box = Box::new(proof);
 
     vcp_proof {
@@ -340,4 +340,80 @@ pub unsafe extern "C" fn vcp_verify(
     let val = vcp_value_slice(&value);
 
     pproof.verify(pverifier, pcom, val, idx)
+}
+
+/// aggregate proofs within a same commitment
+#[no_mangle]
+pub unsafe extern "C" fn vcp_same_commit_aggregate(
+    com: vcp_commitment,
+    proofs: *const vcp_proof,
+    set: *const libc::size_t,
+    values: *const vcp_value,
+    nvalues: libc::size_t,
+    param_n: libc::size_t,
+) -> vcp_proof {
+    // parse commit
+    let pcom = &*(com.data as *const Commitment);
+
+    // parse proofs
+    let tmp = slice::from_raw_parts::<vcp_proof>(proofs, nvalues);
+    let mut proof_list: Vec<Proof> = vec![];
+    for e in tmp {
+        proof_list.push((*(e.data as *const Proof)).clone());
+    }
+
+    // parse indices
+    let tmp = slice::from_raw_parts::<libc::size_t>(set, nvalues);
+    let mut set_list: Vec<usize> = vec![];
+    for e in tmp {
+        set_list.push(*e);
+    }
+
+    // parse values
+    let tmp = slice::from_raw_parts::<vcp_value>(values, nvalues);
+    let mut vvalues: Vec<Vec<u8>> = vec![];
+    for e in tmp {
+        vvalues.push(vcp_value_slice(&e).to_vec());
+    }
+
+    let agg_proof =
+        match Proof::same_commit_aggregate(&pcom, &proof_list, &set_list, &vvalues, param_n) {
+            Ok(p) => p,
+            Err(e) => panic!("C wrapper, same commit aggregation failed: {}", e),
+        };
+    let buf_box = Box::new(agg_proof);
+    vcp_proof {
+        data: Box::into_raw(buf_box) as *mut ffi::c_void,
+    }
+}
+
+/// verify an aggregated proof within a same commitment
+#[no_mangle]
+pub unsafe extern "C" fn vcp_same_commit_batch_verify(
+    verifier: vcp_vp,
+    com: vcp_commitment,
+    proof: vcp_proof,
+    set: *const libc::size_t,
+    values: *const vcp_value,
+    nvalues: libc::size_t,
+) -> bool {
+    let pverifier = &*(verifier.data as *const VerifierParams);
+    let pcom = &*(com.data as *const Commitment);
+    let pproof = &*(proof.data as *const Proof);
+
+    // parse indices
+    let tmp = slice::from_raw_parts::<libc::size_t>(set, nvalues);
+    let mut set_list: Vec<usize> = vec![];
+    for e in tmp {
+        set_list.push(*e);
+    }
+
+    // parse values
+    let tmp = slice::from_raw_parts::<vcp_value>(values, nvalues);
+    let mut vvalues: Vec<Vec<u8>> = vec![];
+    for e in tmp {
+        vvalues.push(vcp_value_slice(&e).to_vec());
+    }
+
+    pproof.same_commit_batch_verify(pverifier, pcom, &set_list, &vvalues)
 }

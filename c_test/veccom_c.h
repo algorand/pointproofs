@@ -172,6 +172,26 @@ vcp_proof vcp_proof_update(vcp_pp prover,
 vcp_proof vcp_prove(vcp_pp prover, const vcp_value *values, uintptr_t n, size_t idx);
 
 /**
+ * aggregate proofs within a same commitment
+ */
+vcp_proof vcp_same_commit_aggregate(vcp_commitment com,
+                                    const vcp_proof *proofs,
+                                    const size_t *set,
+                                    const vcp_value *values,
+                                    size_t nvalues,
+                                    size_t param_n);
+
+/**
+ * verify an aggregated proof within a same commitment
+ */
+bool vcp_same_commit_batch_verify(vcp_vp verifier,
+                                  vcp_commitment com,
+                                  vcp_proof proof,
+                                  const size_t *set,
+                                  const vcp_value *values,
+                                  size_t nvalues);
+
+/**
  * verify the proof against the value and commitment
  */
 bool vcp_verify(vcp_vp verifier, vcp_commitment com, vcp_proof proof, vcp_value value, size_t idx);

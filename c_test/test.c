@@ -122,9 +122,72 @@ int test_basic()
 }
 
 
+
+// aggregation and batch verification tests
+int test_aggregation()
+{
+  size_t n = 1024;
+
+  // values to commit
+  int counter = 0;
+  vcp_value values[n];
+  for (counter =0;counter < n; counter ++) {
+    char *tmp = (char*)malloc(64 * sizeof(char));
+    sprintf(tmp, "This is message %d for commit %d!", counter, 0);
+    values[counter].data = (const unsigned char *)tmp;
+    values[counter].len = strlen(tmp);
+  }
+
+  #ifdef DEBUG
+  printf("values:\n");
+  for (counter =0;counter < 20; counter ++) {
+    printf("%zu: %s\n", values[counter].len, values[counter].data);
+  }
+  #endif
+
+  // generate parameters
+  char seed[] = "this is a very long seed for pixel tests";
+  char rngseed[] = "";
+  char msg[] = "this is the message we want pixel to sign";
+  uint8_t ciphersuite = 0;
+
+
+  vcp_params  vcp_param = vcp_paramgen((const uint8_t *)seed, sizeof(seed), ciphersuite, n);
+  vcp_pp      pp        = vcp_param.prover;
+  vcp_vp      vp        = vcp_param.verifier;
+
+  // generate a commit and 32 proofs
+  vcp_commitment  commit  = vcp_commit(pp, values, n);
+  vcp_proof       proof[32];
+  size_t          index[32];
+  vcp_value       sub_values[32];
+  for (counter = 0; counter < 32; counter ++)
+  {
+    // generate a proof
+    proof[counter]      = vcp_prove(pp, values, n, counter);
+    index[counter]      = counter;
+    sub_values[counter] = values[counter];
+
+    // verify the proof
+    assert( vcp_verify(vp, commit, proof[counter], values[counter], counter) == true);
+  }
+
+  // aggregate
+  vcp_proof agg_proof = vcp_same_commit_aggregate(commit, proof, index, sub_values, 32, n);
+
+  // verify the proof
+  assert( vcp_same_commit_batch_verify(vp, commit, agg_proof, index, sub_values, 32) == true);
+
+  printf("aggregation tests: success\n");
+  return 0;
+}
+
+
 int main(){
 
-  test_basic();
+
+  test_aggregation();
+//  test_basic();
   printf("Hello Algorand\n");
 }
 

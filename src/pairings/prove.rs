@@ -441,6 +441,12 @@ impl Proof {
             return false;
         }
         if com.ciphersuite != verifier_params.ciphersuite || com.ciphersuite != self.ciphersuite {
+            #[cfg(debug_assertions)]
+            println!(
+                "Ciphersuite failed? {} {} {}\n",
+                com.ciphersuite, verifier_params.ciphersuite, self.ciphersuite
+            );
+
             return false;
         }
         if set.len() != value_sub_vector.len() {
