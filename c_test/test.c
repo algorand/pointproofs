@@ -5,6 +5,7 @@
 #include <assert.h>
 #include "veccom_c.h"
 
+// #define DEBUG
 
 // Credit: https://stackoverflow.com/questions/7775991/how-to-get-hexdump-of-a-structure-data
 void hexDump (const char *desc, const void *addr, const int len);
@@ -23,9 +24,13 @@ int test_basic()
     values[counter].data = (const unsigned char *)tmp;
     values[counter].len = strlen(tmp);
   }
+
+  #ifdef DEBUG
+  printf("values:\n");
   for (counter =0;counter < 20; counter ++) {
     printf("%zu: %s\n", values[counter].len, values[counter].data);
   }
+  #endif
 
   // generate parameters
   char seed[] = "this is a very long seed for pixel tests";
@@ -44,12 +49,15 @@ int test_basic()
   vcp_pp_bytes  vcp_pp_string_recover = vcp_pp_serial(pp_recover);
   vcp_vp_bytes  vcp_vp_string_recover = vcp_vp_serial(vp_recover);
 
+  #ifdef DEBUG
   hexDump("prover param (in bytes)", vcp_pp_string.data, 256);
   hexDump("prover param recovered (in bytes)", vcp_pp_string_recover.data, 256);
-  assert( memcmp(vcp_pp_string.data, vcp_pp_string_recover.data, RAW_PP_LEN) == 0);
 
   hexDump("verifier param (in bytes)", vcp_vp_string.data, 256);
   hexDump("verifier param recovered (in bytes)", vcp_vp_string_recover.data, 256);
+  #endif
+
+  assert( memcmp(vcp_pp_string.data, vcp_pp_string_recover.data, RAW_PP_LEN) == 0);
   assert( memcmp(vcp_vp_string.data, vcp_vp_string_recover.data, VP_LEN) == 0);
 
 
@@ -59,8 +67,11 @@ int test_basic()
   vcp_commitment        commit_recover        = vcp_commit_deserial(commit_string);
   vcp_commitment_bytes  commit_string_recover = vcp_commit_serial(commit_recover);
 
+  #ifdef DEBUG
   hexDump("commit (in bytes)", commit_string.data, COMMIT_LEN);
   hexDump("commit recovered (in bytes)", commit_string_recover.data, COMMIT_LEN);
+  #endif
+
   assert( strcmp((const char *)commit_string.data, (const char *)commit_string_recover.data)==0);
 
   for (counter = 0; counter < 32; counter ++)
@@ -71,12 +82,17 @@ int test_basic()
     vcp_proof        proof_recover        = vcp_proof_deserial(proof_string);
     vcp_proof_bytes  proof_string_recover = vcp_proof_serial(proof_recover);
 
+    #ifdef DEBUG
     hexDump("proof (in bytes)", proof_string.data, PROOF_LEN);
     hexDump("proof recovered (in bytes)", proof_string_recover.data, PROOF_LEN);
+    #endif
+
     assert( strcmp((const char *)proof_string.data, (const char *)proof_string_recover.data)==0);
 
     // verify the proof
     assert( vcp_verify(vp_recover, commit, proof, values[counter], counter) == true);
+    vcp_free_proof(proof);
+    vcp_free_proof(proof_recover);
   }
 
   // update the commitment for index = 33
@@ -88,7 +104,20 @@ int test_basic()
     vcp_proof new_proof = vcp_proof_update(pp_recover, proof, counter, 33, values[33], values[44]);
     // verify the new proof
     assert( vcp_verify(vp_recover, new_commit, new_proof, values[counter], counter) == true);
+    vcp_free_proof(proof);
+    vcp_free_proof(new_proof);
   }
+
+  vcp_free_commit(commit);
+  vcp_free_commit(commit_recover);
+  vcp_free_commit(new_commit);
+
+  vcp_free_prover_params(vcp_param.prover);
+  vcp_free_prover_params(pp_recover);
+  vcp_free_verifier_params(vcp_param.verifier);
+  vcp_free_verifier_params(vp_recover);
+
+  printf("basis tests: success\n");
   return 0;
 }
 

@@ -77,7 +77,8 @@ pub struct ProverParams {
     precomp: Vec<VeccomG1Affine>,
 }
 /// Size for serialized prover parameter:
-/// ciphersuite (1 byte) + n (8 bytes) + 2n * G2 (96 bytes) + pp_len (8 bytes)
+/// ciphersuite `(1 byte) + n (8 bytes) + 2n * G2 (96 bytes) + pp_len (8 bytes)`.
+/// Does not include the size for pre-computed parameters.
 pub const RAW_PP_LEN: usize = 196_625; // n = 1024
 
 /// Structure for verifier parameters.
@@ -89,7 +90,7 @@ pub struct VerifierParams {
     gt_elt: Fq12,
 }
 /// Size for serialized verifier parameter:
-/// ciphersuite (1 byte) + n (8 bytes) + n * G1 (48 bytes) + Gt (576 bytes)
+/// ciphersuite `(1 byte) + n (8 bytes) + n * G1 (48 bytes) + Gt (576 bytes)`
 pub const VP_LEN: usize = 49737; // n = 1024
 
 /// Structure to hold a commitment.

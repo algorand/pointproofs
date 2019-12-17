@@ -58,11 +58,11 @@ fn paramgen_from_alpha(
 ) -> (ProverParams, VerifierParams) {
     #[cfg(not(debug_assertions))]
     println!(
-        "Warning!!! \nWarning!!! \nWarning!!! \nWarning!!! \n\
+        "\n\n\nWarning!!! \nWarning!!! \nWarning!!! \nWarning!!! \n\
         This function (paramgen_from_alpha) shall only be used for developing purpose.\n\
         In deployment you should use `veccom-param` crate to ensure \
         the security of the public parameters.\n\
-        End of warning.\n"
+        End of warning.\n\n"
     );
     let mut g1_vec = Vec::with_capacity(2 * n);
     // prover vector at index i-1 contains g1^{alpha^i} for i ranging from 1 to 2n

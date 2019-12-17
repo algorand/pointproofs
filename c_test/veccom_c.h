@@ -15,74 +15,95 @@
 
 #define VP_LEN 49737
 
+/**
+ * deserialized commitment struct
+ */
 typedef struct vcp_commitment {
   void *data;
 } vcp_commitment;
 
 /**
- * deserelized prover parameter struct
+ * deserialized prover parameter struct
  */
 typedef struct vcp_pp {
   void *data;
 } vcp_pp;
 
+/**
+ * values
+ */
 typedef struct vcp_value {
   const uint8_t *data;
   size_t len;
 } vcp_value;
 
+/**
+ * serialized commitment struct
+ */
 typedef struct vcp_commitment_bytes {
   uint8_t data[COMMIT_LEN];
 } vcp_commitment_bytes;
 
 /**
- * deserelized verifier parameter struct
+ * deserialized proof struct
+ */
+typedef struct vcp_proof {
+  void *data;
+} vcp_proof;
+
+/**
+ * deserialized verifier parameter struct
  */
 typedef struct vcp_vp {
   void *data;
 } vcp_vp;
 
+/**
+ * non-serialized
+ */
 typedef struct vcp_params {
   vcp_pp prover;
   vcp_vp verifier;
 } vcp_params;
 
 /**
- * serelized prover parameter struct
+ * serialized prover parameter struct
  */
 typedef struct vcp_pp_bytes {
   uint8_t data[RAW_PP_LEN];
 } vcp_pp_bytes;
 
-typedef struct vcp_proof {
-  void *data;
-} vcp_proof;
-
+/**
+ * serialized proof struct
+ */
 typedef struct vcp_proof_bytes {
   uint8_t data[PROOF_LEN];
 } vcp_proof_bytes;
 
 /**
- * serelized verifer parameter struct
+ * serialized verifer parameter struct
  */
 typedef struct vcp_vp_bytes {
   uint8_t data[VP_LEN];
 } vcp_vp_bytes;
 
 /**
- * # Safety
+ * Generate a commitment
  */
 vcp_commitment vcp_commit(vcp_pp prover, const vcp_value *values, uintptr_t n);
 
 /**
- * # Safety
+ * Deserializeing bytes into commitments
  */
 vcp_commitment vcp_commit_deserial(vcp_commitment_bytes commit);
 
+/**
+ * Serializing commitments into bytes
+ */
 vcp_commitment_bytes vcp_commit_serial(vcp_commitment commit);
 
 /**
- * # Safety
+ * update an existing commitment
  */
 vcp_commitment vcp_commit_update(vcp_pp prover,
                                  vcp_commitment com,
@@ -91,29 +112,52 @@ vcp_commitment vcp_commit_update(vcp_pp prover,
                                  vcp_value val_new);
 
 /**
- * # Safety
+ * Free commitment
+ */
+void vcp_free_commit(vcp_commitment commit);
+
+/**
+ * Free proof
+ */
+void vcp_free_proof(vcp_proof proof);
+
+/**
+ * Free prover parameter
+ */
+void vcp_free_prover_params(vcp_pp pp);
+
+/**
+ * Free verifier parameter
+ */
+void vcp_free_verifier_params(vcp_vp vp);
+
+/**
+ * Generating a pair of parameters
  */
 vcp_params vcp_paramgen(const uint8_t *seedbuf, size_t seedlen, uint8_t ciphersuite, size_t n);
 
 /**
- * # Safety
+ * Deserializing bytes into prover parameters
  */
 vcp_pp vcp_pp_deserial(vcp_pp_bytes pprover);
 
 /**
- * # Safety
+ * Serializing a prove parameter into bytes
  */
 vcp_pp_bytes vcp_pp_serial(vcp_pp pprover);
 
 /**
- * # Safety
+ * Deserializeing bytes into proofs
  */
 vcp_proof vcp_proof_deserial(vcp_proof_bytes proof);
 
+/**
+ * Serializing proofs into bytes
+ */
 vcp_proof_bytes vcp_proof_serial(vcp_proof proof);
 
 /**
- * # Safety
+ * update an existing proof
  */
 vcp_proof vcp_proof_update(vcp_pp prover,
                            vcp_proof proof,
@@ -123,18 +167,21 @@ vcp_proof vcp_proof_update(vcp_pp prover,
                            vcp_value val_new);
 
 /**
- * # Safety
+ * Generate a proof
  */
 vcp_proof vcp_prove(vcp_pp prover, const vcp_value *values, uintptr_t n, size_t idx);
 
 /**
- * # Safety
+ * verify the proof against the value and commitment
  */
 bool vcp_verify(vcp_vp verifier, vcp_commitment com, vcp_proof proof, vcp_value value, size_t idx);
 
 /**
- * # Safety
+ * Deserializing bytes into verifier parameters
  */
 vcp_vp vcp_vp_deserial(vcp_vp_bytes pverifier);
 
+/**
+ * Serializing a verifier parameter into bytes
+ */
 vcp_vp_bytes vcp_vp_serial(vcp_vp pverifier);

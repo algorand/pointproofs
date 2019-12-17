@@ -10,6 +10,4 @@ before_script:
 script:
   - cargo clippy --all-targets --all-features -- -D warnings
   - cargo test
-  - cargo test --features=unswitch_group
   - cargo run
-  - cargo run --features=unswitch_group
