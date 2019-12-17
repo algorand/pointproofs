@@ -360,15 +360,15 @@ pub unsafe extern "C" fn vcp_prove(
 /// # Safety
 #[no_mangle]
 pub unsafe extern "C" fn vcp_proof_update(
-    prover: *const ffi::c_void,
-    proof: *const ffi::c_void,
+    prover: vcp_pp,
+    proof: vcp_proof,
     idx: libc::size_t,
     changed_idx: libc::size_t,
     val_old: vcp_value,
     val_new: vcp_value,
-) -> *mut ffi::c_void {
-    let pprover = &*(prover as *const super::ProverParams);
-    let pproof = &*(proof as *const super::Proof);
+) -> vcp_proof {
+    let pprover = &*(prover.data as *const ProverParams);
+    let pproof = &*(proof.data as *const Proof);
     let value_before = vcp_value_slice(&val_old);
     let value_after = vcp_value_slice(&val_new);
 
@@ -377,29 +377,35 @@ pub unsafe extern "C" fn vcp_proof_update(
     new_proof
         .update(pprover, idx, changed_idx, value_before, value_after)
         .unwrap();
-    return_proof(&new_proof)
+    let buf_box = Box::new(new_proof);
+    vcp_proof {
+        data: Box::into_raw(buf_box) as *mut ffi::c_void,
+    }
 }
-//
-// /// # Safety
-// #[no_mangle]
-// pub unsafe extern "C" fn vcp_commit_update(
-//     prover: *const ffi::c_void,
-//     com: *const ffi::c_void,
-//     changed_idx: libc::size_t,
-//     val_old: vcp_value,
-//     val_new: vcp_value,
-// ) -> *mut ffi::c_void {
-//     let pprover = &*(prover as *const super::ProverParams);
-//     let pcom = &*(com as *const super::Commitment);
-//     let value_before = vcp_value_slice(&val_old);
-//     let value_after = vcp_value_slice(&val_new);
-//     let mut new_com = pcom.clone();
-//     new_com
-//         .update(pprover, changed_idx, value_before, value_after)
-//         .unwrap();
-//     return_commit(&new_com)
-// }
-//
+
+/// # Safety
+#[no_mangle]
+pub unsafe extern "C" fn vcp_commit_update(
+    prover: vcp_pp,
+    com: vcp_commitment,
+    changed_idx: libc::size_t,
+    val_old: vcp_value,
+    val_new: vcp_value,
+) -> vcp_commitment {
+    let pprover = &*(prover.data as *const ProverParams);
+    let pcom = &*(com.data as *const Commitment);
+    let value_before = vcp_value_slice(&val_old);
+    let value_after = vcp_value_slice(&val_new);
+    let mut new_com = pcom.clone();
+    new_com
+        .update(pprover, changed_idx, value_before, value_after)
+        .unwrap();
+    let buf_box = Box::new(new_com);
+    vcp_commitment {
+        data: Box::into_raw(buf_box) as *mut ffi::c_void,
+    }
+}
+
 /// # Safety
 #[no_mangle]
 pub unsafe extern "C" fn vcp_verify(

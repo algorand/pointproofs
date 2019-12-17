@@ -84,6 +84,15 @@ vcp_commitment_bytes vcp_commit_serial(vcp_commitment commit);
 /**
  * # Safety
  */
+vcp_commitment vcp_commit_update(vcp_pp prover,
+                                 vcp_commitment com,
+                                 size_t changed_idx,
+                                 vcp_value val_old,
+                                 vcp_value val_new);
+
+/**
+ * # Safety
+ */
 vcp_params vcp_paramgen(const uint8_t *seedbuf, size_t seedlen, uint8_t ciphersuite, size_t n);
 
 /**
@@ -102,6 +111,16 @@ vcp_pp_bytes vcp_pp_serial(vcp_pp pprover);
 vcp_proof vcp_proof_deserial(vcp_proof_bytes proof);
 
 vcp_proof_bytes vcp_proof_serial(vcp_proof proof);
+
+/**
+ * # Safety
+ */
+vcp_proof vcp_proof_update(vcp_pp prover,
+                           vcp_proof proof,
+                           size_t idx,
+                           size_t changed_idx,
+                           vcp_value val_old,
+                           vcp_value val_new);
 
 /**
  * # Safety

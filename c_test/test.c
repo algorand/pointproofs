@@ -79,6 +79,16 @@ int test_basic()
     assert( vcp_verify(vp_recover, commit, proof, values[counter], counter) == true);
   }
 
+  // update the commitment for index = 33
+  vcp_commitment  new_commit  = vcp_commit_update(pp_recover, commit, 33, values[33], values[44]);
+  for (counter = 0; counter < 32; counter ++)
+  {
+    // update the proofs; the updated index will be 33
+    vcp_proof proof     = vcp_prove(pp_recover, values, n, counter);
+    vcp_proof new_proof = vcp_proof_update(pp_recover, proof, counter, 33, values[33], values[44]);
+    // verify the new proof
+    assert( vcp_verify(vp_recover, new_commit, new_proof, values[counter], counter) == true);
+  }
   return 0;
 }
 
