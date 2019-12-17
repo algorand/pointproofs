@@ -9,29 +9,83 @@
 // Credit: https://stackoverflow.com/questions/7775991/how-to-get-hexdump-of-a-structure-data
 void hexDump (const char *desc, const void *addr, const int len);
 
-// very simple and basic tests on pixel functions
-int test()
+// very simple and basic tests for commit/prove/(de)serializations
+int test_basic()
 {
+  size_t n = 1024;
 
+  // values to commit
+  int counter = 0;
+  vcp_value values[n];
+  for (counter =0;counter < n; counter ++) {
+    char *tmp = (char*)malloc(64 * sizeof(char));
+    sprintf(tmp, "This is message %d for commit %d!", counter, 0);
+    values[counter].data = (const unsigned char *)tmp;
+    values[counter].len = strlen(tmp);
+  }
+  for (counter =0;counter < 20; counter ++) {
+    printf("%zu: %s\n", values[counter].len, values[counter].data);
+  }
+
+  // generate parameters
   char seed[] = "this is a very long seed for pixel tests";
   char rngseed[] = "";
   char msg[] = "this is the message we want pixel to sign";
   uint8_t ciphersuite = 0;
-  size_t n = 32;
-  vcp_params vcp_param = vcp_paramgen((const uint8_t *)seed, sizeof(seed), ciphersuite, n);
-  void* tmp1 = vcp_pp_serial(vcp_param.prover);
-  hexDump("prover param:", tmp1, 256);
 
-  void* tmp2 = vcp_vp_serial(vcp_param.verifier);
-  hexDump("prover param:", tmp2, 256);
-//  hexDump("verifier param:", vcp_param.verifier, 256);
+
+  vcp_params    vcp_param     = vcp_paramgen((const uint8_t *)seed, sizeof(seed), ciphersuite, n);
+
+  // testing (de)serialization of parameters
+  vcp_pp_bytes  vcp_pp_string = vcp_pp_serial(vcp_param.prover);
+  vcp_vp_bytes  vcp_vp_string = vcp_vp_serial(vcp_param.verifier);
+  vcp_pp        pp_recover    = vcp_pp_deserial(vcp_pp_string);
+  vcp_vp        vp_recover    = vcp_vp_deserial(vcp_vp_string);
+  vcp_pp_bytes  vcp_pp_string_recover = vcp_pp_serial(pp_recover);
+  vcp_vp_bytes  vcp_vp_string_recover = vcp_vp_serial(vp_recover);
+
+  hexDump("prover param (in bytes)", vcp_pp_string.data, 256);
+  hexDump("prover param recovered (in bytes)", vcp_pp_string_recover.data, 256);
+  assert( memcmp(vcp_pp_string.data, vcp_pp_string_recover.data, RAW_PP_LEN) == 0);
+
+  hexDump("verifier param (in bytes)", vcp_vp_string.data, 256);
+  hexDump("verifier param recovered (in bytes)", vcp_vp_string_recover.data, 256);
+  assert( memcmp(vcp_vp_string.data, vcp_vp_string_recover.data, VP_LEN) == 0);
+
+
+  // generate a commit
+  vcp_commitment        commit                = vcp_commit(pp_recover, values, n);
+  vcp_commitment_bytes  commit_string         = vcp_commit_serial(commit);
+  vcp_commitment        commit_recover        = vcp_commit_deserial(commit_string);
+  vcp_commitment_bytes  commit_string_recover = vcp_commit_serial(commit_recover);
+
+  hexDump("commit (in bytes)", commit_string.data, COMMIT_LEN);
+  hexDump("commit recovered (in bytes)", commit_string_recover.data, COMMIT_LEN);
+  assert( strcmp((const char *)commit_string.data, (const char *)commit_string_recover.data)==0);
+
+  for (counter = 0; counter < 32; counter ++)
+  {
+    // generate a proof
+    vcp_proof        proof                = vcp_prove(pp_recover, values, n, counter);
+    vcp_proof_bytes  proof_string         = vcp_proof_serial(proof);
+    vcp_proof        proof_recover        = vcp_proof_deserial(proof_string);
+    vcp_proof_bytes  proof_string_recover = vcp_proof_serial(proof_recover);
+
+    hexDump("proof (in bytes)", proof_string.data, PROOF_LEN);
+    hexDump("proof recovered (in bytes)", proof_string_recover.data, PROOF_LEN);
+    assert( strcmp((const char *)proof_string.data, (const char *)proof_string_recover.data)==0);
+
+    // verify the proof
+    assert( vcp_verify(vp_recover, commit, proof, values[counter], counter) == true);
+  }
+
   return 0;
 }
 
 
 int main(){
 
-  test();
+  test_basic();
   printf("Hello Algorand\n");
 }
 
