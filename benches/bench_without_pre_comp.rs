@@ -12,7 +12,7 @@ use veccom::pairings::*;
 
 // const N_ARRAY: [usize; 6] = [256, 1024, 4096, 16384, 65536, 262144];
 // const N_ARRAY: [usize; 3] = [256, 1024, 4096];
-const N_ARRAY: [usize; 2] = [1024, 32768];
+const N_ARRAY: [usize; 3] = [32, 1024, 32768];
 const P_ARRAY: [usize; 4] = [1, 8, 16, 32];
 const C_ARRAY: [usize; 4] = [64, 256, 1024, 4096];
 //const PWD: &str = "/home/ubuntu/pre-com/";
@@ -72,6 +72,7 @@ fn bench_x_com_helper(c: &mut Criterion, n: usize, num_commit: usize, num_proof:
     // now we do x-com aggregation
     let mut value_sub_vector: Vec<Vec<String>> = vec![];
     let mut index: Vec<Vec<usize>> = vec![];
+    let mut proofs_per_commit = vec![];
 
     for commit_index in 0..num_commit {
         let mut value_sub_vector_per_commit: Vec<String> = vec![];
@@ -83,12 +84,23 @@ fn bench_x_com_helper(c: &mut Criterion, n: usize, num_commit: usize, num_proof:
             ));
             index_per_commit.push(proof_index);
         }
+        proofs_per_commit.push(
+            Proof::same_commit_aggregate(
+                &commits[commit_index],
+                &proofs[commit_index],
+                &index_per_commit,
+                &value_sub_vector_per_commit,
+                n,
+            )
+            .unwrap(),
+        );
         value_sub_vector.push(value_sub_vector_per_commit);
-        index.push(index_per_commit)
+        index.push(index_per_commit);
     }
     println!("Subset formed");
+
     let bench_str = format!(
-        "x-com aggregate: n = {}, c = {}, p = {}",
+        "x-com aggregate partial: n = {}, c = {}, p = {}",
         n, num_commit, num_proof
     );
     let commits_clone = commits.clone();
@@ -97,12 +109,42 @@ fn bench_x_com_helper(c: &mut Criterion, n: usize, num_commit: usize, num_proof:
 
     let bench = Benchmark::new(&bench_str, move |b| {
         let file_name = format!(
+            "benches/x-com-aggregate-n{}-c{}-p{}-partial.proof",
+            n, num_commit, num_proof
+        );
+        let mut file = std::fs::File::create(file_name).unwrap();
+        b.iter(|| {
+            let agg_proof = match Proof::cross_commit_aggregate_partial(
+                &commits_clone,
+                &proofs_per_commit,
+                &index_clone,
+                &value_sub_vector_clone,
+                n,
+            ) {
+                Ok(p) => p,
+                Err(e) => panic!(e),
+            };
+
+            agg_proof.serialize(&mut file, true).unwrap();
+        })
+    });
+
+    let bench_str = format!(
+        "x-com aggregate full: n = {}, c = {}, p = {}",
+        n, num_commit, num_proof
+    );
+    let commits_clone = commits.clone();
+    let index_clone = index.clone();
+    let value_sub_vector_clone = value_sub_vector.clone();
+
+    let bench = bench.with_function(&bench_str, move |b| {
+        let file_name = format!(
             "benches/x-com-aggregate-n{}-c{}-p{}.proof",
             n, num_commit, num_proof
         );
         let mut file = std::fs::File::create(file_name).unwrap();
         b.iter(|| {
-            let agg_proof = match Proof::cross_commit_aggregate(
+            let agg_proof = match Proof::cross_commit_aggregate_full(
                 &commits_clone,
                 &proofs,
                 &index_clone,
