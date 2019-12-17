@@ -1,5 +1,7 @@
-//! this mod defines the hash_to_field functions that are more efficient than
-//! simply using bls::hash_to_field
+//! This file is part of the veccom crate.
+//! It defines the hash_to_field functions that are more efficient than `bls::hash_to_field`
+//! The algorithms are described here:
+//! https://github.com/algorand/veccom-rust/blob/master/SPEC.md#hashes
 use bigint::U512;
 use ff::PrimeField;
 use pairing::bls12_381::*;
@@ -10,10 +12,12 @@ use pairings::Commitment;
 use sha2::{Digest, Sha512};
 use std::ops::Rem;
 
-// input: a list of k commitments
-// input: a list of k * x indices, for which we need to generate t_j
-// input: Value: a list of k * x messages that is commited to
-// output: a list of k field elements
+/// Hash a two dim array of bytes into non-zero scalars. An internal function for aggregation
+/// and batch verification.
+/// * input: a list of k commitments
+/// * input: a list of k * x indices, for which we need to generate t_j
+/// * input: Value: a list of k * x messages that is commited to
+/// * output: a list of k field elements
 pub(crate) fn hash_to_tj<Blob: AsRef<[u8]>>(
     commits: &[Commitment],
     set: &[Vec<usize>],
@@ -82,10 +86,12 @@ pub(crate) fn hash_to_tj<Blob: AsRef<[u8]>>(
 
     Ok(res)
 }
-// input: the commitment
-// input: a list of indices, for which we need to generate t_i
-// input: Value: the messages that is commited to
-// output: a list of field elements
+
+// A wrapper of `hash_to_ti` that outputs `Fr`s instead of `FrRepr`s.
+// * input: the commitment
+// * input: a list of indices, for which we need to generate t_i
+// * input: Value: the messages that is commited to
+// * output: a list of field elements
 pub(crate) fn hash_to_ti_fr<Blob: AsRef<[u8]>>(
     commit: &Commitment,
     set: &[usize],
@@ -105,10 +111,13 @@ pub(crate) fn hash_to_ti_fr<Blob: AsRef<[u8]>>(
     }
     Ok(fr_vec)
 }
-// input: the commitment
-// input: a list of indices, for which we need to generate t_i
-// input: Value: the messages that is commited to
-// output: a list of field elements
+
+/// Hash a array of bytes into non-zero scalars. An internal function for aggregation
+/// and batch verification.
+/// * input: the commitment
+/// * input: a list of indices, for which we need to generate t_i
+/// * input: Value: the messages that is commited to
+/// * output: a list of field elements
 pub(crate) fn hash_to_ti_repr<Blob: AsRef<[u8]>>(
     commit: &Commitment,
     set: &[usize],
@@ -170,7 +179,8 @@ pub(crate) fn hash_to_ti_repr<Blob: AsRef<[u8]>>(
     Ok(res)
 }
 
-// hash_to_field_veccom use SHA 512 to hash a blob into a non-zero field element
+/// A wrapper of `hash_to_field` that outputs `Fr`s instead of `FrRepr`s.
+/// hash_to_field_veccom use SHA 512 to hash a blob into a non-zero field element
 pub(crate) fn hash_to_field_veccom<Blob: AsRef<[u8]>>(input: Blob) -> Fr {
     match Fr::from_repr(hash_to_field_repr_veccom(input.as_ref())) {
         Ok(p) => p,
@@ -180,7 +190,8 @@ pub(crate) fn hash_to_field_veccom<Blob: AsRef<[u8]>>(input: Blob) -> Fr {
     }
 }
 
-// hash_to_field_veccom use SHA 512 to hash a blob into a non-zero field element
+/// Hashes a blob into a non-zero field element.
+/// hash_to_field_veccom use SHA 512 to hash a blob into a non-zero field element.
 pub(crate) fn hash_to_field_repr_veccom<Blob: AsRef<[u8]>>(input: Blob) -> FrRepr {
     let mut hasher = Sha512::new();
     hasher.input(input);

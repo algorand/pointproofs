@@ -33,10 +33,15 @@ fn test_same_commit_aggregation_small() {
     let agg_proof =
         Proof::same_commit_aggregate(&com, &proofs, &set, &value_sub_vector, prover_params.n)
             .unwrap();
-    assert!(agg_proof.batch_verify(&verifier_params, &com, &set, &value_sub_vector));
+    assert!(agg_proof.same_commit_batch_verify(&verifier_params, &com, &set, &value_sub_vector));
 
     let new_set = vec![1usize, 4, 8];
-    assert!(!agg_proof.batch_verify(&verifier_params, &com, &new_set, &value_sub_vector));
+    assert!(!agg_proof.same_commit_batch_verify(
+        &verifier_params,
+        &com,
+        &new_set,
+        &value_sub_vector
+    ));
 }
 
 #[test]
@@ -151,10 +156,10 @@ fn test_same_commit_aggregation_large() {
 
         let agg_proof =
             Proof::same_commit_aggregate(&com, &proofs, &set, &value_sub_vector, pp.n).unwrap();
-        assert!(agg_proof.batch_verify(&vp, &com, &set, &value_sub_vector));
+        assert!(agg_proof.same_commit_batch_verify(&vp, &com, &set, &value_sub_vector));
 
         let new_set = vec![1usize, 4, 8];
-        assert!(!agg_proof.batch_verify(&vp, &com, &new_set, &value_sub_vector));
+        assert!(!agg_proof.same_commit_batch_verify(&vp, &com, &new_set, &value_sub_vector));
     }
 }
 

@@ -1,3 +1,5 @@
+//! This file is part of the veccom crate.
+//! Defines functions for proofs.
 use ff::{Field, PrimeField};
 use pairing::{bls12_381::*, CurveAffine, CurveProjective};
 use pairings::err::*;
@@ -6,7 +8,13 @@ use pairings::param::*;
 use pairings::*;
 
 impl Proof {
-    /// generate a new proof
+    /// Generate a new proof.
+    ///
+    ///     * input: prover parameter set
+    ///     * input: values for the proof
+    ///     * input: the index of the proof
+    ///     * output: a new proof
+    ///     * error: invalid ciphersuite/parameters
     pub fn new<Blob: AsRef<[u8]>>(
         prover_params: &ProverParams,
         values: &[Blob],
@@ -57,7 +65,15 @@ impl Proof {
         })
     }
 
-    /// update the proof
+    /// Updating an existing proof.
+    ///
+    ///     * input: prover parameter set
+    ///     * input: the index for the proof
+    ///     * input: the index for the value that is being changed
+    ///     * input: the value before the change
+    ///     * input: the value after the change
+    ///     * output: update self to a new proof
+    ///     * error: invalid ciphersuite/parameters
     pub fn update<Blob: AsRef<[u8]>>(
         &mut self,
         prover_params: &ProverParams,
@@ -107,10 +123,19 @@ impl Proof {
 
             self.proof.add_assign(&res);
         }
+
+        // if proof_index == changed_index, do nothing
         Ok(())
     }
 
-    /// Verify the proof
+    /// Verify the proof.
+    ///
+    ///     * input: the proof
+    ///     * input: verifier parameter set
+    ///     * input: the commitment
+    ///     * input: the value
+    ///     * input: the index
+    ///     * output: if the proof is valid w.r.t. the rest of inputs
     pub fn verify<Blob: AsRef<[u8]>>(
         &self,
         verifier_params: &VerifierParams,
@@ -119,6 +144,7 @@ impl Proof {
         index: usize,
     ) -> bool {
         if self.ciphersuite != verifier_params.ciphersuite || self.ciphersuite != com.ciphersuite {
+            #[cfg(debug_assertions)]
             println!(
                 " ciphersuite fails {}, {}, {}",
                 self.ciphersuite, verifier_params.ciphersuite, com.ciphersuite
@@ -160,10 +186,20 @@ impl Proof {
         ) == verifier_params.gt_elt
     }
 
-    /// Aggregates a vector of proofs into a single one
-    /// Note: the aggregator does not check the validity of
-    /// individual commits. The caller may need to check them
-    /// if they care for it.
+    /// Aggregates a vector of proofs from a same commitment into a single one.
+    ///
+    ///     * input: the commitment
+    ///     * input: the list of proofs
+    ///     * input: the list of the indices of the proofs
+    ///     * input: the list of the values of the proofs
+    ///     * input: parameter n (size of the vector)
+    ///     * output: the aggregated proof
+    ///     * error: invalid ciphersuite/length, or hash to scalars failes
+    ///
+    /// Note:
+    ///
+    ///     the aggregator does not check the validity of individual commit/proofs.
+    ///     The caller may need to check them if they care for it.
     pub fn same_commit_aggregate<Blob: AsRef<[u8]>>(
         commit: &Commitment,
         proofs: &[Self],
@@ -201,10 +237,22 @@ impl Proof {
 
     /// Aggregate an array of proofs, each
     /// proof is a same-commit aggregated proof.
-    /// The aggregator does not check the validity of the proof.
+    ///
+    ///     * input: a list of commitments
+    ///     * input: a list of (aggregated) proofs, each for one commitment
+    ///     * input: a 2-dim array of indices for the proofs, each vector of indices for an aggregated proof
+    ///     * input: a 2-dim array of values for the proofs, each vector of values for an aggregated proof
+    ///     * input: parameter n (size of the vector)
+    ///
+    /// Note:
+    ///
+    ///     1. The aggregator does not check the validity of the proof.
+    ///     2. The proofs are already aggregated within each commitment.
+    ///
     /// Steps:
+    ///
     ///     1. t[j] = hash_to_tj(...)
-    ///     2. return \prod proofs[j]^t[j]
+    ///     2. return prod proofs[j]^t[j]
     pub fn cross_commit_aggregate_partial<Blob: AsRef<[u8]>>(
         commits: &[Commitment],
         proofs: &[Self],
@@ -233,8 +281,8 @@ impl Proof {
             || commits.len() != set.len()
             || commits.len() != value_sub_vector.len()
             || commits.is_empty()
-            || commits.len() > n
         {
+            #[cfg(debug_assertions)]
             println!(
                 "commit: {}, proofs: {}, set: {}, value_sub_vector: {}",
                 commits.len(),
@@ -266,11 +314,25 @@ impl Proof {
 
     /// Aggregate a 2-dim array of proofs, each row corresponding to a
     /// commit, into a single proof.
-    /// The aggregator does not check the validity of the proof.
+    ///
+    ///     * input: a list of commitments
+    ///     * input: a 2-dim array of non-aggregated proofs, each vector of proofs for one commitment
+    ///     * input: a 2-dim array of indices for the proofs, each indice for a proof
+    ///     * input: a 2-dim array of values for the proofs, each value for a proof
+    ///     * input: parameter n (size of the vector)
+    ///     * output: an aggregated proof
+    ///     * error: invalid ciphersuite, input vectors length does not match
+    ///
+    /// Note:
+    ///
+    ///     1. The aggregator does not check the validity of the proof.
+    ///     2. The proofs are already aggregated within each commitment.
+    ///
     /// Steps:
+    ///
     ///     1. t[j] = hash_to_tj(...)
     ///     2. pi[j] = same_commit_aggregate(...)
-    ///     2. return \prod pi[j]^t[j]
+    ///     3. return prod pi[j]^t[j]
     pub fn cross_commit_aggregate_full<Blob: AsRef<[u8]>>(
         commits: &[Commitment],
         proofs: &[Vec<Self>],
@@ -301,8 +363,8 @@ impl Proof {
             || commits.len() != set.len()
             || commits.len() != value_sub_vector.len()
             || commits.is_empty()
-            || commits.len() > n
         {
+            #[cfg(debug_assertions)]
             println!(
                 "commit: {}, proofs: {}, set: {}, value_sub_vector: {}",
                 commits.len(),
@@ -350,7 +412,14 @@ impl Proof {
     }
 
     /// batch verify a proof for a list of values/indices
-    pub fn batch_verify<Blob: AsRef<[u8]>>(
+    ///
+    ///     * input: the proof
+    ///     * input: verifier parameter set
+    ///     * input: the commitment
+    ///     * input: the list of indices
+    ///     * input: the list of values
+    ///     * output: if the proof is valid w.r.t. the rest of inputs
+    pub fn same_commit_batch_verify<Blob: AsRef<[u8]>>(
         &self,
         verifier_params: &VerifierParams,
         com: &Commitment,
@@ -445,7 +514,14 @@ impl Proof {
         ) == verifier_params.gt_elt
     }
 
-    /// verify a proof which was aggregated from 2-dim array of proofs
+    /// Verify a proof which was aggregated from 2-dim array of proofs
+    ///
+    ///     * input: the proof
+    ///     * input: verifier parameter set
+    ///     * input: the list of commitments
+    ///     * input: a 2-dim array of indices
+    ///     * input: a 2-dim array of values
+    ///     * output: if the proof is valid w.r.t. the rest of inputs
     pub fn cross_commit_batch_verify<Blob: AsRef<[u8]>>(
         &self,
         verifier_params: &VerifierParams,
@@ -482,7 +558,12 @@ impl Proof {
         // handled the case where there is only 1 commit
         if num_commit == 1 {
             // call normal batch verification
-            return self.batch_verify(&verifier_params, &com[0], &set[0], &value_sub_vector[0]);
+            return self.same_commit_batch_verify(
+                &verifier_params,
+                &com[0],
+                &set[0],
+                &value_sub_vector[0],
+            );
         }
 
         // generate all the t_i-s for j \in [num_commit]

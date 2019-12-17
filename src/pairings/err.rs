@@ -1,3 +1,4 @@
+//! This file is part of the veccom crate.
 //! A list of error messages.
 
 pub(crate) const ERR_SEED_TOO_SHORT: &str = "The seed length is too short";

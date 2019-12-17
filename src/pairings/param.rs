@@ -1,3 +1,6 @@
+//! This file is part of the veccom crate.
+//! This module defines system parameters and functions to generate/validate them.
+
 use ff::Field;
 use pairing::{bls12_381::*, CurveAffine, CurveProjective};
 use pairings::err::*;
@@ -6,6 +9,7 @@ use pairings::*;
 
 const VALID_CIPHERSUITE: [u8; 1] = [0u8];
 
+/// Ciphersuite ID is a wrapper of u8.
 pub type Ciphersuite = u8;
 
 /// Checks if csid is supported. Currently only support csid = 0.
@@ -15,6 +19,9 @@ pub fn check_ciphersuite(csid: Ciphersuite) -> bool {
 
 /// Generate a set of parameters from a seed and a ciphersuite ID.
 /// Returns an error is the seed is not long enough; or ciphersuite is not valid; or n == 0
+/// This function shall only be used for testing purpose.
+/// In deployment you should use `veccom-param` crate to ensure the
+/// security of the public parameters.
 pub fn paramgen_from_seed<Blob: AsRef<[u8]>>(
     seed: Blob,
     ciphersuite: Ciphersuite,
@@ -49,6 +56,14 @@ fn paramgen_from_alpha(
     ciphersuite: Ciphersuite,
     n: usize,
 ) -> (ProverParams, VerifierParams) {
+    #[cfg(not(debug_assertions))]
+    println!(
+        "Warning!!! \nWarning!!! \nWarning!!! \nWarning!!! \n\
+        This function (paramgen_from_alpha) shall only be used for developing purpose.\n\
+        In deployment you should use `veccom-param` crate to ensure \
+        the security of the public parameters.\n\
+        End of warning.\n"
+    );
     let mut g1_vec = Vec::with_capacity(2 * n);
     // prover vector at index i-1 contains g1^{alpha^i} for i ranging from 1 to 2n
     // except that at index i, prover vector contains nothing useful

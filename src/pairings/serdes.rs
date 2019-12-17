@@ -1,3 +1,6 @@
+//! This file is part of the veccom crate.
+//! It defines APIs for (de)serialization.
+
 use pairing::bls12_381::*;
 use pairing::serdes::SerDes;
 use pairings::err::*;
