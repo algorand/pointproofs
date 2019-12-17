@@ -31,7 +31,8 @@ fn test_same_commit_aggregation_small() {
     }
 
     let agg_proof =
-        Proof::aggregate(&com, &proofs, &set, &value_sub_vector, prover_params.n).unwrap();
+        Proof::same_commit_aggregate(&com, &proofs, &set, &value_sub_vector, prover_params.n)
+            .unwrap();
     assert!(agg_proof.batch_verify(&verifier_params, &com, &set, &value_sub_vector));
 
     let new_set = vec![1usize, 4, 8];
@@ -49,7 +50,7 @@ fn test_cross_commit_aggregation_small() {
     let mut proofs: Vec<Vec<Proof>> = vec![];
     let mut value_sub_vector: Vec<Vec<Vec<u8>>> = vec![];
     let mut set = vec![];
-
+    let mut same_commit_proof = vec![];
     for j in 0..8 {
         println!("{}-th commit", j);
         let mut init_values = Vec::with_capacity(n);
@@ -71,6 +72,16 @@ fn test_cross_commit_aggregation_small() {
             tmp_proofs.push(proof);
             tmp_value_sub_vector.push(init_values[*index].clone());
         }
+        same_commit_proof.push(
+            Proof::same_commit_aggregate(
+                &com,
+                &tmp_proofs,
+                &tmp_set,
+                &tmp_value_sub_vector,
+                prover_params.n,
+            )
+            .unwrap(),
+        );
 
         values.push(init_values);
         commits.push(com);
@@ -79,10 +90,25 @@ fn test_cross_commit_aggregation_small() {
         value_sub_vector.push(tmp_value_sub_vector);
     }
 
-    let agg_proof =
-        Proof::cross_commit_aggregate(&commits, &proofs, &set, &value_sub_vector, prover_params.n)
-            .unwrap();
-    assert!(agg_proof.cross_commit_batch_verify(
+    let agg_proof1 = Proof::cross_commit_aggregate_full(
+        &commits,
+        &proofs,
+        &set,
+        &value_sub_vector,
+        prover_params.n,
+    )
+    .unwrap();
+    let agg_proof2 = Proof::cross_commit_aggregate_partial(
+        &commits,
+        &same_commit_proof,
+        &set,
+        &value_sub_vector,
+        prover_params.n,
+    )
+    .unwrap();
+    assert_eq!(agg_proof1, agg_proof2);
+
+    assert!(agg_proof1.cross_commit_batch_verify(
         &verifier_params,
         &commits,
         &set,
@@ -117,14 +143,14 @@ fn test_same_commit_aggregation_large() {
         let set = vec![1usize, 4, 7];
         let mut proofs: Vec<Proof> = vec![];
         let mut value_sub_vector: Vec<&[u8]> = vec![];
-
         for index in &set {
             let proof = Proof::new(&pp, &values, *index).unwrap();
             proofs.push(proof);
             value_sub_vector.push(values[*index]);
         }
 
-        let agg_proof = Proof::aggregate(&com, &proofs, &set, &value_sub_vector, pp.n).unwrap();
+        let agg_proof =
+            Proof::same_commit_aggregate(&com, &proofs, &set, &value_sub_vector, pp.n).unwrap();
         assert!(agg_proof.batch_verify(&vp, &com, &set, &value_sub_vector));
 
         let new_set = vec![1usize, 4, 8];
@@ -148,7 +174,7 @@ fn test_cross_commit_aggregation_large() {
         let mut proofs: Vec<Vec<Proof>> = vec![];
         let mut value_sub_vector: Vec<Vec<Vec<u8>>> = vec![];
         let mut set = vec![];
-
+        let mut same_commit_proof = vec![];
         for j in 0..8 {
             println!("{}-th commit", j);
             let mut init_values = Vec::with_capacity(n);
@@ -170,6 +196,10 @@ fn test_cross_commit_aggregation_large() {
                 tmp_proofs.push(proof);
                 tmp_value_sub_vector.push(init_values[*index].clone());
             }
+            same_commit_proof.push(
+                Proof::same_commit_aggregate(&com, &tmp_proofs, &tmp_set, &tmp_value_sub_vector, n)
+                    .unwrap(),
+            );
 
             values.push(init_values);
             commits.push(com);
@@ -178,9 +208,18 @@ fn test_cross_commit_aggregation_large() {
             value_sub_vector.push(tmp_value_sub_vector);
         }
 
-        let agg_proof =
-            Proof::cross_commit_aggregate(&commits, &proofs, &set, &value_sub_vector, pp.n)
+        let agg_proof1 =
+            Proof::cross_commit_aggregate_full(&commits, &proofs, &set, &value_sub_vector, n)
                 .unwrap();
+        let agg_proof2 = Proof::cross_commit_aggregate_partial(
+            &commits,
+            &same_commit_proof,
+            &set,
+            &value_sub_vector,
+            n,
+        )
+        .unwrap();
+        assert_eq!(agg_proof1, agg_proof2);
 
         let mut invalid_vp = vp.clone();
         invalid_vp.n = 255;
@@ -194,10 +233,10 @@ fn test_cross_commit_aggregation_large() {
         let mut invalid_value_sub_vector = value_sub_vector.clone();
         invalid_value_sub_vector[0][0] = b"this is a must-fail string".to_owned().to_vec();
 
-        assert!(agg_proof.cross_commit_batch_verify(&vp, &commits, &set, &value_sub_vector));
-
+        assert!(agg_proof1.cross_commit_batch_verify(&vp, &commits, &set, &value_sub_vector));
+        assert_eq!(agg_proof1, agg_proof2);
         // must fail: invalid vp
-        assert!(!agg_proof.cross_commit_batch_verify(
+        assert!(!agg_proof1.cross_commit_batch_verify(
             &invalid_vp,
             &commits,
             &set,
@@ -205,7 +244,7 @@ fn test_cross_commit_aggregation_large() {
         ));
 
         // must fail: invalid vp
-        assert!(!agg_proof.cross_commit_batch_verify(
+        assert!(!agg_proof1.cross_commit_batch_verify(
             &vp,
             &invalid_commits,
             &set,
@@ -213,7 +252,7 @@ fn test_cross_commit_aggregation_large() {
         ));
 
         // must fail: invalid set
-        assert!(!agg_proof.cross_commit_batch_verify(
+        assert!(!agg_proof1.cross_commit_batch_verify(
             &vp,
             &commits,
             &invalid_set,
@@ -221,7 +260,7 @@ fn test_cross_commit_aggregation_large() {
         ));
 
         // must fail: invalid vp
-        assert!(!agg_proof.cross_commit_batch_verify(
+        assert!(!agg_proof1.cross_commit_batch_verify(
             &vp,
             &commits,
             &set,

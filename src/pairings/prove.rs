@@ -164,7 +164,7 @@ impl Proof {
     /// Note: the aggregator does not check the validity of
     /// individual commits. The caller may need to check them
     /// if they care for it.
-    pub fn aggregate<Blob: AsRef<[u8]>>(
+    pub fn same_commit_aggregate<Blob: AsRef<[u8]>>(
         commit: &Commitment,
         proofs: &[Self],
         set: &[usize],
@@ -199,9 +199,79 @@ impl Proof {
         })
     }
 
+    /// Aggregate an array of proofs, each
+    /// proof is a same-commit aggregated proof.
+    /// The aggregator does not check the validity of the proof.
+    /// Steps:
+    ///     1. t[j] = hash_to_tj(...)
+    ///     2. return \prod proofs[j]^t[j]
+    pub fn cross_commit_aggregate_partial<Blob: AsRef<[u8]>>(
+        commits: &[Commitment],
+        proofs: &[Self],
+        set: &[Vec<usize>],
+        value_sub_vector: &[Vec<Blob>],
+        n: usize,
+    ) -> Result<Self, String> {
+        // check ciphersuite
+        let ciphersuite = commits[0].ciphersuite;
+        if !check_ciphersuite(ciphersuite) {
+            return Err(ERR_CIPHERSUITE.to_owned());
+        }
+        for e in commits.iter() {
+            if e.ciphersuite != ciphersuite {
+                return Err(ERR_CIPHERSUITE.to_owned());
+            }
+        }
+        for e in proofs.iter() {
+            if e.ciphersuite != ciphersuite {
+                return Err(ERR_CIPHERSUITE.to_owned());
+            }
+        }
+
+        // check the length are correct
+        if commits.len() != proofs.len()
+            || commits.len() != set.len()
+            || commits.len() != value_sub_vector.len()
+            || commits.is_empty()
+            || commits.len() > n
+        {
+            println!(
+                "commit: {}, proofs: {}, set: {}, value_sub_vector: {}",
+                commits.len(),
+                proofs.len(),
+                set.len(),
+                value_sub_vector.len()
+            );
+            return Err(ERR_X_COM_SIZE.to_owned());
+        };
+
+        // if commit.len() == 1, return the aggregated proof
+        if commits.len() == 1 {
+            return Ok(proofs[0].clone());
+        }
+
+        // start aggregation
+        let scalars = hash_to_tj(&commits, &set, &value_sub_vector, n)?;
+        if scalars.len() != proofs.len() {
+            return Err(ERR_X_COM_SIZE.to_owned());
+        }
+
+        let scalars_u64: Vec<&[u64; 4]> = scalars.iter().map(|s| &s.0).collect();
+        let bases: Vec<VeccomG1Affine> = proofs.iter().map(|s| s.proof.into_affine()).collect();
+        // proof = \prod pi[i] ^ tj[i]
+        let proof = VeccomG1Affine::sum_of_products(&bases[..], &scalars_u64);
+
+        Ok(Proof { ciphersuite, proof })
+    }
+
     /// Aggregate a 2-dim array of proofs, each row corresponding to a
-    /// commit, into a single proof
-    pub fn cross_commit_aggregate<Blob: AsRef<[u8]>>(
+    /// commit, into a single proof.
+    /// The aggregator does not check the validity of the proof.
+    /// Steps:
+    ///     1. t[j] = hash_to_tj(...)
+    ///     2. pi[j] = same_commit_aggregate(...)
+    ///     2. return \prod pi[j]^t[j]
+    pub fn cross_commit_aggregate_full<Blob: AsRef<[u8]>>(
         commits: &[Commitment],
         proofs: &[Vec<Self>],
         set: &[Vec<usize>],
@@ -245,7 +315,13 @@ impl Proof {
 
         // if commit.len() == 1, call normal aggregation
         if commits.len() == 1 {
-            return Self::aggregate(&commits[0], &proofs[0], &set[0], &value_sub_vector[0], n);
+            return Self::same_commit_aggregate(
+                &commits[0],
+                &proofs[0],
+                &set[0],
+                &value_sub_vector[0],
+                n,
+            );
         }
 
         // start aggregation
@@ -253,7 +329,7 @@ impl Proof {
 
         let mut pi: Vec<Self> = vec![];
         for i in 0..commits.len() {
-            pi.push(Self::aggregate(
+            pi.push(Self::same_commit_aggregate(
                 &commits[i],
                 &proofs[i],
                 &set[i],
