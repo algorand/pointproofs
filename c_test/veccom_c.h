@@ -205,3 +205,25 @@ vcp_vp vcp_vp_deserial(vcp_vp_bytes pverifier);
  * Serializing a verifier parameter into bytes
  */
 vcp_vp_bytes vcp_vp_serial(vcp_vp pverifier);
+
+/**
+ * aggregated proofs cross commitments
+ */
+vcp_proof vcp_x_commit_aggregate(const vcp_commitment *com,
+                                 const vcp_proof *proof,
+                                 const size_t *set,
+                                 const vcp_value *values,
+                                 const size_t *commit_indices,
+                                 size_t no_commits,
+                                 size_t param_n);
+
+/**
+ * verify an aggregated proof across commitments
+ */
+bool vcp_x_commit_batch_verify(vcp_vp verifier,
+                               const vcp_commitment *com,
+                               vcp_proof proof,
+                               const size_t *set,
+                               const vcp_value *values,
+                               const size_t *commit_indices,
+                               size_t no_commits);

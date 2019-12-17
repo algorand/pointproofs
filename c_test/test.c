@@ -5,7 +5,7 @@
 #include <assert.h>
 #include "veccom_c.h"
 
-// #define DEBUG
+#define DEBUG
 
 // Credit: https://stackoverflow.com/questions/7775991/how-to-get-hexdump-of-a-structure-data
 void hexDump (const char *desc, const void *addr, const int len);
@@ -33,9 +33,7 @@ int test_basic()
   #endif
 
   // generate parameters
-  char seed[] = "this is a very long seed for pixel tests";
-  char rngseed[] = "";
-  char msg[] = "this is the message we want pixel to sign";
+  char seed[] = "this is a very long seed for veccom tests";
   uint8_t ciphersuite = 0;
 
 
@@ -123,8 +121,8 @@ int test_basic()
 
 
 
-// aggregation and batch verification tests
-int test_aggregation()
+// same commit aggregation and batch verification tests
+int test_same_commit_aggregation()
 {
   size_t n = 1024;
 
@@ -146,9 +144,7 @@ int test_aggregation()
   #endif
 
   // generate parameters
-  char seed[] = "this is a very long seed for pixel tests";
-  char rngseed[] = "";
-  char msg[] = "this is the message we want pixel to sign";
+  char seed[] = "this is a very long seed for veccom tests";
   uint8_t ciphersuite = 0;
 
 
@@ -183,11 +179,97 @@ int test_aggregation()
 }
 
 
+
+// across commits aggregation and batch verification tests
+int test_x_commit_aggregation()
+{
+  size_t  n = 1024;
+  size_t  k = 32;
+  size_t  commit_indices[32];
+  int     i;
+  int     total = 0;
+  for (i = 0; i < 32; i++){
+    commit_indices[i] = i+2;
+    total += commit_indices[i];
+  }
+
+
+
+  // values to commit
+  int counter = 0;
+  int com_counter = 0;
+  vcp_value values[k][n];
+  for (com_counter = 0; com_counter < k; com_counter ++){
+    for (counter = 0; counter < n; counter ++) {
+      char *tmp = (char*)malloc(64 * sizeof(char));
+      sprintf(tmp, "This is message %d for commit %d!", counter, com_counter);
+      values[com_counter][counter].data = (const unsigned char *)tmp;
+      values[com_counter][counter].len = strlen(tmp);
+    }
+  }
+
+
+  #ifdef DEBUG
+  printf("values:\n");
+  for (com_counter = 0; com_counter < k; com_counter ++){
+    for (counter =0;counter < commit_indices[com_counter]; counter ++) {
+    printf("%zu: %s\n", values[com_counter][counter].len, values[com_counter][counter].data);
+    }
+  }
+  #endif
+
+  // generate parameters
+  char seed[] = "this is a very long seed for veccom tests";
+  uint8_t ciphersuite = 0;
+
+
+  vcp_params  vcp_param = vcp_paramgen((const uint8_t *)seed, sizeof(seed), ciphersuite, n);
+  vcp_pp      pp        = vcp_param.prover;
+  vcp_vp      vp        = vcp_param.verifier;
+
+  // generate 32 commit and 32*32 proofs
+  vcp_commitment  commit[32];
+  for (com_counter = 0; com_counter < k; com_counter++) {
+    commit[com_counter] = vcp_commit(pp, values[com_counter], n);
+  }
+
+
+  vcp_proof proof[total];
+  size_t    index[total];
+  vcp_value sub_values[total];
+
+  i = 0;
+  for (com_counter = 0; com_counter < k; com_counter++) {
+    for (counter = 0; counter < commit_indices[com_counter]; counter ++)
+    {
+      // generate a proof
+      proof[i]      = vcp_prove(pp, values[com_counter], n, counter);
+      index[i]      = counter;
+      sub_values[i] = values[com_counter][counter];
+
+      // verify the proof
+      assert( vcp_verify(vp, commit[com_counter], proof[i], sub_values[i], counter) == true);
+
+      i ++;
+    }
+  }
+
+  // aggregate
+  vcp_proof agg_proof = vcp_x_commit_aggregate(commit, proof, index, sub_values, commit_indices, 32, n);
+
+  // verify the proof
+  assert( vcp_x_commit_batch_verify(vp, commit, agg_proof, index, sub_values, commit_indices, 32) == true);
+
+  printf("aggregation tests: success\n");
+  return 0;
+}
+
+
 int main(){
 
-
-  test_aggregation();
-//  test_basic();
+  test_x_commit_aggregation();
+  // test_same_commit_aggregation();
+  // test_basic();
   printf("Hello Algorand\n");
 }
 

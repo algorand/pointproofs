@@ -417,3 +417,129 @@ pub unsafe extern "C" fn vcp_same_commit_batch_verify(
 
     pproof.same_commit_batch_verify(pverifier, pcom, &set_list, &vvalues)
 }
+
+/// aggregated proofs cross commitments
+#[no_mangle]
+pub unsafe extern "C" fn vcp_x_commit_aggregate(
+    com: *const vcp_commitment,
+    proof: *const vcp_proof,
+    set: *const libc::size_t,
+    values: *const vcp_value,
+    commit_indices: *const libc::size_t,
+    no_commits: libc::size_t,
+    param_n: libc::size_t,
+) -> vcp_proof {
+    // parse commits
+    let tmp = slice::from_raw_parts::<vcp_commitment>(com, no_commits);
+    let mut com_list: Vec<Commitment> = vec![];
+    for e in tmp {
+        com_list.push((*(e.data as *const Commitment)).clone());
+    }
+
+    // parse index counters
+    let mut total = 0;
+    let tmp = slice::from_raw_parts::<usize>(commit_indices, no_commits);
+    let mut commit_indices_vec: Vec<usize> = vec![];
+    for e in tmp {
+        total += *e;
+        commit_indices_vec.push(*e);
+    }
+
+    // parse indices, values and proofs as a 1-dim arrays
+    let set_tmp = slice::from_raw_parts::<libc::size_t>(set, total);
+    let value_tmp = slice::from_raw_parts::<vcp_value>(values, total);
+    let proof_tmp = slice::from_raw_parts::<vcp_proof>(proof, total);
+
+    // convert them into 2-dim arrays
+    let mut set_list: Vec<Vec<usize>> = vec![];
+    let mut value_list: Vec<Vec<Vec<u8>>> = vec![];
+    let mut proof_list: Vec<Vec<Proof>> = vec![];
+    let mut counter = 0;
+    for e in commit_indices_vec {
+        let mut set_list_within_com: Vec<usize> = vec![];
+        let mut value_list_within_com: Vec<Vec<u8>> = vec![];
+        let mut proof_list_within_com: Vec<Proof> = vec![];
+        for _j in 0..e {
+            set_list_within_com.push(set_tmp[counter]);
+            value_list_within_com.push(vcp_value_slice(&value_tmp[counter]).to_vec());
+            proof_list_within_com.push((*(proof_tmp[counter].data as *const Proof)).clone());
+        }
+        set_list.push(set_list_within_com);
+        value_list.push(value_list_within_com);
+        proof_list.push(proof_list_within_com);
+        counter = counter + 1;
+    }
+
+    println!("set list: {:?}", set_list);
+
+    let agg_proof = match Proof::cross_commit_aggregate_full(
+        &com_list,
+        &proof_list,
+        &set_list,
+        &value_list,
+        param_n,
+    ) {
+        Ok(p) => p,
+        Err(e) => panic!("C wrapper, x-commit aggregation failed: {}", e),
+    };
+    let buf_box = Box::new(agg_proof);
+    vcp_proof {
+        data: Box::into_raw(buf_box) as *mut ffi::c_void,
+    }
+}
+
+/// verify an aggregated proof across commitments
+#[no_mangle]
+pub unsafe extern "C" fn vcp_x_commit_batch_verify(
+    verifier: vcp_vp,
+    com: *const vcp_commitment,
+    proof: vcp_proof,
+    set: *const libc::size_t,
+    values: *const vcp_value,
+    commit_indices: *const libc::size_t,
+    no_commits: libc::size_t,
+) -> bool {
+    // parse commits
+    let tmp = slice::from_raw_parts::<vcp_commitment>(com, no_commits);
+    let mut com_list: Vec<Commitment> = vec![];
+    for e in tmp {
+        com_list.push((*(e.data as *const Commitment)).clone());
+    }
+
+    // parse index counters
+    let mut total = 0;
+    let tmp = slice::from_raw_parts::<usize>(commit_indices, no_commits);
+    let mut commit_indices_vec: Vec<usize> = vec![];
+    for e in tmp {
+        total += *e;
+        commit_indices_vec.push(*e);
+    }
+
+    // parse indices, values and proofs as a 1-dim arrays
+    let set_tmp = slice::from_raw_parts::<libc::size_t>(set, total);
+    let value_tmp = slice::from_raw_parts::<vcp_value>(values, total);
+
+    // convert them into 2-dim arrays
+    let mut set_list: Vec<Vec<usize>> = vec![];
+    let mut value_list: Vec<Vec<Vec<u8>>> = vec![];
+    let mut counter = 0;
+    for e in commit_indices_vec {
+        let mut set_list_within_com: Vec<usize> = vec![];
+        let mut value_list_within_com: Vec<Vec<u8>> = vec![];
+        for _j in 0..e {
+            set_list_within_com.push(set_tmp[counter]);
+            value_list_within_com.push(vcp_value_slice(&value_tmp[counter]).to_vec());
+        }
+        set_list.push(set_list_within_com);
+        value_list.push(value_list_within_com);
+        counter = counter + 1;
+    }
+
+    // parse the proof and prover parameter
+    let pverifier = &*(verifier.data as *const VerifierParams);
+    let pproof = &*(proof.data as *const Proof);
+
+    println!("set list: {:?}", set_list);
+
+    pproof.cross_commit_batch_verify(pverifier, &com_list, &set_list, &value_list)
+}
