@@ -463,11 +463,11 @@ pub unsafe extern "C" fn vcp_x_commit_aggregate(
             set_list_within_com.push(set_tmp[counter]);
             value_list_within_com.push(vcp_value_slice(&value_tmp[counter]).to_vec());
             proof_list_within_com.push((*(proof_tmp[counter].data as *const Proof)).clone());
+            counter = counter + 1;
         }
         set_list.push(set_list_within_com);
         value_list.push(value_list_within_com);
         proof_list.push(proof_list_within_com);
-        counter = counter + 1;
     }
 
     println!("set list: {:?}", set_list);
@@ -529,10 +529,10 @@ pub unsafe extern "C" fn vcp_x_commit_batch_verify(
         for _j in 0..e {
             set_list_within_com.push(set_tmp[counter]);
             value_list_within_com.push(vcp_value_slice(&value_tmp[counter]).to_vec());
+            counter = counter + 1;
         }
         set_list.push(set_list_within_com);
         value_list.push(value_list_within_com);
-        counter = counter + 1;
     }
 
     // parse the proof and prover parameter
