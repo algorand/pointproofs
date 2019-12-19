@@ -1,13 +1,12 @@
-/// A list of error messages.
+//! This file is part of the veccom crate.
+//! A list of error messages.
 
-pub const ERR_SEED_TOO_SHORT: &str = "The seed length is too short";
-pub const ERR_CIPHERSUITE: &str = "Invalid ciphersuite ID";
-pub const ERR_COMPRESS: &str = "Only support compress=true mode";
-// pub const ERR_SERIAL: &str = "Fail to convert the element to a blob";
-// pub const ERR_DESERIAL: &str = "Fail to convert a blob to the element";
-// pub const ERR_INVALID_N: &str = "Invalid number of public parameters";
-pub const ERR_INVALID_VALUE: &str = "Invalid number of values";
-pub const ERR_INVALID_INDEX: &str = "Invalid index";
-pub const ERR_INDEX_PROOF_NOT_MATCH: &str = "Length of index and proof sets do not match";
-pub const ERR_X_COM_SIZE: &str = "Invalid sizes for commit, proof, or values for cross commit";
-pub const ERR_MAX_N: &str = "N is too large";
+pub(crate) const ERR_SEED_TOO_SHORT: &str = "The seed length is too short";
+pub(crate) const ERR_CIPHERSUITE: &str = "Invalid ciphersuite ID";
+pub(crate) const ERR_COMPRESS: &str = "Only support compress=true mode";
+pub(crate) const ERR_INVALID_VALUE: &str = "Invalid number of values";
+pub(crate) const ERR_INVALID_INDEX: &str = "Invalid index";
+pub(crate) const ERR_INDEX_PROOF_NOT_MATCH: &str = "Length of index and proof sets do not match";
+pub(crate) const ERR_X_COM_SIZE: &str =
+    "Invalid sizes for commit, proof, or values for cross commit";
+pub(crate) const ERR_MAX_N: &str = "N is too large";

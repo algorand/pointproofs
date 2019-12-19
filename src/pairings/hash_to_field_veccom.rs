@@ -1,20 +1,24 @@
-/// this mod defines the hash_to_field functions that are more efficient than
-/// simply using bls::hash_to_field
-use super::ciphersuite::*;
-use super::err::*;
-use super::Commitment;
+//! This file is part of the veccom crate.
+//! It defines the hash_to_field functions that are more efficient than `bls::hash_to_field`
+//! The algorithms are described here:
+//! https://github.com/algorand/veccom-rust/blob/master/SPEC.md#hashes
 use bigint::U512;
 use ff::PrimeField;
 use pairing::bls12_381::*;
 use pairing::serdes::SerDes;
+use pairings::err::*;
+use pairings::param::*;
+use pairings::Commitment;
 use sha2::{Digest, Sha512};
 use std::ops::Rem;
 
-// input: a list of k commitments
-// input: a list of k * x indices, for which we need to generate t_j
-// input: Value: a list of k * x messages that is commited to
-// output: a list of k field elements
-pub fn hash_to_tj<Blob: AsRef<[u8]>>(
+/// Hash a two dim array of bytes into non-zero scalars. An internal function for aggregation
+/// and batch verification.
+/// * input: a list of k commitments
+/// * input: a list of k * x indices, for which we need to generate t_j
+/// * input: Value: a list of k * x messages that is commited to
+/// * output: a list of k field elements
+pub(crate) fn hash_to_tj<Blob: AsRef<[u8]>>(
     commits: &[Commitment],
     set: &[Vec<usize>],
     value_sub_vector: &[Vec<Blob>],
@@ -82,11 +86,13 @@ pub fn hash_to_tj<Blob: AsRef<[u8]>>(
 
     Ok(res)
 }
-// input: the commitment
-// input: a list of indices, for which we need to generate t_i
-// input: Value: the messages that is commited to
-// output: a list of field elements
-pub fn hash_to_ti_fr<Blob: AsRef<[u8]>>(
+
+// A wrapper of `hash_to_ti` that outputs `Fr`s instead of `FrRepr`s.
+// * input: the commitment
+// * input: a list of indices, for which we need to generate t_i
+// * input: Value: the messages that is commited to
+// * output: a list of field elements
+pub(crate) fn hash_to_ti_fr<Blob: AsRef<[u8]>>(
     commit: &Commitment,
     set: &[usize],
     value_sub_vector: &[Blob],
@@ -105,11 +111,14 @@ pub fn hash_to_ti_fr<Blob: AsRef<[u8]>>(
     }
     Ok(fr_vec)
 }
-// input: the commitment
-// input: a list of indices, for which we need to generate t_i
-// input: Value: the messages that is commited to
-// output: a list of field elements
-pub fn hash_to_ti_repr<Blob: AsRef<[u8]>>(
+
+/// Hash a array of bytes into non-zero scalars. An internal function for aggregation
+/// and batch verification.
+/// * input: the commitment
+/// * input: a list of indices, for which we need to generate t_i
+/// * input: Value: the messages that is commited to
+/// * output: a list of field elements
+pub(crate) fn hash_to_ti_repr<Blob: AsRef<[u8]>>(
     commit: &Commitment,
     set: &[usize],
     value_sub_vector: &[Blob],
@@ -170,8 +179,9 @@ pub fn hash_to_ti_repr<Blob: AsRef<[u8]>>(
     Ok(res)
 }
 
-// hash_to_field_veccom use SHA 512 to hash a blob into a non-zero field element
-pub fn hash_to_field_veccom<Blob: AsRef<[u8]>>(input: Blob) -> Fr {
+/// A wrapper of `hash_to_field` that outputs `Fr`s instead of `FrRepr`s.
+/// hash_to_field_veccom use SHA 512 to hash a blob into a non-zero field element
+pub(crate) fn hash_to_field_veccom<Blob: AsRef<[u8]>>(input: Blob) -> Fr {
     match Fr::from_repr(hash_to_field_repr_veccom(input.as_ref())) {
         Ok(p) => p,
         // the hash_to_field_repr_veccom should already produce a valid Fr element
@@ -180,8 +190,9 @@ pub fn hash_to_field_veccom<Blob: AsRef<[u8]>>(input: Blob) -> Fr {
     }
 }
 
-// hash_to_field_veccom use SHA 512 to hash a blob into a non-zero field element
-pub fn hash_to_field_repr_veccom<Blob: AsRef<[u8]>>(input: Blob) -> FrRepr {
+/// Hashes a blob into a non-zero field element.
+/// hash_to_field_veccom use SHA 512 to hash a blob into a non-zero field element.
+pub(crate) fn hash_to_field_repr_veccom<Blob: AsRef<[u8]>>(input: Blob) -> FrRepr {
     let mut hasher = Sha512::new();
     hasher.input(input);
     let hash_output = hasher.result();
@@ -199,7 +210,7 @@ pub fn hash_to_field_repr_veccom<Blob: AsRef<[u8]>>(input: Blob) -> FrRepr {
 /// https://tools.ietf.org/html/rfc8017#section-4
 /// the input is a 64 bytes array, and the output is between 0 and p-1
 /// i.e., it performs mod operation by default.
-fn os2ip_mod_p(oct_str: &[u8]) -> FrRepr {
+pub(crate) fn os2ip_mod_p(oct_str: &[u8]) -> FrRepr {
     // "For the purposes of this document, and consistent with ASN.1 syntax,
     // an octet string is an ordered sequence of octets (eight-bit bytes).
     // The sequence is indexed from first (conventionally, leftmost) to last
@@ -250,38 +261,4 @@ fn os2ip_mod_p(oct_str: &[u8]) -> FrRepr {
             bytes[32], bytes[33], bytes[34], bytes[35], bytes[36], bytes[37], bytes[38], bytes[39],
         ]),
     ])
-}
-
-// examples from
-// https://crypto.stackexchange.com/questions/37537/what-are-i2osp-os2ip-in-rsa-pkcs1
-//  0  ->  00:00
-//  1  ->  00:01
-// 255  ->  00:FF
-// 256  ->  01:00
-// 65535  ->  FF:FF
-#[test]
-fn test_os2ip() {
-    use ff::{Field, PrimeField};
-    assert_eq!(
-        Fr::from_str("0").unwrap(),
-        Fr::from_repr(os2ip_mod_p(&[0u8, 0u8])).unwrap()
-    );
-    assert_eq!(
-        Fr::from_str("1").unwrap(),
-        Fr::from_repr(os2ip_mod_p(&[0u8, 1u8])).unwrap()
-    );
-    assert_eq!(
-        Fr::from_str("255").unwrap(),
-        Fr::from_repr(os2ip_mod_p(&[0u8, 0xffu8])).unwrap()
-    );
-    assert_eq!(
-        Fr::from_str("256").unwrap(),
-        Fr::from_repr(os2ip_mod_p(&[1u8, 0u8])).unwrap()
-    );
-    assert_eq!(
-        Fr::from_str("65535").unwrap(),
-        Fr::from_repr(os2ip_mod_p(&[0xffu8, 0xffu8])).unwrap()
-    );
-
-    assert_eq!(Fr::from_repr(FrRepr([1, 0, 0, 0])).unwrap(), Fr::one());
 }

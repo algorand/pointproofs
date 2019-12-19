@@ -1,7 +1,75 @@
+use pairings::param::paramgen_from_seed;
 use pairings::*;
 
 #[test]
 fn test_commit() {
+    let n = 16usize;
+    let (prover_params, verifier_params) =
+        paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, n).unwrap();
+
+    let mut init_values = Vec::with_capacity(n);
+    for i in 0..n {
+        let s = format!("this is message number {}", i);
+        init_values.push(s.into_bytes());
+    }
+
+    let mut values: Vec<&[u8]> = Vec::with_capacity(n);
+    for e in init_values.iter().take(n) {
+        values.push(&e);
+    }
+
+    let mut com = Commitment::new(&prover_params, &values).unwrap();
+    let mut proofs = Vec::with_capacity(n);
+
+    // Check all proofs, together with conversion to/from bytes
+    for i in 0..n {
+        proofs.push(Proof::new(&prover_params, &values, i).unwrap());
+    }
+
+    // update values
+    let mut new_values = Vec::with_capacity(n);
+    for i in 0..n {
+        new_values.push(format!("new string {}", i).into_bytes());
+    }
+    for i in 0..n {
+        com.update(&prover_params, i, &values[i], &new_values[i][..].as_ref())
+            .unwrap();
+
+        // Old value should not verify, but new one should
+        assert!(!proofs[i].verify(&verifier_params, &com, &values[i], i));
+        assert!(proofs[i].verify(&verifier_params, &com, &new_values[i], i));
+
+        // update proofs of other values
+        for j in 0..n {
+            // Old proofs should not verify for i!=j regardless of whether they are for the old or the new value
+            if i != j {
+                assert!(!proofs[j].verify(&verifier_params, &com, &values[j], j));
+                assert!(!proofs[j].verify(&verifier_params, &com, &new_values[j], j));
+            }
+            proofs[j]
+                .update(
+                    &prover_params,
+                    j,
+                    i,
+                    &values[i],
+                    &new_values[i][..].as_ref(),
+                )
+                .unwrap();
+
+            if j <= i {
+                assert!(proofs[j].verify(&verifier_params, &com, &new_values[j], j));
+                assert!(!proofs[j].verify(&verifier_params, &com, &values[j], j));
+            } else {
+                assert!(!proofs[j].verify(&verifier_params, &com, &new_values[j], j));
+                assert!(proofs[j].verify(&verifier_params, &com, &values[j], j));
+            }
+        }
+    }
+}
+
+#[test]
+#[ignore]
+fn test_commit_full() {
     let n = 32usize;
     let (prover_params, verifier_params) =
         paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, n).unwrap();

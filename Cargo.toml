@@ -23,6 +23,9 @@
   # veccom-paramgen = { git = "ssh://git@github.com/algorand/veccom-paramgen", branch = "potential_bug"}
   # veccom-paramgen = { path = "../veccom-paramgen"}
 
+[features]
+
+
 [build-dependencies]
   cbindgen = "0.9.0"
 
