@@ -17,7 +17,7 @@ See `veccom-paramgen`
 |---|---:|---:|---:|---:|:---|
 | new commitment |  55.5 ms | 169.38 ms | 1.145 s | 3.30 s | sum of n product |
 | commitment update | 0.335 ms |1.03 ms | 1.133 s | 1.02 ms  | 2 hash_to_field + g1_mul |
-| new proof | 55.3 ms |  169.49 ms | 1.146 s| 3.3 s|  sum of n product |
+| new proof | 55.3 ms |  169.49 ms | 1.146 s| 3.3 s |  sum of n product |
 | proof update | 0.355 ms| 1.09 ms | |  | hash_to_field + g1_mul |
 | verify | 4.78 ms |7.43 ms|| 7.25 ms| hash_to_field + 2 g1_mul + pairing_product |
 
@@ -25,6 +25,9 @@ See `veccom-paramgen`
 
 ## Aggregation
 
+* aggregate partial: input a list of same-commit aggregated proofs, output a cross-commit aggregated proof.
+* aggregate full: input a list of non-aggregated proofs, output a cross-commit aggregated proof.
+* batch verify: input a cross-commit aggregated proof, verify the proof.
 
 ### N = 1024, proof in G2
 
@@ -33,7 +36,7 @@ See `veccom-paramgen`
 |:---|---:|---:|---:|---:|---:|
 | aggregate partial | 64 | 61 ms | 65 ms | 66 ms | 67 ms |
 | aggregate full | 64 | 68 ms | 1.02 s | 1.07 s | 2.07 s |  
-| batch verify | 64 | 212 ms | 152.3 ms | ??? ms | 494 ms |
+| batch verify | 64 | 212 ms | 152.3 ms | 211.6 ms | 494 ms |
 |  |  |  |  |  |  |  |
 | aggregate partial | 256 | 61 ms | 194 ms | 195 ms | 198 ms |
 | aggregate full | 256 | 135 ms | 3.19 s | 5.00 s | 7.40 s |
