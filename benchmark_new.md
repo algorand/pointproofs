@@ -38,7 +38,7 @@ See `veccom-paramgen`
 | aggregate full | 64 | 68 ms | 1.02 s | 1.07 s | 2.07 s |  
 | batch verify | 64 | 212 ms | 152.3 ms | 211.6 ms | 494 ms |
 |  |  |  |  |  |  |  |
-| aggregate partial | 256 | 61 ms | 194 ms | 195 ms | 198 ms |
+| aggregate partial | 256 | 178 ms | 194 ms | 195 ms | 198 ms |
 | aggregate full | 256 | 135 ms | 3.19 s | 5.00 s | 7.40 s |
 | batch verify | 256 | 825 ms | 1.52 s | 1.68 s | 2.62 s |
 |  |  |  |  |  |  |  |
