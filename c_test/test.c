@@ -5,7 +5,7 @@
 #include <assert.h>
 #include "veccom_c.h"
 
-#define DEBUG
+// #define DEBUG
 
 // Credit: https://stackoverflow.com/questions/7775991/how-to-get-hexdump-of-a-structure-data
 void hexDump (const char *desc, const void *addr, const int len);
@@ -174,6 +174,14 @@ int test_same_commit_aggregation()
   // verify the proof
   assert( vcp_same_commit_batch_verify(vp, commit, agg_proof, index, sub_values, 32) == true);
 
+
+  vcp_free_prover_params(vcp_param.prover);
+  vcp_free_verifier_params(vcp_param.verifier);
+  vcp_free_proof(agg_proof);
+  vcp_free_commit(commit);
+  for (counter = 0; counter < 32; counter ++)
+    vcp_free_proof(proof[counter]);
+
   printf("aggregation tests: success\n");
   return 0;
 }
@@ -235,11 +243,13 @@ int test_x_commit_aggregation()
 
 
   vcp_proof proof[total];
+  vcp_proof same_commit_agg_proof[k];
   size_t    index[total];
   vcp_value sub_values[total];
 
   i = 0;
   for (com_counter = 0; com_counter < k; com_counter++) {
+    int cur_index = i;
     for (counter = 0; counter < commit_indices[com_counter]; counter ++)
     {
       // generate a proof
@@ -252,13 +262,48 @@ int test_x_commit_aggregation()
 
       i ++;
     }
+    same_commit_agg_proof[com_counter]  = vcp_same_commit_aggregate(
+                                  commit[com_counter],
+                                  proof + cur_index,
+                                  index + cur_index,
+                                  sub_values + cur_index,
+                                  commit_indices[com_counter],
+                                  n);
+
+    assert( vcp_same_commit_batch_verify(
+                vp,
+                commit[com_counter],
+                same_commit_agg_proof[com_counter],
+                index + cur_index,
+                sub_values + cur_index,
+                commit_indices[com_counter]) == true);
   }
 
-  // aggregate
-  vcp_proof agg_proof = vcp_x_commit_aggregate(commit, proof, index, sub_values, commit_indices, 32, n);
+  // aggregate full
+  vcp_proof agg_proof1 = vcp_x_commit_aggregate_full(commit, proof, index, sub_values, commit_indices, 32, n);
+  // aggregate partial
+  vcp_proof agg_proof2 = vcp_x_commit_aggregate_partial(commit, same_commit_agg_proof, index, sub_values, commit_indices, 32, n);
+
+  vcp_proof_bytes  proof_string1  = vcp_proof_serial(agg_proof1);
+  vcp_proof_bytes  proof_string2  = vcp_proof_serial(agg_proof1);
+
+  assert( strcmp((const char *)agg_proof1.data, (const char *)agg_proof1.data)==0);
 
   // verify the proof
-  assert( vcp_x_commit_batch_verify(vp, commit, agg_proof, index, sub_values, commit_indices, 32) == true);
+  assert(vcp_x_commit_batch_verify(vp, commit, agg_proof1, index, sub_values, commit_indices, 32) == true);
+
+  vcp_free_prover_params(vcp_param.prover);
+  vcp_free_verifier_params(vcp_param.verifier);
+
+  for (com_counter = 0; com_counter < k; com_counter++)
+    vcp_free_commit(commit[com_counter]);
+
+  vcp_free_proof(agg_proof1);
+  vcp_free_proof(agg_proof2);
+  for (com_counter = 0; com_counter < k; com_counter++)
+    vcp_free_proof(same_commit_agg_proof[com_counter]);
+  for (i = 0; i < total; i++)
+    vcp_free_proof(proof[i]);
 
   printf("aggregation tests: success\n");
   return 0;
@@ -267,9 +312,10 @@ int test_x_commit_aggregation()
 
 int main(){
 
+  test_basic();
+  test_same_commit_aggregation();
   test_x_commit_aggregation();
-  // test_same_commit_aggregation();
-  // test_basic();
+
   printf("Hello Algorand\n");
 }
 
