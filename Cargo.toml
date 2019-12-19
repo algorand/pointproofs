@@ -4,6 +4,7 @@
   license = "MIT/Apache-2.0"
   authors = [
     "Leo Reyzin <leo@algorand.com>",
+    "Zhenfei Zhang <zhenfei@algorand.com>"
   ]
   build = "build.rs"
 
