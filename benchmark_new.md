@@ -64,7 +64,7 @@ See `veccom-paramgen`
 
 
 |Operation | # Commitments | 1 proofs per commit |  8 proofs per commit |  16 proofs per commit |  32 proofs per commit |
-|:---|---:|---:|---:|---:|---:|---:|
+|:---|---:|---:|---:|---:|---:|
 | aggregate partial | 64 | 62.7 ms | 65.5 ms | 66.4 ms |  ??? ms |
 | aggregate full | 64 | 69.3  ms | 835.3 ms |  1.03 s |  1.81 s |  
 | batch verify | 64 |  211.5 ms | ??? ms |  617.1 ms | 909 ms |  
@@ -82,7 +82,7 @@ See `veccom-paramgen`
 
 
 |Operation | # Commitments | 1 proofs per commit |  8 proofs per commit |  16 proofs per commit |  32 proofs per commit |
-|:---|---:|---:|---:|---:|---:|---:|
+|:---|---:|---:|---:|---:|---:|
 | aggregate partial | 64 | 7.34 ms | 8.43 ms | 8.57 ms |  8.77 ms |
 | aggregate full | 64 | 9.00  ms | 115.0 ms |  180.7 ms |  280.1 ms |  
 | batch verify | 64 |  123.2 ms | 368.4 ms |  556.6 ms | 862.9 ms |  
