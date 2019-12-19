@@ -19,3 +19,7 @@ benches/pre-gen-com-and-proof/target
 *.proof
 *.commit
 data/process_data/target
+
+# grcov data
+html
+ccov.zip

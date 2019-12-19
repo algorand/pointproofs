@@ -3,7 +3,7 @@ use pairings::{Commitment, Proof};
 
 #[test]
 fn test_same_commit_aggregation_small() {
-    let n = 32usize;
+    let n = 8usize;
     let (prover_params, verifier_params) =
         paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, n).unwrap();
 
@@ -46,7 +46,7 @@ fn test_same_commit_aggregation_small() {
 
 #[test]
 fn test_cross_commit_aggregation_small() {
-    let n = 32usize;
+    let n = 8usize;
     let (prover_params, verifier_params) =
         paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, n).unwrap();
 
@@ -56,7 +56,7 @@ fn test_cross_commit_aggregation_small() {
     let mut value_sub_vector: Vec<Vec<Vec<u8>>> = vec![];
     let mut set = vec![];
     let mut same_commit_proof = vec![];
-    for j in 0..8 {
+    for j in 0..4 {
         println!("{}-th commit", j);
         let mut init_values = Vec::with_capacity(n);
         for i in 0..n {

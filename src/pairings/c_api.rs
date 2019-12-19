@@ -10,15 +10,16 @@ use std::slice;
 /// non-serialized
 #[repr(C)]
 pub struct vcp_params {
-    prover: vcp_pp,
-    verifier: vcp_vp,
+    pub(crate) prover: vcp_pp,
+    pub(crate) verifier: vcp_vp,
 }
 
 /// values
 #[repr(C)]
+#[derive(Clone)]
 pub struct vcp_value {
-    data: *const u8,
-    len: libc::size_t,
+    pub(crate) data: *const u8,
+    pub(crate) len: libc::size_t,
 }
 
 /// serialized prover parameter struct
@@ -35,36 +36,42 @@ pub struct vcp_vp_bytes {
 
 /// deserialized prover parameter struct
 #[repr(C)]
+#[derive(Clone)]
 pub struct vcp_pp {
     data: *mut ffi::c_void,
 }
 
 /// deserialized verifier parameter struct
 #[repr(C)]
+#[derive(Clone)]
 pub struct vcp_vp {
     data: *mut ffi::c_void,
 }
 
 /// serialized commitment struct
 #[repr(C)]
+#[derive(Clone)]
 pub struct vcp_commitment_bytes {
-    data: [u8; COMMIT_LEN],
+    pub(crate) data: [u8; COMMIT_LEN],
 }
 
 /// deserialized commitment struct
 #[repr(C)]
+#[derive(Clone)]
 pub struct vcp_commitment {
     data: *mut ffi::c_void,
 }
 
 /// serialized proof struct
 #[repr(C)]
+#[derive(Clone)]
 pub struct vcp_proof_bytes {
-    data: [u8; PROOF_LEN],
+    pub(crate) data: [u8; PROOF_LEN],
 }
 
 /// deserialized proof struct
 #[repr(C)]
+#[derive(Clone)]
 pub struct vcp_proof {
     data: *mut ffi::c_void,
 }

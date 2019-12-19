@@ -19,10 +19,9 @@ impl Commitment {
         values: &[Blob],
     ) -> Result<Self, String> {
         // checks that cipersuite is supported
-        assert!(
-            check_ciphersuite(prover_params.ciphersuite),
-            ERR_CIPHERSUITE.to_owned()
-        );
+        if !check_ciphersuite(prover_params.ciphersuite) {
+            return Err(ERR_CIPHERSUITE.to_owned());
+        };
 
         if prover_params.n != values.len() {
             return Err(ERR_INVALID_VALUE.to_owned());

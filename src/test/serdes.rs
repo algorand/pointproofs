@@ -14,9 +14,6 @@ fn test_serdes_prover_param() {
         assert!(prover_params.serialize(&mut buf, false).is_err());
         assert!(prover_params.serialize(&mut buf, true).is_ok());
 
-        #[cfg(unswitch_group)]
-        assert_eq!(buf.len(), 17 + n * 96);
-        #[cfg(not(unswitch_group))]
         assert_eq!(buf.len(), 17 + n * 192);
 
         let mut invalid_buf = buf.clone();
@@ -61,9 +58,6 @@ fn test_serdes_prover_param_slow() {
         assert!(prover_params.serialize(&mut buf, false).is_err());
         assert!(prover_params.serialize(&mut buf, true).is_ok());
 
-        #[cfg(unswitch_group)]
-        assert_eq!(buf.len(), 17 + n * 96);
-        #[cfg(not(unswitch_group))]
         assert_eq!(buf.len(), 17 + n * 192);
 
         let mut invalid_buf = buf.clone();
@@ -108,9 +102,6 @@ fn test_serdes_verifier_param() {
         assert!(verifier_params.serialize(&mut buf, true).is_ok());
         let len = buf.len();
 
-        #[cfg(unswitch_group)]
-        assert_eq!(len, 585 + n * 96);
-        #[cfg(not(unswitch_group))]
         assert_eq!(len, 585 + n * 48);
 
         assert!(VerifierParams::deserialize(&mut buf[..].as_ref(), false).is_err());
@@ -132,6 +123,7 @@ fn test_serdes_verifier_param() {
 }
 
 #[test]
+#[ignore]
 fn test_serdes_verifier_param_slow() {
     let n_array = [32, 256];
     for n in n_array.iter() {
@@ -143,9 +135,6 @@ fn test_serdes_verifier_param_slow() {
         assert!(verifier_params.serialize(&mut buf, true).is_ok());
         let len = buf.len();
 
-        #[cfg(unswitch_group)]
-        assert_eq!(len, 585 + n * 96);
-        #[cfg(not(unswitch_group))]
         assert_eq!(len, 585 + n * 48);
 
         assert!(VerifierParams::deserialize(&mut buf[..].as_ref(), false).is_err());
