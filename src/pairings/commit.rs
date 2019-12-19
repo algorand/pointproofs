@@ -10,7 +10,6 @@ use pairings::*;
 
 impl Commitment {
     /// generate a new commitment.
-    ///
     ///     * input: prover parameter set
     ///     * input: a list of n values
     ///     * output: a commitment
@@ -59,7 +58,6 @@ impl Commitment {
     }
 
     /// upated an existing commitment
-    ///
     ///     * input: commitment
     ///     * input: prover parameter set
     ///     * input: the index of the value to be updated

@@ -9,7 +9,6 @@ use pairings::*;
 
 impl Proof {
     /// Generate a new proof.
-    ///
     ///     * input: prover parameter set
     ///     * input: values for the proof
     ///     * input: the index of the proof
@@ -66,7 +65,6 @@ impl Proof {
     }
 
     /// Updating an existing proof.
-    ///
     ///     * input: prover parameter set
     ///     * input: the index for the proof
     ///     * input: the index for the value that is being changed
@@ -129,7 +127,6 @@ impl Proof {
     }
 
     /// Verify the proof.
-    ///
     ///     * input: the proof
     ///     * input: verifier parameter set
     ///     * input: the commitment
@@ -187,7 +184,6 @@ impl Proof {
     }
 
     /// Aggregates a vector of proofs from a same commitment into a single one.
-    ///
     ///     * input: the commitment
     ///     * input: the list of proofs
     ///     * input: the list of the indices of the proofs
@@ -195,11 +191,9 @@ impl Proof {
     ///     * input: parameter n (size of the vector)
     ///     * output: the aggregated proof
     ///     * error: invalid ciphersuite/length, or hash to scalars failes
-    ///
-    /// Note:
-    ///
-    ///     the aggregator does not check the validity of individual commit/proofs.
-    ///     The caller may need to check them if they care for it.
+    ///     * Note:
+    ///         the aggregator does not check the validity of individual commit/proofs.
+    ///         The caller may need to check them if they care for it.
     pub fn same_commit_aggregate<Blob: AsRef<[u8]>>(
         commit: &Commitment,
         proofs: &[Self],
@@ -237,22 +231,17 @@ impl Proof {
 
     /// Aggregate an array of proofs, each
     /// proof is a same-commit aggregated proof.
-    ///
     ///     * input: a list of commitments
     ///     * input: a list of (aggregated) proofs, each for one commitment
     ///     * input: a 2-dim array of indices for the proofs, each vector of indices for an aggregated proof
     ///     * input: a 2-dim array of values for the proofs, each vector of values for an aggregated proof
     ///     * input: parameter n (size of the vector)
-    ///
-    /// Note:
-    ///
-    ///     1. The aggregator does not check the validity of the proof.
-    ///     2. The proofs are already aggregated within each commitment.
-    ///
-    /// Steps:
-    ///
-    ///     1. t[j] = hash_to_tj(...)
-    ///     2. return prod proofs[j]^t[j]
+    ///     * Note:
+    ///         * The aggregator does not check the validity of the proof.
+    ///         * The proofs are already aggregated within each commitment.
+    ///     * Steps:
+    ///         * t\[j\] = hash_to_tj(...)
+    ///         * return prod proofs\[j\]^t\[j\]
     pub fn cross_commit_aggregate_partial<Blob: AsRef<[u8]>>(
         commits: &[Commitment],
         proofs: &[Self],
@@ -314,7 +303,6 @@ impl Proof {
 
     /// Aggregate a 2-dim array of proofs, each row corresponding to a
     /// commit, into a single proof.
-    ///
     ///     * input: a list of commitments
     ///     * input: a 2-dim array of non-aggregated proofs, each vector of proofs for one commitment
     ///     * input: a 2-dim array of indices for the proofs, each indice for a proof
@@ -322,17 +310,13 @@ impl Proof {
     ///     * input: parameter n (size of the vector)
     ///     * output: an aggregated proof
     ///     * error: invalid ciphersuite, input vectors length does not match
-    ///
-    /// Note:
-    ///
-    ///     1. The aggregator does not check the validity of the proof.
-    ///     2. The proofs are already aggregated within each commitment.
-    ///
-    /// Steps:
-    ///
-    ///     1. t[j] = hash_to_tj(...)
-    ///     2. pi[j] = same_commit_aggregate(...)
-    ///     3. return prod pi[j]^t[j]
+    ///     * Note:
+    ///         1. The aggregator does not check the validity of the proof.
+    ///         2. The proofs are already aggregated within each commitment.
+    ///     * Steps:
+    ///         1. t\[j\] = hash_to_tj(...)
+    ///         2. pi\[j\] = same_commit_aggregate(...)
+    ///         3. return prod pi\[j\]^t\[j\]
     pub fn cross_commit_aggregate_full<Blob: AsRef<[u8]>>(
         commits: &[Commitment],
         proofs: &[Vec<Self>],
@@ -412,7 +396,6 @@ impl Proof {
     }
 
     /// batch verify a proof for a list of values/indices
-    ///
     ///     * input: the proof
     ///     * input: verifier parameter set
     ///     * input: the commitment
@@ -521,7 +504,6 @@ impl Proof {
     }
 
     /// Verify a proof which was aggregated from 2-dim array of proofs
-    ///
     ///     * input: the proof
     ///     * input: verifier parameter set
     ///     * input: the list of commitments
