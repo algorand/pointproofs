@@ -5,44 +5,95 @@ __To be completed.__
 
 * AWS Intel(R) Xeon(R) CPU E5-2686 v4 @ __2.30__ GHz (Slower than MBP).
 * Public parameter `n` (size of the vector) is either 1024 or 32k.
-* Group unswitched: proof in `G1`
-* Group switched: proof in `G2`
+
 
 ## Parameter Generation
 See `veccom-paramgen`
 
-## Commit
+## Basics
 
 
-|Function|  n = 1024, groups unswitched | n = 1024, groups switched | n = 32768, groups unswitched | n = 32768, groups switched | main cost |
+|Function|  n = 1024, proof in G1 | n = 1024, proof in G2 | n = 32768, proof in G1 | n = 32768, proof in G2 | main cost |
 |---|---:|---:|---:|---:|:---|
-| new commitment without pre-computation |  55.5 ms | 169.38 ms | 1.145 s |  | sum of n product |
-| new commitment with pre-computation = 3 | 54.7 ms | 168.45 ms  |1.145 s |  | sum of n product |
-| new commitment with pre-computation = 256 | 43.1 ms | 127.35 ms | 1.525 s |  |sum of n product |
-| commitment update without pre-computation | 0.335 ms |1.03 ms ||  | 2 hash_to_field + g1_mul |
-| commitment update with pre-computation = 3 | 0.158 ms|0.51 ms ||  |2 hash_to_field + g1_mul |
-| commitment update with pre-computation = 256 | 0.072 ms |0.20 ms ||  | 2 hash_to_field + g1_mul |
-
-## Proof
-
-|Function| n = 1024, groups unswitched | n = 1024, groups switched | n = 32768, groups unswitched | n = 32768, groups switched | main cost |
-|---|---:|---:|---:|---:|:---|
-| new proof without pre-computation | 55.3 ms |  169.49 ms | 1.146 s| |  sum of n product |
-| new proof with pre-computation = 3 | 55.1 ms|  169.93 ms |1.149 s| | sum of n product |
-| new proof with pre-computation = 256 | 45.9 ms |  132.14 ms |1.524 s| |  sum of n product |
-| proof update without pre-computation | 0.355 ms| 1.09 ms || | hash_to_field + g1_mul |
-| proof update with pre-computation = 3 | 0.160 ms | 0.49 ms || | hash_to_field + g1_mul |
-| proof update with pre-computation = 256 | 0.075 ms | 0.21 ms || | hash_to_field + g1_mul |
-
-## Verify
-
-|Function|  n = 1024, groups unswitched | n = 1024, groups switched |  n = 32768, groups unswitched | n = 32768, groups switched | main cost |
-|---|---:|---:|---:|---:|---:|
-|Verify| 4.78 ms |7.43 ms|| | hash_to_field + 2 g1_mul + pairing_product |
+| new commitment |  55.5 ms | 169.38 ms | 1.145 s | 3.30 s | sum of n product |
+| commitment update | 0.335 ms |1.03 ms | 1.133 s | 1.02 ms  | 2 hash_to_field + g1_mul |
+| new proof | 55.3 ms |  169.49 ms | 1.146 s| 3.3 s|  sum of n product |
+| proof update | 0.355 ms| 1.09 ms | |  | hash_to_field + g1_mul |
+| verify | 4.78 ms |7.43 ms|| 7.25 ms| hash_to_field + 2 g1_mul + pairing_product |
 
 
 
+## Aggregation
 
+
+### N = 1024, proof in G2
+
+
+|Operation | # Commitments | 1 proofs per commit |  8 proofs per commit |  16 proofs per commit |  32 proofs per commit |
+|:---|---:|---:|---:|---:|---:|
+| aggregate partial | 64 | 61 ms | 65 ms | 66 ms | 67 ms |
+| aggregate full | 64 | 68 ms | 1.02 s | 1.07 s | 2.07 s |  
+| batch verify | 64 | 212 ms | 152.3 ms | ??? ms | 494 ms |
+|  |  |  |  |  |  |  |
+| aggregate partial | 256 | 61 ms | 194 ms | 195 ms | 198 ms |
+| aggregate full | 256 | 135 ms | 3.19 s | 5.00 s | 7.40 s |
+| batch verify | 256 | 825 ms | 1.52 s | 1.68 s | 2.62 s |
+|  |  |  |  |  |  |  |
+| aggregate partial | 1024 | 223 ms | 254 ms | 0.565 ms | 618 ms |
+| aggregate full | 1024 | 571 ms | 12.2 s | 19.2 s | 30.42 s |
+| batch verify | 1024 | 2.24 s | 5.12 s | 7.35 s | 11.13 s|
+
+### N = 1024, proof in G1
+
+
+|Operation | # Commitments | 1 proofs per commit |  8 proofs per commit |  16 proofs per commit |  32 proofs per commit |
+|:---|---:|---:|---:|---:|---:|
+| aggregate partial | 64 | 7.45 ms | 8.6 ms | ??? ms | 8.75 ms |
+| aggregate full | 64 | 9.06 ms | 117.7 s | 298.8 s | 291.5 s |  
+| batch verify | 64 | 124.9 ms | 376.5 ms | 580.3 ms | 865.3 ms |
+|  |  |  |  |  |  |  |
+| aggregate partial | 256 | 22.1 ms | 26.5 ms | 26.9 ms | 27.9 ms |
+| aggregate full | 256 | 28.7 ms | 453.0 ms | 715.6 ms | 1.15 s |
+| batch verify | 256 | 486.8 ms | 1.47 s | 2.23 s | 3.45 s |
+|  |  |  |  |  |  |  |
+| aggregate partial | 1024 | 71.3 ms | 88.6 ms | 90.5 ms | 94.4 ms |
+| aggregate full | 1024 | 97.7 ms | 1.80 s | 2.85 s | 4.59 s |
+| batch verify | 1024 | 1.95 s | 5.88 s | 8.88 s | 13.78 s|
+
+### N = 32768, proof in G2
+
+
+|Operation | # Commitments | 1 proofs per commit |  8 proofs per commit |  16 proofs per commit |  32 proofs per commit |
+|:---|---:|---:|---:|---:|---:|---:|
+| aggregate partial | 64 | 62.7 ms | 65.5 ms | 66.4 ms |  ??? ms |
+| aggregate full | 64 | 69.3  ms | 835.3 ms |  1.03 s |  1.81 s |  
+| batch verify | 64 |  211.5 ms | ??? ms |  617.1 ms | 909 ms |  
+|  |  |  |  |  |  |  |
+| aggregate partial | 256 |  61.3 ms |  193 ms |  194 ms |  ms |
+| aggregate full | 256 | 70.5 ms | 3.22 s |  4.95 s |  s |
+| batch verify | 256 |  819 ms |  1.50 s | 1.65 s |  s |
+|  |  |  |  |  |  |  |
+| aggregate partial | 1024 |  ms |  ms |  ms |  ms |
+| aggregate full | 1024 |  ms |  s |  s |  s |
+| batch verify | 1024 |  s |  s |  s |  s|
+
+
+### N = 32768, proof in G1
+
+
+|Operation | # Commitments | 1 proofs per commit |  8 proofs per commit |  16 proofs per commit |  32 proofs per commit |
+|:---|---:|---:|---:|---:|---:|---:|
+| aggregate partial | 64 | 7.34 ms | 8.43 ms | 8.57 ms |  8.77 ms |
+| aggregate full | 64 | 9.00  ms | 115.0 ms |  180.7 ms |  280.1 ms |  
+| batch verify | 64 |  123.2 ms | 368.4 ms |  556.6 ms | 862.9 ms |  
+|  |  |  |  |  |  |  |
+| aggregate partial | 256 |  22.2 ms |  8.56 ms | 27.3  ms | 81.3 ms |
+| aggregate full | 256 | 28.8 ms | 906.0 ms |  1.42 s | 2.38 s |
+| batch verify | 256 |  486.7 ms |  3.40 s | 4.12 s | 7.82 s |
+|  |  |  |  |  |  |  |
+| aggregate partial | 1024 | 208.3 ms | 125 ms | 91.0 ms |  ms |
+| aggregate full | 1024 |  286.0 ms | 3.98 s | 6.32 s |  s |
+| batch verify | 1024 | 4.46 s | 12.9 s |  19.6 s |  s|
 
 <!---
 ## aggregation
