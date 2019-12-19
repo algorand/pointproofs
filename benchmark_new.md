@@ -16,7 +16,7 @@ See `veccom-paramgen`
 |Function|  n = 1024, proof in G1 | n = 1024, proof in G2 | n = 32768, proof in G1 | n = 32768, proof in G2 | main cost |
 |---|---:|---:|---:|---:|:---|
 | new commitment |  55.5 ms | 169.38 ms | 1.145 s | 3.30 s | sum of n product |
-| commitment update | 0.335 ms |1.03 ms | 1.133 s | 1.02 ms  | 2 hash_to_field + g1_mul |
+| commitment update | 0.335 ms |1.03 ms |   | 1.02 ms  | 2 hash_to_field + g1_mul |
 | new proof | 55.3 ms |  169.49 ms | 1.146 s| 3.3 s |  sum of n product |
 | proof update | 0.355 ms| 1.09 ms | |  | hash_to_field + g1_mul |
 | verify | 4.78 ms |7.43 ms|| 7.25 ms| hash_to_field + 2 g1_mul + pairing_product |
