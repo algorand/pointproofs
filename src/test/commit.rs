@@ -142,7 +142,7 @@ fn test_commit() {
                 .unwrap();
             proof256
                 .update(
-                    &prover_params3,
+                    &prover_params256,
                     j,
                     i,
                     &values[i],

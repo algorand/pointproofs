@@ -20,10 +20,9 @@ impl Proof {
         index: usize,
     ) -> Result<Self, String> {
         // checks that cipersuite is supported
-        assert!(
-            check_ciphersuite(prover_params.ciphersuite),
-            ERR_CIPHERSUITE.to_owned()
-        );
+        if !check_ciphersuite(prover_params.ciphersuite) {
+            return Err(ERR_CIPHERSUITE.to_owned());
+        }
 
         // check index is valid
         if index >= prover_params.n {
@@ -81,10 +80,9 @@ impl Proof {
         value_after: Blob,
     ) -> Result<(), String> {
         // checks that cipersuite is supported
-        assert!(
-            check_ciphersuite(prover_params.ciphersuite),
-            ERR_CIPHERSUITE.to_owned()
-        );
+        if !check_ciphersuite(prover_params.ciphersuite) {
+            return Err(ERR_CIPHERSUITE.to_owned());
+        }
         if self.ciphersuite != prover_params.ciphersuite {
             return Err(ERR_CIPHERSUITE.to_owned());
         }
@@ -116,6 +114,11 @@ impl Proof {
                     &prover_params.precomp[param_index * 256..(param_index + 1) * 256],
                 )
             } else {
+                println!(
+                    "{:?} {}",
+                    prover_params.precomp.len(),
+                    512 * prover_params.n
+                );
                 prover_params.generators[param_index].mul(multiplier)
             };
 
