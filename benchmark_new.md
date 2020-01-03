@@ -16,10 +16,10 @@ See `veccom-paramgen`
 |Function|  n = 1024, proof in G1 | n = 1024, proof in G2 | n = 32768, proof in G1 | n = 32768, proof in G2 | main cost |
 |---|---:|---:|---:|---:|:---|
 | new commitment |  55.5 ms | 169.38 ms | 1.145 s | 3.30 s | sum of n product |
-| commitment update | 0.335 ms |1.03 ms |   | 1.02 ms  | 2 hash_to_field + g1_mul |
+| commitment update | 0.335 ms |1.03 ms |  0.675 ms  | 1.02 ms  | 2 hash_to_field + g1_mul |
 | new proof | 55.3 ms |  169.49 ms | 1.146 s| 3.3 s |  sum of n product |
-| proof update | 0.355 ms| 1.09 ms | |  | hash_to_field + g1_mul |
-| verify | 4.78 ms |7.43 ms|| 7.25 ms| hash_to_field + 2 g1_mul + pairing_product |
+| proof update | 0.355 ms| 1.09 ms | ??? | ??? | hash_to_field + g1_mul |
+| verify | 4.78 ms |7.43 ms|__8.64 ms__| 7.25 ms| hash_to_field + 2 g1_mul + pairing_product |
 
 
 
@@ -72,13 +72,13 @@ See `veccom-paramgen`
 | aggregate full | 64 | 69.3  ms | 835.3 ms |  1.03 s |  1.81 s |  
 | batch verify | 64 |  211.5 ms | ??? ms |  617.1 ms | 909 ms |  
 |  |  |  |  |  |  |  |
-| aggregate partial | 256 |  61.3 ms |  193 ms |  194 ms |  ms |
-| aggregate full | 256 | 70.5 ms | 3.22 s |  4.95 s |  s |
-| batch verify | 256 |  819 ms |  1.50 s | 1.65 s |  s |
+| aggregate partial | 256 |  61.3 ms |  193 ms |  194 ms | 197  ms |
+| aggregate full | 256 | 70.5 ms | 3.22 s |  4.95 s | 7.65 s |
+| batch verify | 256 |  819 ms |  1.50 s | 1.65 s | 2.90 s |
 |  |  |  |  |  |  |  |
-| aggregate partial | 1024 |  ms |  ms |  ms |  ms |
-| aggregate full | 1024 |  ms |  s |  s |  s |
-| batch verify | 1024 |  s |  s |  s |  s|
+| aggregate partial | 1024 | ??? ms |  421.1 ms | 322.7 ms | 572.8 ms |
+| aggregate full | 1024 | 225.6 ms | 12.1  s | 18.9 s |  30.3 s |
+| batch verify | 1024 | 2.6 s |  5.02 s | 7.56 s | 10.9 s|
 
 
 ### N = 32768, proof in G1
@@ -94,9 +94,9 @@ See `veccom-paramgen`
 | aggregate full | 256 | 28.8 ms | 906.0 ms |  1.42 s | 2.38 s |
 | batch verify | 256 |  486.7 ms |  3.40 s | 4.12 s | 7.82 s |
 |  |  |  |  |  |  |  |
-| aggregate partial | 1024 | 208.3 ms | 125 ms | 91.0 ms |  ms |
-| aggregate full | 1024 |  286.0 ms | 3.98 s | 6.32 s |  s |
-| batch verify | 1024 | 4.46 s | 12.9 s |  19.6 s |  s|
+| aggregate partial | 1024 | 208.3 ms | 125 ms | 91.0 ms | 94.9 ms |
+| aggregate full | 1024 |  286.0 ms | 3.98 s | 6.32 s |  10.1 s |
+| batch verify | 1024 | 4.46 s | 12.9 s |  19.6 s | 30.8 s|
 
 <!---
 ## aggregation
