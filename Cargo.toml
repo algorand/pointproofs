@@ -15,10 +15,12 @@
   crate-type = ["rlib", "staticlib"]
 
 [dependencies]
+  ff = { git = "https://github.com/algorand/ff"}
   pairing-plus = { git = "https://github.com/algorand/pairing-plus"}
+  #pairing-plus = { path = "../pairing-plus"}
   sha2 = "0.8"
   libc = { version = "0.2", features = ["align"] }
-  ff = { version = "0.4", features = ["derive"] }
+  # ff = { version = "0.4", features = ["derive"] }
   bigint = { version = "4", default-features = false }
   # veccom-paramgen = { git = "ssh://git@github.com/algorand/veccom-paramgen", branch = "potential_bug"}
   # veccom-paramgen = { path = "../veccom-paramgen"}
@@ -36,7 +38,7 @@
 [[bench]]
   name = "pairings"
   harness = false
-
-[[bench]]
-  name = "bench_without_pre_comp"
-  harness = false
+#
+# [[bench]]
+#   name = "bench_without_pre_comp"
+#   harness = false
