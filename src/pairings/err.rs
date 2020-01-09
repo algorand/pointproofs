@@ -10,3 +10,4 @@ pub(crate) const ERR_INDEX_PROOF_NOT_MATCH: &str = "Length of index and proof se
 pub(crate) const ERR_X_COM_SIZE: &str =
     "Invalid sizes for commit, proof, or values for cross commit";
 pub(crate) const ERR_MAX_N: &str = "N is too large";
+pub(crate) const ERR_PARAM: &str = "The input parameter is not correct";

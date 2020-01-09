@@ -95,7 +95,8 @@ impl Proof {
         // update the proof
         // For updating your proof when someone else's value changes
         // Not for updating your own proof when your value changes -- because then the proof does not change!
-        // Assumes prover_params are correctly generated for n such that changed_index<n and proof_index<n
+        // proof_param may be pre-computed -- the code will determine this
+        // by checking the length of pre_comp
         if proof_index != changed_index {
             let mut multiplier = hash_to_field_veccom(&value_before);
             multiplier.negate();
@@ -114,11 +115,7 @@ impl Proof {
                     &prover_params.precomp[param_index * 256..(param_index + 1) * 256],
                 )
             } else {
-                println!(
-                    "{:?} {}",
-                    prover_params.precomp.len(),
-                    512 * prover_params.n
-                );
+                assert_eq!(prover_params.precomp.len(), 0, "{}", ERR_PARAM);
                 prover_params.generators[param_index].mul(multiplier)
             };
 
@@ -161,10 +158,15 @@ impl Proof {
         }
 
         // verification formula: e(com, param[n-index-1]) = gt_elt ^ hash(value) * e(proof, generator_of_g2)
-        // We modify the formula in order to avoid slow exponentation in the target group (which is Fq12)
+        // which is to check
+        //  e(com^hash_inverse,  param[n-index-1]) * e(proof^{-hash_inverse}, generator_of_g2)
+        //  ?= gt_elt
+        // We modify the formula as above in order to avoid slow exponentation in the target group (which is Fq12)
         // and perform two scalar multiplication by to 1/hash(value) in G1 instead, which is considerably faster.
         // We also move the pairing from the right-hand-side to the left-hand-side in order
         // to take advantage of the pairing product computation, which is faster than two pairings.
+
+        // step 1. compute hash_inverse
         let hash = hash_to_field_veccom(&value);
         let hash_inverse = match hash.inverse() {
             Some(p) => p,
@@ -172,12 +174,14 @@ impl Proof {
             None => panic!("hash_to_field_veccom failed"),
         };
 
+        // step 2, compute com^hash_inverse and proof^{-hash_inverse}
         let mut com_mut = com.commit;
         let mut proof_mut = self.proof;
         proof_mut.negate();
         com_mut.mul_assign(hash_inverse);
         proof_mut.mul_assign(hash_inverse);
 
+        // step 3. check pairing product
         veccom_pairing_product(
             com_mut.into_affine(),
             verifier_params.generators[verifier_params.n - index - 1],
@@ -223,7 +227,7 @@ impl Proof {
         let ti = hash_to_ti_repr(commit, set, value_sub_vector, n)?;
         let scalars_u64: Vec<&[u64; 4]> = ti.iter().map(|s| &s.0).collect();
         let bases: Vec<VeccomG1Affine> = proofs.iter().map(|s| s.proof.into_affine()).collect();
-        // proof = \prod proofs[i] ^ ti[i]
+        // proof = \prod proofs[i]^ti[i]
         let proof = VeccomG1Affine::sum_of_products(&bases[..], &scalars_u64);
 
         Ok(Proof {

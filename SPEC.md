@@ -242,7 +242,7 @@ This file is still under construction
   * Output: if the proof is valid w.r.t. commit/values/index or not
   * Steps:
     1. Compute `t = hash_to_field_veccom(value)`
-    2. return `e(com^{1/t}, param[n-index-1]) * e(proof^{1/t}, 1/generator_of_g2) ?= gt_elt`
+    2. return `e(com^{1/t}, param[n-index-1]) * e(proof^{-1/t}, generator_of_g2) ?= gt_elt`
 
   ``` rust
   /// Aggregates a vector of proofs into a single one
