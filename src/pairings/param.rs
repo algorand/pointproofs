@@ -128,8 +128,9 @@ impl ProverParams {
         self.pp_len = self.n * 512;
     }
 
-    /// check if the parameters are correct
-    pub fn check_parameters(&self, vp: &VerifierParams) -> bool {
+    /// check if the parameters are correct -- should not be used other than testing
+    #[cfg(test)]
+    pub(crate) fn check_parameters(&self, vp: &VerifierParams) -> bool {
         if self.n != vp.n || self.ciphersuite != vp.ciphersuite {
             return false;
         }
