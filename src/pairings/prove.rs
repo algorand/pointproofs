@@ -226,9 +226,62 @@ impl Proof {
         // get the list of scalas
         let ti = hash_to_ti_repr(commit, set, value_sub_vector, n)?;
         let scalars_u64: Vec<&[u64; 4]> = ti.iter().map(|s| &s.0).collect();
+
+        // let mut bases: Vec<VeccomG1> = proofs.iter().map(|s| s.proof).collect();
+        // CurveProjective::batch_normalization(&mut bases);
+        // let bases_affine: Vec<VeccomG1Affine> = bases.iter().map(|s| s.into_affine()).collect();
         let bases: Vec<VeccomG1Affine> = proofs.iter().map(|s| s.proof.into_affine()).collect();
         // proof = \prod proofs[i]^ti[i]
         let proof = VeccomG1Affine::sum_of_products(&bases[..], &scalars_u64);
+
+        Ok(Proof {
+            ciphersuite: csid,
+            proof,
+        })
+    }
+    /// Aggregates a vector of proofs from a same commitment into a single one.
+    ///     * input: the commitment
+    ///     * input: the list of proofs
+    ///     * input: the list of the indices of the proofs
+    ///     * input: the list of the values of the proofs
+    ///     * input: parameter n (size of the vector)
+    ///     * output: the aggregated proof
+    ///     * error: invalid ciphersuite/length, or hash to scalars failes
+    ///     * Note:
+    ///         the aggregator does not check the validity of individual commit/proofs.
+    ///         The caller may need to check them if they care for it.
+    pub fn same_commit_aggregate_batch_norm<Blob: AsRef<[u8]>>(
+        commit: &Commitment,
+        proofs: &[Self],
+        set: &[usize],
+        value_sub_vector: &[Blob],
+        n: usize,
+    ) -> Result<Self, String> {
+        // check that the csids are valid/match
+        let csid = commit.ciphersuite;
+        if !check_ciphersuite(csid) {
+            return Err(ERR_CIPHERSUITE.to_owned());
+        }
+        for e in proofs.iter() {
+            if e.ciphersuite != csid {
+                return Err(ERR_CIPHERSUITE.to_owned());
+            }
+        }
+        // check that the length of proofs and sets match
+        if proofs.len() != set.len() || proofs.len() != value_sub_vector.len() {
+            return Err(ERR_INDEX_PROOF_NOT_MATCH.to_owned());
+        }
+
+        // get the list of scalas
+        let ti = hash_to_ti_repr(commit, set, value_sub_vector, n)?;
+        let scalars_u64: Vec<&[u64; 4]> = ti.iter().map(|s| &s.0).collect();
+
+        let mut bases: Vec<VeccomG1> = proofs.iter().map(|s| s.proof).collect();
+        CurveProjective::batch_normalization(&mut bases);
+        let bases_affine: Vec<VeccomG1Affine> = bases.iter().map(|s| s.into_affine()).collect();
+        // let bases: Vec<VeccomG1Affine> = proofs.iter().map(|s| s.proof.into_affine()).collect();
+        // proof = \prod proofs[i]^ti[i]
+        let proof = VeccomG1Affine::sum_of_products(&bases_affine[..], &scalars_u64);
 
         Ok(Proof {
             ciphersuite: csid,
@@ -304,6 +357,83 @@ impl Proof {
         let bases: Vec<VeccomG1Affine> = proofs.iter().map(|s| s.proof.into_affine()).collect();
         // proof = \prod pi[i] ^ tj[i]
         let proof = VeccomG1Affine::sum_of_products(&bases[..], &scalars_u64);
+
+        Ok(Proof { ciphersuite, proof })
+    }
+
+    /// Aggregate an array of proofs, each
+    /// proof is a same-commit aggregated proof.
+    ///     * input: a list of commitments
+    ///     * input: a list of (aggregated) proofs, each for one commitment
+    ///     * input: a 2-dim array of indices for the proofs, each vector of indices for an aggregated proof
+    ///     * input: a 2-dim array of values for the proofs, each vector of values for an aggregated proof
+    ///     * input: parameter n (size of the vector)
+    ///     * Note:
+    ///         * The aggregator does not check the validity of the proof.
+    ///         * The proofs are already aggregated within each commitment.
+    ///     * Steps:
+    ///         * t\[j\] = hash_to_tj(...)
+    ///         * return prod proofs\[j\]^t\[j\]
+    pub fn cross_commit_aggregate_partial_batch_norm<Blob: AsRef<[u8]>>(
+        commits: &[Commitment],
+        proofs: &[Self],
+        set: &[Vec<usize>],
+        value_sub_vector: &[Vec<Blob>],
+        n: usize,
+    ) -> Result<Self, String> {
+        // check ciphersuite
+        let ciphersuite = commits[0].ciphersuite;
+        if !check_ciphersuite(ciphersuite) {
+            return Err(ERR_CIPHERSUITE.to_owned());
+        }
+        for e in commits.iter() {
+            if e.ciphersuite != ciphersuite {
+                return Err(ERR_CIPHERSUITE.to_owned());
+            }
+        }
+        for e in proofs.iter() {
+            if e.ciphersuite != ciphersuite {
+                return Err(ERR_CIPHERSUITE.to_owned());
+            }
+        }
+
+        // check the length are correct
+        if commits.len() != proofs.len()
+            || commits.len() != set.len()
+            || commits.len() != value_sub_vector.len()
+            || commits.is_empty()
+        {
+            #[cfg(debug_assertions)]
+            println!(
+                "commit: {}, proofs: {}, set: {}, value_sub_vector: {}",
+                commits.len(),
+                proofs.len(),
+                set.len(),
+                value_sub_vector.len()
+            );
+            return Err(ERR_X_COM_SIZE.to_owned());
+        };
+
+        // if commit.len() == 1, return the aggregated proof
+        if commits.len() == 1 {
+            return Ok(proofs[0].clone());
+        }
+
+        // start aggregation
+        let scalars = hash_to_tj(&commits, &set, &value_sub_vector, n)?;
+        if scalars.len() != proofs.len() {
+            return Err(ERR_X_COM_SIZE.to_owned());
+        }
+
+        let scalars_u64: Vec<&[u64; 4]> = scalars.iter().map(|s| &s.0).collect();
+
+        let mut bases: Vec<VeccomG1> = proofs.iter().map(|s| s.proof).collect();
+        CurveProjective::batch_normalization(&mut bases);
+        let bases_affine: Vec<VeccomG1Affine> = bases.iter().map(|s| s.into_affine()).collect();
+
+        // let bases: Vec<VeccomG1Affine> = proofs.iter().map(|s| s.proof.into_affine()).collect();
+        // proof = \prod pi[i] ^ tj[i]
+        let proof = VeccomG1Affine::sum_of_products(&bases_affine[..], &scalars_u64);
 
         Ok(Proof { ciphersuite, proof })
     }
@@ -398,6 +528,105 @@ impl Proof {
         let bases: Vec<VeccomG1Affine> = pi.iter().map(|s| s.proof.into_affine()).collect();
         // proof = \prod pi[i] ^ tj[i]
         let proof = VeccomG1Affine::sum_of_products(&bases[..], &scalars_u64);
+
+        Ok(Proof { ciphersuite, proof })
+    }
+    /// Aggregate a 2-dim array of proofs, each row corresponding to a
+    /// commit, into a single proof.
+    ///     * input: a list of commitments
+    ///     * input: a 2-dim array of non-aggregated proofs, each vector of proofs for one commitment
+    ///     * input: a 2-dim array of indices for the proofs, each indice for a proof
+    ///     * input: a 2-dim array of values for the proofs, each value for a proof
+    ///     * input: parameter n (size of the vector)
+    ///     * output: an aggregated proof
+    ///     * error: invalid ciphersuite, input vectors length does not match
+    ///     * Note:
+    ///         1. The aggregator does not check the validity of the proof.
+    ///         2. The proofs are already aggregated within each commitment.
+    ///     * Steps:
+    ///         1. t\[j\] = hash_to_tj(...)
+    ///         2. pi\[j\] = same_commit_aggregate(...)
+    ///         3. return prod pi\[j\]^t\[j\]
+    pub fn cross_commit_aggregate_full_batch_norm<Blob: AsRef<[u8]>>(
+        commits: &[Commitment],
+        proofs: &[Vec<Self>],
+        set: &[Vec<usize>],
+        value_sub_vector: &[Vec<Blob>],
+        n: usize,
+    ) -> Result<Self, String> {
+        // check ciphersuite
+        let ciphersuite = commits[0].ciphersuite;
+        if !check_ciphersuite(ciphersuite) {
+            return Err(ERR_CIPHERSUITE.to_owned());
+        }
+        for e in commits.iter() {
+            if e.ciphersuite != ciphersuite {
+                return Err(ERR_CIPHERSUITE.to_owned());
+            }
+        }
+        for e in proofs.iter() {
+            for ee in e.iter() {
+                if ee.ciphersuite != ciphersuite {
+                    return Err(ERR_CIPHERSUITE.to_owned());
+                }
+            }
+        }
+
+        // check the length are correct
+        if commits.len() != proofs.len()
+            || commits.len() != set.len()
+            || commits.len() != value_sub_vector.len()
+            || commits.is_empty()
+        {
+            #[cfg(debug_assertions)]
+            println!(
+                "commit: {}, proofs: {}, set: {}, value_sub_vector: {}",
+                commits.len(),
+                proofs.len(),
+                set.len(),
+                value_sub_vector.len()
+            );
+            return Err(ERR_X_COM_SIZE.to_owned());
+        };
+
+        // if commit.len() == 1, call normal aggregation
+        if commits.len() == 1 {
+            return Self::same_commit_aggregate(
+                &commits[0],
+                &proofs[0],
+                &set[0],
+                &value_sub_vector[0],
+                n,
+            );
+        }
+
+        // start aggregation
+        let scalars = hash_to_tj(&commits, &set, &value_sub_vector, n)?;
+
+        let mut pi: Vec<Self> = vec![];
+        for i in 0..commits.len() {
+            pi.push(Self::same_commit_aggregate(
+                &commits[i],
+                &proofs[i],
+                &set[i],
+                &value_sub_vector[i],
+                n,
+            )?);
+        }
+        if scalars.len() != pi.len() {
+            return Err(ERR_X_COM_SIZE.to_owned());
+        }
+
+        let scalars_u64: Vec<&[u64; 4]> = scalars.iter().map(|s| &s.0).collect();
+
+        let mut bases: Vec<VeccomG1> = pi.iter().map(|s| s.proof).collect();
+        CurveProjective::batch_normalization(&mut bases);
+        let bases_affine: Vec<VeccomG1Affine> = bases.iter().map(|s| s.into_affine()).collect();
+
+        //
+        // let bases: Vec<VeccomG1Affine> = pi.iter().map(|s| s.proof.into_affine()).collect();
+        // proof = \prod pi[i] ^ tj[i]
+        let proof = VeccomG1Affine::sum_of_products(&bases_affine[..], &scalars_u64);
 
         Ok(Proof { ciphersuite, proof })
     }
