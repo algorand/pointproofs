@@ -38,6 +38,7 @@
 [[bench]]
   name = "pairings"
   harness = false
+
 #
 # [[bench]]
 #   name = "bench_without_pre_comp"

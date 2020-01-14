@@ -226,9 +226,12 @@ impl Proof {
         // get the list of scalas
         let ti = hash_to_ti_repr(commit, set, value_sub_vector, n)?;
         let scalars_u64: Vec<&[u64; 4]> = ti.iter().map(|s| &s.0).collect();
-        let bases: Vec<VeccomG1Affine> = proofs.iter().map(|s| s.proof.into_affine()).collect();
+
+        let mut bases: Vec<VeccomG1> = proofs.iter().map(|s| s.proof).collect();
+        CurveProjective::batch_normalization(&mut bases);
+        let bases_affine: Vec<VeccomG1Affine> = bases.iter().map(|s| s.into_affine()).collect();
         // proof = \prod proofs[i]^ti[i]
-        let proof = VeccomG1Affine::sum_of_products(&bases[..], &scalars_u64);
+        let proof = VeccomG1Affine::sum_of_products(&bases_affine[..], &scalars_u64);
 
         Ok(Proof {
             ciphersuite: csid,
@@ -301,9 +304,13 @@ impl Proof {
         }
 
         let scalars_u64: Vec<&[u64; 4]> = scalars.iter().map(|s| &s.0).collect();
-        let bases: Vec<VeccomG1Affine> = proofs.iter().map(|s| s.proof.into_affine()).collect();
+
+        let mut bases: Vec<VeccomG1> = proofs.iter().map(|s| s.proof).collect();
+        CurveProjective::batch_normalization(&mut bases);
+        let bases_affine: Vec<VeccomG1Affine> = bases.iter().map(|s| s.into_affine()).collect();
+
         // proof = \prod pi[i] ^ tj[i]
-        let proof = VeccomG1Affine::sum_of_products(&bases[..], &scalars_u64);
+        let proof = VeccomG1Affine::sum_of_products(&bases_affine[..], &scalars_u64);
 
         Ok(Proof { ciphersuite, proof })
     }
@@ -395,9 +402,13 @@ impl Proof {
         }
 
         let scalars_u64: Vec<&[u64; 4]> = scalars.iter().map(|s| &s.0).collect();
-        let bases: Vec<VeccomG1Affine> = pi.iter().map(|s| s.proof.into_affine()).collect();
+
+        let mut bases: Vec<VeccomG1> = pi.iter().map(|s| s.proof).collect();
+        CurveProjective::batch_normalization(&mut bases);
+        let bases_affine: Vec<VeccomG1Affine> = bases.iter().map(|s| s.into_affine()).collect();
+
         // proof = \prod pi[i] ^ tj[i]
-        let proof = VeccomG1Affine::sum_of_products(&bases[..], &scalars_u64);
+        let proof = VeccomG1Affine::sum_of_products(&bases_affine[..], &scalars_u64);
 
         Ok(Proof { ciphersuite, proof })
     }
