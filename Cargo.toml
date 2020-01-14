@@ -36,7 +36,7 @@
   criterion = "0.2.11"
 
 [[bench]]
-  name = "pairings"
+  name = "paper"
   harness = false
 
 #
