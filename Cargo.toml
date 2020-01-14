@@ -35,13 +35,10 @@
   bencher = "0.1.5"
   criterion = "0.2.11"
 
-# [[bench]]
-#   name = "pairings"
-#   harness = false
-
 [[bench]]
-  name = "bench_batch_norm"
+  name = "pairings"
   harness = false
+
 #
 # [[bench]]
 #   name = "bench_without_pre_comp"
