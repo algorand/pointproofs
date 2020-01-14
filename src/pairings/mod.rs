@@ -6,7 +6,7 @@ use pairing::Engine;
 
 // Uncomment the following if we want the proofs/commits lie in BLS12::G1
 // the groups are not switched
-/*
+
 /// A wrapper of BLS::G1. Groups are not switched and proof/commits are in BLS::G1
 pub type VeccomG1 = G1;
 /// A wrapper of BLS::G2. Groups are not switched and proof/commits are in BLS::G1
@@ -35,8 +35,8 @@ pub(crate) fn veccom_pairing_multi_product(
 ) -> Fq12 {
     Bls12::pairing_multi_product(g1_vec, g2_vec)
 }
-*/
 
+/*
 // the groups are switched
 /// A wrapper of BLS::G2. Groups are switched and proof/commits are in BLS::G2
 pub type VeccomG1 = G2;
@@ -66,6 +66,7 @@ pub(crate) fn veccom_pairing_multi_product(
 ) -> Fq12 {
     Bls12::pairing_multi_product(g2_vec, g1_vec)
 }
+*/
 
 /// Structure for porver parameters.
 #[derive(Clone, Debug)]
