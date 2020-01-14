@@ -152,7 +152,9 @@ This file is still under construction
   * Output: a `Commitment`
   * Error: ciphersuite is not supported
   * Error: ciphersuite does not match #elements in parameters
-
+  * Steps:
+    1. hash `value`s into `scalar`s
+    2. commit = \prod prover_params[i]^scalar[i]
 
   ``` rust
   pub fn update<Blob: AsRef<[u8]>>(
@@ -171,8 +173,34 @@ This file is still under construction
   * Output: mutate self to the updated commit
   * Error: ciphersuite is not supported
   * Error: index out of range
+  * Steps:
+    1. hash `value_before` into `old_scalar`
+    2. hash `value_after` into `new_scalar`
+    3. `commit = commit * prover_params[changed_index]^(new_scalar-old_scalar)`
 
-
+  ``` rust
+  pub fn batch_update<Blob: AsRef<[u8]>>(
+      &mut self,
+      prover_params: &ProverParams,
+      changed_index: &[usize],
+      value_before: &[Blob],
+      value_after: &[Blob],
+  ) -> Result<(), String>
+  ```
+  * Input: self, a `Commitment`
+  * Input: a `ProverParam`
+  * Input: a list of `indices` to be updated
+  * Input: a list of original values
+  * Input: a list of values updated to
+  * Output: mutate self to the updated commit
+  * Error: ciphersuite is not supported
+  * Error: index out of range
+  * Error: # of changed_index, value_before or value_after do not match
+  * Steps:
+    1. for `i` in `indices`
+      1. hash `value_before[i]`s into `old_scalar[i]`
+      2. hash `value_after[i]`s into `new_scalar[i]`
+    2. `commit = commit * \prod prover_params[changed_index]^(new_scalar[i]-old_scalar[i])`
 
 ## Proofs
 
@@ -200,6 +228,9 @@ This file is still under construction
   * Output: a new proof
   * Error: ciphersuite is not supported
   * Error: index out of range
+  * Steps:
+    1. hash the `value`s into `scarlar`s
+    2. `proof = \prod prover_params[n - index + i]^scalar[i]`
 
 
   ``` rust
@@ -222,6 +253,10 @@ This file is still under construction
   * Error: ciphersuite is not supported
   * Error: index out of range
   * Note: This function is used for updating your proof when someone else's value changes. It is not for updating your own proof when your value changes -- because then the proof does not change!
+  * Steps:
+    1. hash `value_before` into `old_scalar`
+    2. hash `value_after` into `new_scalar`
+    3. `proof = proof * prover_params[changed_index + n - proof_index]^(new_scalar-old_scalar)`
 
 
   ``` rust
@@ -249,7 +284,7 @@ This file is still under construction
   /// Note: the aggregator does not check the validity of
   /// individual commits. The caller may need to check them
   /// if they care for it.
-  pub fn aggregate<Blob: AsRef<[u8]>>(
+  pub fn same_commit_aggregate<Blob: AsRef<[u8]>>(
       commit: &Commitment,
       proofs: &[Self],
       set: &[usize],
@@ -271,9 +306,33 @@ This file is still under construction
     3. return `proof = \prod proofs[i]^ti[i]`
 
   ``` rust
+  /// Aggregate an array of proofs, each is an (aggregated) proof for a
+  /// commit, into a single proof
+  pub fn cross_commit_aggregate_partial<Blob: AsRef<[u8]>>(
+      commits: &[Commitment],
+      proofs: &[Self],
+      set: &[Vec<usize>],
+      value_sub_vector: &[Vec<Blob>],
+      n: usize,
+  ) -> Result<Self, String>
+  ```
+  * Input: a vector commitments
+  * Input: a vector of proofs, each (aggregate) proof belongs to a commitment
+  * Input: a vector of sets of indices for proofs, each set of indices belongs to a same commitment
+  * Input: a vector of sets of values for proofs, each set of values belongs to a same commitment
+  * Output: an aggregated proof
+  * Error: the lengths do not match
+  * Error: ciphersuite not supported
+  * Steps:
+    1. if `commit.len() == 1`, return `aggregate(commits[0], proofs[0], set[0], value_sub_vector[0], n)`
+    2. hash to a list of scalars `hash_to_tj(&commits, &set, &value_sub_vector, n)?`
+    3. return `proof = \prod proofs[i]^tj[i]`
+
+
+  ``` rust
   /// Aggregate a 2-dim array of proofs, each row corresponding to a
   /// commit, into a single proof
-  pub fn cross_commit_aggregate<Blob: AsRef<[u8]>>(
+  pub fn cross_commit_aggregate_full<Blob: AsRef<[u8]>>(
       commits: &[Commitment],
       proofs: &[Vec<Self>],
       set: &[Vec<usize>],
@@ -296,7 +355,7 @@ This file is still under construction
 
   ``` rust
   /// batch verify a proof for a list of values/indices
-  pub fn batch_verify<Blob: AsRef<[u8]>>(
+  pub fn same_commit_batch_verify<Blob: AsRef<[u8]>>(
       &self,
       verifier_params: &VerifierParams,
       com: &Commitment,

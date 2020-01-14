@@ -48,6 +48,76 @@ fn negative_test_commit() {
 }
 
 #[test]
+fn test_commit_batch_update() {
+    let n = 8usize;
+    let (prover_params, verifier_params) =
+        paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, n).unwrap();
+
+    let mut init_values = Vec::with_capacity(n);
+    for i in 0..n {
+        let s = format!("this is message number {}", i);
+        init_values.push(s.into_bytes());
+    }
+
+    let mut values: Vec<&[u8]> = Vec::with_capacity(n);
+    for e in init_values.iter().take(n) {
+        values.push(&e);
+    }
+
+    let mut com = Commitment::new(&prover_params, &values).unwrap();
+    let mut com2 = com.clone();
+    let com_old = com.clone();
+    let mut proofs = Vec::with_capacity(n);
+
+    // Check all proofs, together with conversion to/from bytes
+    for i in 0..n {
+        proofs.push(Proof::new(&prover_params, &values, i).unwrap());
+    }
+
+    // update values
+    let mut new_init_values = Vec::with_capacity(n);
+    for i in 0..n {
+        let s = format!("new string {}", i);
+        new_init_values.push(s.into_bytes());
+    }
+
+    let mut new_values: Vec<&[u8]> = Vec::with_capacity(n);
+    for e in new_init_values.iter().take(n) {
+        new_values.push(&e);
+    }
+
+    // indices
+    let indices = [0, 1, 2, 3];
+    let value_before = [values[0], values[1], values[2], values[3]];
+    let value_after = [new_values[0], new_values[1], new_values[2], new_values[3]];
+
+    // batch and serial updates
+    com.batch_update(&prover_params, &indices, &value_before, &value_after)
+        .unwrap();
+    for e in indices.iter() {
+        com2.update(&prover_params, *e, value_before[*e], value_after[*e])
+            .unwrap();
+    }
+    assert_eq!(com, com2);
+
+    for e in 4..8 {
+        for changed_index in indices.iter() {
+            proofs[e]
+                .update(
+                    &prover_params,
+                    e,
+                    *changed_index,
+                    values[*changed_index],
+                    new_values[*changed_index],
+                )
+                .unwrap();
+        }
+        assert!(proofs[e].verify(&verifier_params, &com, &values[e], e));
+        assert!(!proofs[e].verify(&verifier_params, &com_old, &values[e], e));
+    }
+}
+
+#[test]
 fn test_commit() {
     let n = 8usize;
     let (prover_params, verifier_params) =
