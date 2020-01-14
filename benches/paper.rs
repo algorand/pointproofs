@@ -139,7 +139,7 @@ fn single_commit(c: &mut Criterion) {
 fn aggregate(c: &mut Criterion) {
     let dim = 1000;
     let num_com_array = [10, 1000, 2000, 3000, 4000, 5000];
-    for s in num_com_array {
+    for s in num_com_array.iter() {
         let num_com = *s;
         let mut values: Vec<Vec<String>> = vec![];
         //let mut value_sub_vector: Vec<Vec<String>>  = vec![];
