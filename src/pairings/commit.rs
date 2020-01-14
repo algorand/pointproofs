@@ -1,7 +1,7 @@
 //! This file is part of the veccom crate.
 //! It defines APIs for constructing and updating commitments.
 
-use ff::Field;
+use ff::{Field, PrimeField};
 use pairing::{bls12_381::*, CurveAffine, CurveProjective};
 use pairings::err::*;
 use pairings::hash_to_field_veccom::*;
@@ -103,6 +103,57 @@ impl Commitment {
         };
 
         self.commit.add_assign(&res);
+        Ok(())
+    }
+
+    /// upated an existing commitment with a list of messages
+    ///     * input: commitment
+    ///     * input: prover parameter set
+    ///     * input: the indices of the value to be updated
+    ///     * input: the old values
+    ///     * input: the new values
+    ///     * output: mutate self to the new commitment
+    ///     * error: invalid ciphersuite, parameters
+    pub fn batch_update<Blob: AsRef<[u8]>>(
+        &mut self,
+        prover_params: &ProverParams,
+        changed_index: &[usize],
+        value_before: &[Blob],
+        value_after: &[Blob],
+    ) -> Result<(), String> {
+        // checks that cipersuite is supported
+        if self.ciphersuite != prover_params.ciphersuite {
+            return Err(ERR_CIPHERSUITE.to_owned());
+        }
+        if !check_ciphersuite(prover_params.ciphersuite) {
+            return Err(ERR_CIPHERSUITE.to_owned());
+        }
+        // check the parameters are valid
+        for index in changed_index {
+            if prover_params.n <= *index {
+                return Err(ERR_INVALID_INDEX.to_owned());
+            };
+        }
+        if changed_index.len() != value_before.len() || changed_index.len() != value_after.len() {
+            return Err(ERR_INDEX_VALUE_NOT_MATCH.to_owned());
+        }
+
+        // get the hashes and the bases
+        let mut multiplier_set: Vec<FrRepr> = vec![];
+        let mut basis: Vec<VeccomG1Affine> = vec![];
+        for i in 0..value_before.len() {
+            // multiplier = hash(new_value) - hash(old_value)
+            let mut multiplier = hash_to_field_veccom(&value_before[i]);
+            multiplier.negate();
+            multiplier.add_assign(&hash_to_field_veccom(&value_after[i]));
+            multiplier_set.push(multiplier.into_repr());
+            basis.push(prover_params.generators[changed_index[i]]);
+        }
+
+        // new_commit = old_commit * \prod g[index]^multiplier
+        let scalars_u64: Vec<&[u64; 4]> = multiplier_set.iter().map(|s| &s.0).collect();
+        let delta = VeccomG1Affine::sum_of_products(&basis[..], &scalars_u64);
+        self.commit.add_assign(&delta);
         Ok(())
     }
 }
