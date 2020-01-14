@@ -230,7 +230,6 @@ impl Proof {
         let mut bases: Vec<VeccomG1> = proofs.iter().map(|s| s.proof).collect();
         CurveProjective::batch_normalization(&mut bases);
         let bases_affine: Vec<VeccomG1Affine> = bases.iter().map(|s| s.into_affine()).collect();
-        // let bases: Vec<VeccomG1Affine> = proofs.iter().map(|s| s.proof.into_affine()).collect();
         // proof = \prod proofs[i]^ti[i]
         let proof = VeccomG1Affine::sum_of_products(&bases_affine[..], &scalars_u64);
 
@@ -310,7 +309,6 @@ impl Proof {
         CurveProjective::batch_normalization(&mut bases);
         let bases_affine: Vec<VeccomG1Affine> = bases.iter().map(|s| s.into_affine()).collect();
 
-        // let bases: Vec<VeccomG1Affine> = proofs.iter().map(|s| s.proof.into_affine()).collect();
         // proof = \prod pi[i] ^ tj[i]
         let proof = VeccomG1Affine::sum_of_products(&bases_affine[..], &scalars_u64);
 
@@ -409,8 +407,6 @@ impl Proof {
         CurveProjective::batch_normalization(&mut bases);
         let bases_affine: Vec<VeccomG1Affine> = bases.iter().map(|s| s.into_affine()).collect();
 
-        //
-        // let bases: Vec<VeccomG1Affine> = pi.iter().map(|s| s.proof.into_affine()).collect();
         // proof = \prod pi[i] ^ tj[i]
         let proof = VeccomG1Affine::sum_of_products(&bases_affine[..], &scalars_u64);
 
