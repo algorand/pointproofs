@@ -10,7 +10,7 @@ use pairing::serdes::SerDes;
 use std::time::Duration;
 use veccom::pairings::*;
 
-criterion_group!(paper, single_commit, aggregate);
+criterion_group!(paper, aggregate, single_commit,);
 criterion_main!(paper);
 
 fn single_commit(c: &mut Criterion) {
@@ -139,11 +139,18 @@ fn single_commit(c: &mut Criterion) {
 fn aggregate(c: &mut Criterion) {
     let dim = 1000;
     let num_com_array = [10, 1000, 2000, 3000, 4000, 5000];
+
+    // generate parameter for dimension n
+    let (pp, vp) = param::paramgen_from_seed(
+        "This is a very very long seed for vector commitment benchmarking",
+        0,
+        dim,
+    )
+    .unwrap();
+    println!("parameters generated");
     for s in num_com_array.iter() {
         let num_com = *s;
         let mut values: Vec<Vec<String>> = vec![];
-        //let mut value_sub_vector: Vec<Vec<String>>  = vec![];
-        // let index: Vec<usize> = vec![0,1,2,3,4,5,6,7];
         let mut single_proof_commit_index: Vec<Vec<usize>> = vec![];
         let mut single_proof_commit_value: Vec<Vec<String>> = vec![];
         let mut eight_proof_commit_index: Vec<Vec<usize>> = vec![];
@@ -164,20 +171,9 @@ fn aggregate(c: &mut Criterion) {
             eight_proof_commit_value.push(tmp_value_sub_vector.clone());
         }
 
-        // generate parameter for dimension n
-        let (pp, vp) = param::paramgen_from_seed(
-            "This is a very very long seed for vector commitment benchmarking",
-            0,
-            dim,
-        )
-        .unwrap();
-        println!("parameters generated");
-
         let mut com_list: Vec<Commitment> = vec![];
         let mut single_proof_list: Vec<Proof> = vec![];
         let mut agg_proof_list: Vec<Proof> = vec![];
-        let mut single_proof_bytes_list: Vec<Vec<u8>> = vec![];
-        let mut agg_proof_bytes_list: Vec<Vec<u8>> = vec![];
 
         for i in 0..num_com {
             // commit
@@ -190,10 +186,7 @@ fn aggregate(c: &mut Criterion) {
                 tmp_proof_list.push(tmp_proof);
             }
             // store the first proof for each commit
-            let mut buf: Vec<u8> = vec![];
-            tmp_proof_list[0].serialize(&mut buf, true).unwrap();
             single_proof_list.push(tmp_proof_list[0].clone());
-            single_proof_bytes_list.push(buf);
 
             // aggregate proofs
             let agg_proof = Proof::same_commit_aggregate(
@@ -204,10 +197,7 @@ fn aggregate(c: &mut Criterion) {
                 dim,
             )
             .unwrap();
-            let mut buf: Vec<u8> = vec![];
-            agg_proof.serialize(&mut buf, true).unwrap();
             agg_proof_list.push(agg_proof);
-            agg_proof_bytes_list.push(buf);
 
             com_list.push(tmp_com);
         }
