@@ -10,7 +10,7 @@ use pairing::serdes::SerDes;
 use std::time::Duration;
 use veccom::pairings::*;
 
-criterion_group!(paper, aggregate, single_commit,);
+criterion_group!(paper, single_commit, aggregate,);
 criterion_main!(paper);
 
 fn single_commit(c: &mut Criterion) {
@@ -71,8 +71,16 @@ fn single_commit(c: &mut Criterion) {
         b.iter(|| Proof::new(&pp_clone, &values_clone, 0).unwrap());
     });
 
-    // aggregate 8 proofs
+    // batch proof generation without aggregation
     let pp_clone = pp.clone();
+    let values_clone = values.clone();
+    let set_clone = set.clone();
+    let bench_str = format!("single_commit_n_{}_proof_new", n);
+    let bench = bench.with_function(bench_str, move |b| {
+        b.iter(|| Proof::batch_new(&pp_clone, &values_clone, &set_clone).unwrap());
+    });
+
+    // aggregate 8 proofs
     let proofs_clone = proofs.clone();
     let set_clone = set.clone();
     let com_clone = com.clone();
@@ -87,6 +95,18 @@ fn single_commit(c: &mut Criterion) {
                 &value_sub_vector_clone,
                 n,
             )
+        });
+    });
+
+    // batch proof generation without aggregation
+    let pp_clone = pp.clone();
+    let values_clone = values.clone();
+    let set_clone = set.clone();
+    let com_clone = com.clone();
+    let bench_str = format!("single_commit_n_{}_proof_new", n);
+    let bench = bench.with_function(bench_str, move |b| {
+        b.iter(|| {
+            Proof::batch_new_aggregated(&pp_clone, &com_clone, &values_clone, &set_clone).unwrap()
         });
     });
 
@@ -109,6 +129,7 @@ fn single_commit(c: &mut Criterion) {
 
     // commit update
     let mut com_clone = com.clone();
+    let pp_clone = pp.clone();
     let ov = old_values[0].clone();
     let nv = new_values[0].clone();
     let bench_str = format!("single_commit_n_{}_commit_update", n);
