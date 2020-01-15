@@ -63,6 +63,135 @@ impl Proof {
         })
     }
 
+    /// Generate a new set of proofs.
+    ///     * input: prover parameter set
+    ///     * input: values for the proof
+    ///     * input: the list of indices of the proof
+    ///     * output: a list of new proofs
+    ///     * error: invalid ciphersuite/parameters
+    pub fn batch_new<Blob: AsRef<[u8]>>(
+        prover_params: &ProverParams,
+        values: &[Blob],
+        indices: &[usize],
+    ) -> Result<Vec<Self>, String> {
+        // checks that cipersuite is supported
+        if !check_ciphersuite(prover_params.ciphersuite) {
+            return Err(ERR_CIPHERSUITE.to_owned());
+        }
+
+        // check index is valid
+        if indices.len() >= prover_params.n {
+            return Err(ERR_INVALID_INDEX.to_owned());
+        };
+        for e in indices {
+            if *e >= prover_params.n {
+                return Err(ERR_INVALID_INDEX.to_owned());
+            }
+        }
+
+        // check param
+        if values.len() != prover_params.n {
+            return Err(ERR_INVALID_INDEX.to_owned());
+        }
+
+        // hash into a set of scalars
+        let scalars_fr_repr: Vec<FrRepr> = values
+            .iter()
+            .map(|s| hash_to_field_repr_veccom(&s.as_ref()))
+            .collect();
+        let scalars_u64: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+
+        let mut proof_list: Vec<Self> = vec![];
+        for e in indices {
+            // generate the proof use `sum of product` function
+            let proof = VeccomG1Affine::sum_of_products(
+                &prover_params.generators[prover_params.n - *e..2 * prover_params.n - *e],
+                &scalars_u64,
+            );
+            proof_list.push(Self {
+                ciphersuite: prover_params.ciphersuite,
+                proof,
+            })
+        }
+
+        Ok(proof_list)
+    }
+
+    /// Generate a new set of proofs.
+    ///     * input: prover parameter set
+    ///     * input: the commitment
+    ///     * input: values for the proof
+    ///     * input: the list of indices of the proof
+    ///     * output: an aggregation of the list of new proofs
+    ///     * error: invalid ciphersuite/parameters
+    pub fn batch_new_aggregated<Blob: AsRef<[u8]>>(
+        prover_params: &ProverParams,
+        commit: &Commitment,
+        values: &[Blob],
+        indices: &[usize],
+    ) -> Result<Self, String> {
+        // checks that cipersuite is supported
+        if !check_ciphersuite(prover_params.ciphersuite) {
+            return Err(ERR_CIPHERSUITE.to_owned());
+        }
+
+        // check index is valid
+        if indices.len() >= prover_params.n {
+            return Err(ERR_INVALID_INDEX.to_owned());
+        };
+        for e in indices {
+            if *e >= prover_params.n {
+                return Err(ERR_INVALID_INDEX.to_owned());
+            }
+        }
+
+        // check param
+        if values.len() != prover_params.n {
+            return Err(ERR_INVALID_INDEX.to_owned());
+        }
+
+        // generate the list of sub_values
+        let mut value_sub_vector: Vec<&[u8]> = vec![];
+        for e in indices {
+            value_sub_vector.push(values[*e].as_ref());
+        }
+
+        // hash into a set of scalars
+        let scalars_fr: Vec<Fr> = values
+            .iter()
+            .map(|s| hash_to_field_veccom(&s.as_ref()))
+            .collect();
+        // get the list of scalars for each proof
+        let ti = hash_to_ti_fr(commit, indices, &value_sub_vector, prover_params.n)?;
+
+        let mut final_scalars: Vec<FrRepr> = vec![];
+        for e in &ti {
+            for f in &scalars_fr {
+                let mut tmp = e.clone();
+                tmp.mul_assign(f);
+                final_scalars.push(tmp.into_repr());
+            }
+        }
+
+        let scalars_u64: Vec<&[u64; 4]> = final_scalars.iter().map(|s| &s.0).collect();
+
+        let mut final_basis: Vec<VeccomG1Affine> = vec![];
+        for e in indices {
+            final_basis = [
+                final_basis.as_slice(),
+                &prover_params.generators[prover_params.n - *e..2 * prover_params.n - *e],
+            ]
+            .concat();
+        }
+
+        let agg_proof = VeccomG1Affine::sum_of_products(&final_basis, &scalars_u64);
+
+        Ok(Proof {
+            ciphersuite: prover_params.ciphersuite,
+            proof: agg_proof,
+        })
+    }
+
     /// Updating an existing proof.
     ///     * input: prover parameter set
     ///     * input: the index for the proof
