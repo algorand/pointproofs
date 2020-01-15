@@ -75,7 +75,7 @@ fn single_commit(c: &mut Criterion) {
     let pp_clone = pp.clone();
     let values_clone = values.clone();
     let set_clone = set.clone();
-    let bench_str = format!("single_commit_n_{}_proof_new", n);
+    let bench_str = format!("single_commit_n_{}_proof_batch_new", n);
     let bench = bench.with_function(bench_str, move |b| {
         b.iter(|| Proof::batch_new(&pp_clone, &values_clone, &set_clone).unwrap());
     });
@@ -85,7 +85,7 @@ fn single_commit(c: &mut Criterion) {
     let set_clone = set.clone();
     let com_clone = com.clone();
     let value_sub_vector_clone = value_sub_vector.clone();
-    let bench_str = format!("single_commit_n_{}_proof_aggregate", n);
+    let bench_str = format!("single_commit_n_{}_proof_aggregated", n);
     let bench = bench.with_function(bench_str, move |b| {
         b.iter(|| {
             Proof::same_commit_aggregate(
@@ -103,7 +103,7 @@ fn single_commit(c: &mut Criterion) {
     let values_clone = values.clone();
     let set_clone = set.clone();
     let com_clone = com.clone();
-    let bench_str = format!("single_commit_n_{}_proof_new", n);
+    let bench_str = format!("single_commit_n_{}_proof_batch_new_aggregated", n);
     let bench = bench.with_function(bench_str, move |b| {
         b.iter(|| {
             Proof::batch_new_aggregated(&pp_clone, &com_clone, &values_clone, &set_clone).unwrap()
@@ -153,7 +153,7 @@ fn single_commit(c: &mut Criterion) {
 
     let bench = bench.warm_up_time(Duration::from_millis(1000));
     let bench = bench.measurement_time(Duration::from_millis(5000));
-    let bench = bench.sample_size(100);
+    let bench = bench.sample_size(10);
     c.bench("paper", bench);
 }
 
