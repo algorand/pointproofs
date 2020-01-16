@@ -167,7 +167,7 @@ impl Proof {
         let mut final_scalars: Vec<FrRepr> = vec![];
         for e in &ti {
             for f in &scalars_fr {
-                let mut tmp = e.clone();
+                let mut tmp = *e;
                 tmp.mul_assign(f);
                 final_scalars.push(tmp.into_repr());
             }
