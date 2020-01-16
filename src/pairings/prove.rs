@@ -164,6 +164,7 @@ impl Proof {
         // get the list of scalars for each proof
         let ti = hash_to_ti_fr(commit, indices, &value_sub_vector, prover_params.n)?;
 
+        // compute the final scalars, a list of __indices.len() * n__ number of scarlar
         let mut final_scalars: Vec<FrRepr> = vec![];
         for e in &ti {
             for f in &scalars_fr {
@@ -766,25 +767,17 @@ impl Proof {
         g1_vec.push(tmp2.into_affine());
 
         // g2_vec stores the g2 components for the pairing product
-        // for j \in [num_commit], g2^{\sum alpha^{n + 1 - i} * t_i,j} * tj/tmp )
+        // for j \in [num_commit], g2^{\prod alpha^{n + 1 - i} * t_i,j} * tj/tmp )
         let mut g2_vec: Vec<VeccomG2Affine> = vec![];
         for j in 0..num_commit {
-            let mut tmp3 = tmp_inverse;
-            let scalar = match Fr::from_repr(tj[j]) {
-                Ok(p) => p,
-                // the output of hash should always be a field element
-                Err(_e) => panic!("some thing is wrong, check hash_to_field function"),
-            };
-            tmp3.mul_assign(&scalar);
-
+            // subset_sum = \prod alpha^{n + 1 - i} * t_i,j}
             let mut bases: Vec<VeccomG2Affine> = vec![];
             let mut scalars_u64: Vec<[u64; 4]> = vec![];
             for i in 0..ti_s[j].len() {
                 bases.push(verifier_params.generators[verifier_params.n - set[j][i] - 1]);
 
-                let mut t = ti_s[j][i];
-                t.mul_assign(&tmp3);
-                scalars_u64.push(t.into_repr().0);
+                let t = ti_s[j][i].into_repr();
+                scalars_u64.push(t.0);
             }
 
             let mut scalars_u64_ref: Vec<&[u64; 4]> = vec![];
@@ -792,8 +785,17 @@ impl Proof {
                 scalars_u64_ref.push(&e);
             }
 
-            let param_subset_sum = VeccomG2Affine::sum_of_products(&bases, &scalars_u64_ref);
+            let mut param_subset_sum = VeccomG2Affine::sum_of_products(&bases, &scalars_u64_ref);
 
+            // param_subset_sum = param_subset_sum^{t_j/tmp}
+            let mut tmp3 = tmp_inverse;
+            let scalar = match Fr::from_repr(tj[j]) {
+                Ok(p) => p,
+                // the output of hash should always be a field element
+                Err(_e) => panic!("some thing is wrong, check hash_to_field function"),
+            };
+            tmp3.mul_assign(&scalar);
+            param_subset_sum.mul_assign(tmp3);
             g2_vec.push(param_subset_sum.into_affine());
         }
         // the last element for g1_vec is g2
