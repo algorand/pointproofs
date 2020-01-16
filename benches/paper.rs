@@ -98,17 +98,36 @@ fn single_commit(c: &mut Criterion) {
         });
     });
 
-    // batch proof generation without aggregation
+    // batch proof generation with aggregation
     let pp_clone = pp.clone();
     let values_clone = values.clone();
     let set_clone = set.clone();
     let com_clone = com.clone();
     let bench_str = format!("single_commit_n_{}_proof_batch_new_aggregated", n);
-    let bench = bench.with_function(bench_str, move |b| {
+    let mut bench = bench.with_function(bench_str, move |b| {
         b.iter(|| {
             Proof::batch_new_aggregated(&pp_clone, &com_clone, &values_clone, &set_clone).unwrap()
         });
     });
+
+    let num_proof_array = [8usize,16,32,64,128];
+    for e in num_proof_array.iter(){
+        let mut set2: Vec<usize> = Vec::with_capacity(8);
+        for i in 0..*e {
+            set2.push(i);
+        }
+
+        // batch proof generation with aggregation
+        let pp_clone = pp.clone();
+        let values_clone = values.clone();
+        let com_clone = com.clone();
+        let bench_str = format!("single_commit_n_{}_proof_{}_batch_new_aggregated", n, *e);
+        bench = bench.with_function(bench_str, move |b| {
+            b.iter(|| {
+                Proof::batch_new_aggregated(&pp_clone, &com_clone, &values_clone, &set2).unwrap()
+            });
+        });
+    }
 
     // Verify 8 aggregated proofs
     // verification with des
