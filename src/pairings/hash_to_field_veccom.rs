@@ -12,13 +12,38 @@ use pairings::Commitment;
 use sha2::{Digest, Sha512};
 use std::ops::Rem;
 
+// A wrapper of `hash_to_tj_repr` that outputs `Fr`s instead of `FrRepr`s.
+/// * input: a list of k commitments
+/// * input: a list of k * x indices, for which we need to generate t_j
+/// * input: Value: a list of k * x messages that is commited to
+/// * output: a list of k field elements
+pub(crate) fn hash_to_tj_fr<Blob: AsRef<[u8]>>(
+    commits: &[Commitment],
+    set: &[Vec<usize>],
+    value_sub_vector: &[Vec<Blob>],
+    n: usize,
+) -> Result<Vec<Fr>, String> {
+    let frrepr_vec = hash_to_tj_repr(commits, set, value_sub_vector, n)?;
+    let mut fr_vec: Vec<Fr> = vec![];
+    for frrepr in &frrepr_vec {
+        let fr = match Fr::from_repr(*frrepr) {
+            Ok(p) => p,
+            // the hash_to_ti_repr should already produce valid Fr elements
+            // something is wrong if this errors
+            Err(e) => panic!(e),
+        };
+        fr_vec.push(fr);
+    }
+    Ok(fr_vec)
+}
+
 /// Hash a two dim array of bytes into non-zero scalars. An internal function for aggregation
 /// and batch verification.
 /// * input: a list of k commitments
 /// * input: a list of k * x indices, for which we need to generate t_j
 /// * input: Value: a list of k * x messages that is commited to
 /// * output: a list of k field elements
-pub(crate) fn hash_to_tj<Blob: AsRef<[u8]>>(
+pub(crate) fn hash_to_tj_repr<Blob: AsRef<[u8]>>(
     commits: &[Commitment],
     set: &[Vec<usize>],
     value_sub_vector: &[Vec<Blob>],
