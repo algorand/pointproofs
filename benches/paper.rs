@@ -110,8 +110,8 @@ fn single_commit(c: &mut Criterion) {
         });
     });
 
-    let num_proof_array = [8usize,16,32,64,128];
-    for e in num_proof_array.iter(){
+    let num_proof_array = [2, 4, 8, 16, 32, 64, 128, 256, 512];
+    for e in num_proof_array.iter() {
         let mut set2: Vec<usize> = Vec::with_capacity(8);
         for i in 0..*e {
             set2.push(i);
@@ -121,10 +121,40 @@ fn single_commit(c: &mut Criterion) {
         let pp_clone = pp.clone();
         let values_clone = values.clone();
         let com_clone = com.clone();
+        let set2_clone = set2.clone();
         let bench_str = format!("single_commit_n_{}_proof_{}_batch_new_aggregated", n, *e);
         bench = bench.with_function(bench_str, move |b| {
             b.iter(|| {
-                Proof::batch_new_aggregated(&pp_clone, &com_clone, &values_clone, &set2).unwrap()
+                Proof::batch_new_aggregated(&pp_clone, &com_clone, &values_clone, &set2_clone)
+                    .unwrap()
+            });
+        });
+
+        let pp_clone = pp.clone();
+        let vp_clone = vp.clone();
+        let values_clone = values.clone();
+        let com_clone = com.clone();
+        let set2_clone = set2.clone();
+        let mut value_subset = vec![];
+        for e in set2.iter() {
+            value_subset.push(values[*e].clone());
+        }
+
+        let agg_proof =
+            Proof::batch_new_aggregated(&pp_clone, &com_clone, &values_clone, &set2_clone).unwrap();
+        let mut proof_str: Vec<u8> = vec![];
+        agg_proof.serialize(&mut proof_str, true).unwrap();
+        let bench_str = format!("single_commit_n_{}_proof_{}_batch_verify", n, *e);
+        bench = bench.with_function(bench_str, move |b| {
+            b.iter(|| {
+                let proof_rec =
+                    Proof::deserialize::<&[u8]>(&mut proof_str[..].as_ref(), true).unwrap();
+                proof_rec.same_commit_batch_verify(
+                    &vp_clone,
+                    &com_clone,
+                    &set2_clone,
+                    &value_subset,
+                )
             });
         });
     }
