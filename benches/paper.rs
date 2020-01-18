@@ -333,6 +333,12 @@ fn aggregate2(c: &mut Criterion) {
         }
         values.push(tmp_value);
     }
+    let mut com_list: Vec<Commitment> = vec![];
+    for i in 0..num_com {
+        // commit
+        let tmp_com = Commitment::new(&pp, &values[i]).unwrap();
+        com_list.push(tmp_com);
+    }
 
     for e in proof_array.iter() {
         let num_proof = *e;
@@ -350,18 +356,14 @@ fn aggregate2(c: &mut Criterion) {
             commit_value.push(tmp_value_sub_vector);
         }
 
-        let mut com_list: Vec<Commitment> = vec![];
         let mut proof_list: Vec<Proof> = vec![];
 
         for i in 0..num_com {
-            // commit
-            let tmp_com = Commitment::new(&pp, &values[i]).unwrap();
-
             // proofs
             let tmp_proof =
-                Proof::batch_new_aggregated(&pp, &tmp_com, &values[i], &commit_index[i]).unwrap();
+                Proof::batch_new_aggregated(&pp, &com_list[i], &values[i], &commit_index[i])
+                    .unwrap();
 
-            com_list.push(tmp_com);
             proof_list.push(tmp_proof);
         }
         let agg_proof = Proof::cross_commit_aggregate_partial(
