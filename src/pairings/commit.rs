@@ -151,8 +151,8 @@ impl Commitment {
 
         // form the basis for `sum_of_products`
         let mut basis: Vec<VeccomG1Affine> = vec![];
-        for i in 0..value_before.len() {
-            basis.push(prover_params.generators[changed_index[i]]);
+        for e in changed_index.iter().take(value_before.len()) {
+            basis.push(prover_params.generators[*e]);
         }
         let mut pre: Vec<VeccomG1Affine> = vec![];
         // compute delta = \prod g[index]^multiplier
@@ -160,10 +160,11 @@ impl Commitment {
             // to use sum_of_products with pre_computation,
             // we need to form the right basis
             if prover_params.precomp.len() == 256 * prover_params.generators.len() {
-                for i in 0..value_before.len() {
+                for e in changed_index.iter().take(value_before.len()) {
                     pre = [
                         pre,
-                        prover_params.precomp[changed_index[i] * 256..(changed_index[i] + 1) * 256]
+                        prover_params.precomp
+                            [changed_index[*e] * 256..(changed_index[*e] + 1) * 256]
                             .to_vec(),
                     ]
                     .concat();
