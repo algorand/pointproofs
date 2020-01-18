@@ -10,7 +10,7 @@ use pairing::serdes::SerDes;
 use std::time::Duration;
 use veccom::pairings::*;
 
-criterion_group!(paper, commit_update, aggregate2); //, single_commit, aggregate,);
+criterion_group!(paper, commit_update, aggregate2, single_commit, aggregate,);
 criterion_main!(paper);
 
 fn single_commit(c: &mut Criterion) {
@@ -228,7 +228,7 @@ fn commit_update(c: &mut Criterion) {
         index.push(i);
     }
     // generate parameter for dimension n
-    let (pp, vp) = param::paramgen_from_seed(
+    let (pp, _vp) = param::paramgen_from_seed(
         "This is a very very long seed for vector commitment benchmarking",
         0,
         n,
@@ -324,7 +324,7 @@ fn aggregate2(c: &mut Criterion) {
     .unwrap();
     println!("parameters generated");
 
-    let num_com = 10;
+    let num_com = 1000;
     let mut values: Vec<Vec<String>> = vec![];
     for i in 0..num_com {
         let mut tmp_value: Vec<String> = vec![];
