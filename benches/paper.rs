@@ -10,7 +10,7 @@ use pairing::serdes::SerDes;
 use std::time::Duration;
 use veccom::pairings::*;
 
-criterion_group!(paper, single_commit, aggregate,);
+criterion_group!(paper, commit_update, aggregate2); //, single_commit, aggregate,);
 criterion_main!(paper);
 
 fn single_commit(c: &mut Criterion) {
@@ -206,8 +206,206 @@ fn single_commit(c: &mut Criterion) {
     c.bench("paper", bench);
 }
 
+fn commit_update(c: &mut Criterion) {
+    let n = 1024;
+
+    let mut values: Vec<String> = Vec::with_capacity(n);
+    for i in 0..n {
+        values.push(format!("this is message number {}", i));
+    }
+    let mut old_values: Vec<String> = Vec::with_capacity(8);
+    for i in 0..8 {
+        old_values.push(format!("this is message number {}", i));
+    }
+
+    let mut new_values: Vec<String> = Vec::with_capacity(8);
+    for i in 0..8 {
+        new_values.push(format!("this is new message number {}", i));
+    }
+
+    let mut index: Vec<usize> = Vec::with_capacity(8);
+    for i in 0..8 {
+        index.push(i);
+    }
+    // generate parameter for dimension n
+    let (pp, vp) = param::paramgen_from_seed(
+        "This is a very very long seed for vector commitment benchmarking",
+        0,
+        n,
+    )
+    .unwrap();
+    let mut pp256 = pp.clone();
+    pp256.precomp_256();
+    println!("parameters generated");
+
+    let com = Commitment::new(&pp, &values).unwrap();
+    let mut proofs: Vec<Proof> = vec![];
+    let mut set: Vec<usize> = vec![];
+    let mut value_sub_vector: Vec<String> = vec![];
+    for i in 0..8 {
+        let tmp = Proof::new(&pp, &values, i).unwrap();
+        proofs.push(tmp);
+        set.push(i);
+        value_sub_vector.push(values[i].clone());
+    }
+    println!("pre_generation finished");
+
+    // commit update
+    let mut com_clone = com.clone();
+    let pp_clone = pp.clone();
+    let ov = old_values[0].clone();
+    let nv = new_values[0].clone();
+    let bench_str = format!("single_commit_n_{}_commit_update", n);
+    let bench = Benchmark::new(bench_str, move |b| {
+        b.iter(|| {
+            com_clone.update(&pp_clone, 0, &ov, &nv).unwrap();
+        });
+    });
+    // commit update
+    let mut com_clone = com.clone();
+    let pp256_clone = pp256.clone();
+    let ov = old_values[0].clone();
+    let nv = new_values[0].clone();
+    let bench_str = format!("single_commit_n_{}_commit_update_with_pre256", n);
+    let bench = bench.with_function(bench_str, move |b| {
+        b.iter(|| {
+            com_clone.update(&pp256_clone, 0, &ov, &nv).unwrap();
+        });
+    });
+
+    // commit batch update
+    let mut com_clone = com.clone();
+    let pp_clone = pp.clone();
+    let index_clone = index.clone();
+    let old_values_clone = old_values.clone();
+    let new_values_clone = new_values.clone();
+    let bench_str = format!("single_commit_n_{}_commit_batch_update", n);
+    let bench = bench.with_function(bench_str, move |b| {
+        b.iter(|| {
+            com_clone
+                .batch_update(
+                    &pp_clone,
+                    &index_clone,
+                    &old_values_clone,
+                    &new_values_clone,
+                )
+                .unwrap();
+        });
+    });
+
+    // commit batch update
+    let mut com_clone = com.clone();
+    let pp256_clone = pp256.clone();
+    let bench_str = format!("single_commit_n_{}_commit_batch_update_with_pre256", n);
+    let bench = bench.with_function(bench_str, move |b| {
+        b.iter(|| {
+            com_clone
+                .batch_update(&pp256_clone, &index, &old_values, &new_values)
+                .unwrap();
+        });
+    });
+
+    let bench = bench.warm_up_time(Duration::from_millis(1000));
+    let bench = bench.measurement_time(Duration::from_millis(5000));
+    let bench = bench.sample_size(10);
+    c.bench("paper", bench);
+}
+
+fn aggregate2(c: &mut Criterion) {
+    let dim = 1024;
+    let proof_array = [2, 4, 8, 16, 32, 64, 128, 256, 512];
+
+    // generate parameter for dimension n
+    let (pp, vp) = param::paramgen_from_seed(
+        "This is a very very long seed for vector commitment benchmarking",
+        0,
+        dim,
+    )
+    .unwrap();
+    println!("parameters generated");
+
+    let num_com = 10;
+    let mut values: Vec<Vec<String>> = vec![];
+    for i in 0..num_com {
+        let mut tmp_value: Vec<String> = vec![];
+        for j in 0..dim {
+            tmp_value.push(format!("this is message #{} for commit #{}", j, i));
+        }
+        values.push(tmp_value);
+    }
+
+    for e in proof_array.iter() {
+        let num_proof = *e;
+        let mut commit_index: Vec<Vec<usize>> = vec![];
+        let mut commit_value: Vec<Vec<String>> = vec![];
+
+        for i in 0..num_com {
+            let mut tmp_index: Vec<usize> = vec![];
+            let mut tmp_value_sub_vector: Vec<String> = vec![];
+            for j in 0..num_proof {
+                tmp_index.push(j);
+                tmp_value_sub_vector.push(format!("this is message #{} for commit #{}", j, i));
+            }
+            commit_index.push(vec![0]);
+            commit_value.push(vec![tmp_value_sub_vector[0].clone()]);
+        }
+
+        let mut com_list: Vec<Commitment> = vec![];
+        let mut proof_list: Vec<Proof> = vec![];
+
+        for i in 0..num_com {
+            // commit
+            let tmp_com = Commitment::new(&pp, &values[i]).unwrap();
+
+            // proofs
+            let tmp_proof =
+                Proof::batch_new_aggregated(&pp, &tmp_com, &values[i], &commit_index[i]).unwrap();
+
+            com_list.push(tmp_com);
+            proof_list.push(tmp_proof);
+        }
+        let agg_proof = Proof::cross_commit_aggregate_partial(
+            &com_list,
+            &proof_list,
+            &commit_index,
+            &commit_value,
+            dim,
+        )
+        .unwrap();
+        println!("Pre-generation finished");
+
+        let mut agg_proof_bytes: Vec<u8> = vec![];
+        agg_proof.serialize(&mut agg_proof_bytes, true).unwrap();
+
+        let vp_clone = vp.clone();
+        let com_list_clone = com_list.clone();
+        let commit_index_clone = commit_index.clone();
+        let commit_value_clone = commit_value.clone();
+        let bench_str = format!(
+            "batch_verify: n={}, commit={}, proof_per_commit={}",
+            dim, num_com, num_proof
+        );
+        let bench = Benchmark::new(bench_str, move |b| {
+            b.iter(|| {
+                let p = Proof::deserialize::<&[u8]>(&mut agg_proof_bytes.as_ref(), true).unwrap();
+                assert!(p.cross_commit_batch_verify(
+                    &vp_clone,
+                    &com_list_clone,
+                    &commit_index_clone,
+                    &commit_value_clone,
+                ))
+            });
+        });
+
+        let bench = bench.warm_up_time(Duration::from_millis(1000));
+        let bench = bench.measurement_time(Duration::from_millis(5000));
+        let bench = bench.sample_size(10);
+        c.bench("paper", bench);
+    }
+}
+
 fn aggregate(c: &mut Criterion) {
-    let dim = 1000;
+    let dim = 1024;
     let num_com_array = [10, 1000, 2000, 3000, 4000, 5000];
 
     // generate parameter for dimension n
