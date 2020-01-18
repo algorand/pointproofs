@@ -1,3 +1,4 @@
+use pairing::CurveProjective;
 use pairings::param::paramgen_from_seed;
 use pairings::*;
 
@@ -52,6 +53,8 @@ fn test_commit_batch_update() {
     let n = 8usize;
     let (prover_params, verifier_params) =
         paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, n).unwrap();
+    let mut pp256 = prover_params.clone();
+    pp256.precomp_256();
 
     let mut init_values = Vec::with_capacity(n);
     for i in 0..n {
@@ -92,8 +95,14 @@ fn test_commit_batch_update() {
     let value_after = [new_values[0], new_values[1], new_values[2], new_values[3]];
 
     // batch and serial updates
+    let mut com256 = com.clone();
     com.batch_update(&prover_params, &indices, &value_before, &value_after)
         .unwrap();
+    com256
+        .batch_update(&pp256, &indices, &value_before, &value_after)
+        .unwrap();
+    assert_eq!(com.commit.into_affine(), com256.commit.into_affine());
+
     for e in indices.iter() {
         com2.update(&prover_params, *e, value_before[*e], value_after[*e])
             .unwrap();

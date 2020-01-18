@@ -138,21 +138,43 @@ impl Commitment {
             return Err(ERR_INDEX_VALUE_NOT_MATCH.to_owned());
         }
 
-        // get the hashes and the bases
+        // get the scalars from the hashes
         let mut multiplier_set: Vec<FrRepr> = vec![];
-        let mut basis: Vec<VeccomG1Affine> = vec![];
         for i in 0..value_before.len() {
             // multiplier = hash(new_value) - hash(old_value)
             let mut multiplier = hash_to_field_veccom(&value_before[i]);
             multiplier.negate();
             multiplier.add_assign(&hash_to_field_veccom(&value_after[i]));
             multiplier_set.push(multiplier.into_repr());
+        }
+        let scalars_u64: Vec<&[u64; 4]> = multiplier_set.iter().map(|s| &s.0).collect();
+
+        // form the basis for `sum_of_products`
+        let mut basis: Vec<VeccomG1Affine> = vec![];
+        for i in 0..value_before.len() {
             basis.push(prover_params.generators[changed_index[i]]);
         }
-
+        let mut pre: Vec<VeccomG1Affine> = vec![];
+        // compute delta = \prod g[index]^multiplier
+        let delta = {
+            // to use sum_of_products with pre_computation,
+            // we need to form the right basis
+            if prover_params.precomp.len() == 256 * prover_params.generators.len() {
+                for i in 0..value_before.len() {
+                    pre = [
+                        pre,
+                        prover_params.precomp[changed_index[i] * 256..(changed_index[i] + 1) * 256]
+                            .to_vec(),
+                    ]
+                    .concat();
+                }
+                VeccomG1Affine::sum_of_products_precomp_256(&basis, &scalars_u64, &pre)
+            } else {
+                // without pre_computation
+                VeccomG1Affine::sum_of_products(&basis[..], &scalars_u64)
+            }
+        };
         // new_commit = old_commit * \prod g[index]^multiplier
-        let scalars_u64: Vec<&[u64; 4]> = multiplier_set.iter().map(|s| &s.0).collect();
-        let delta = VeccomG1Affine::sum_of_products(&basis[..], &scalars_u64);
         self.commit.add_assign(&delta);
         Ok(())
     }
