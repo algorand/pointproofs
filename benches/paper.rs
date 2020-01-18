@@ -347,7 +347,7 @@ fn aggregate2(c: &mut Criterion) {
                 tmp_value_sub_vector.push(format!("this is message #{} for commit #{}", j, i));
             }
             commit_index.push(tmp_index);
-            commit_value.push(vec![tmp_value_sub_vector[0].clone()]);
+            commit_value.push(tmp_value_sub_vector);
         }
 
         let mut com_list: Vec<Commitment> = vec![];
