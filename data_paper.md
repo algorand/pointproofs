@@ -60,8 +60,8 @@
 |proof_per_commit =  2 | 2.97 s |
 |proof_per_commit =  4 | 4.09 s |
 |proof_per_commit =  8 | 5.82 s |
-|proof_per_commit = 16 |  s |
-|proof_per_commit = 32 |  s |
+|proof_per_commit = 16 | 8.79 s |
+|proof_per_commit = 32 | 13.68 s |
 |proof_per_commit = 64 |  s |
 |proof_per_commit =128 |  s |
 |proof_per_commit =256 |  s |
