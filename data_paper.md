@@ -62,10 +62,10 @@
 |proof_per_commit =  8 | 5.82 s |
 |proof_per_commit = 16 | 8.79 s |
 |proof_per_commit = 32 | 13.68 s |
-|proof_per_commit = 64 |  s |
-|proof_per_commit =128 |  s |
-|proof_per_commit =256 |  s |
-|proof_per_commit =512 |  s |
+|proof_per_commit = 64 | 21.70 s |
+|proof_per_commit =128 | 35.69 s |
+|proof_per_commit =256 | 60.25 s |
+|proof_per_commit =512 | 102.67 s |
 
 
 ## Aggregation
