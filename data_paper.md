@@ -18,15 +18,15 @@
 |---:|---:|
 | proof_new | 54.41 ms |
 | 8_new_proof_without_aggregation | 390.62 ms |
-| 2_new_proof_with_aggregation | 90.88 ms |
-| 4_new_proof_with_aggregation | 158.29 ms |
-| 8_new_proof_with_aggregation | 280.09 ms |
-| 16_new_proof_with_aggregation | 509.03 ms |
-| 32_new_proof_with_aggregation | 946.87 ms |
-| 64_new_proof_with_aggregation | 1.77 s |
-| 128_new_proof_with_aggregation | 3.34 s |
-| 256_new_proof_with_aggregation | 6.97 s |
-| 512_new_proof_with_aggregation | 19.75 s |
+| 2_new_proof_with_aggregation | 55.31 ms |
+| 4_new_proof_with_aggregation | 55.43 ms |
+| 8_new_proof_with_aggregation | 55.30 ms |
+| 16_new_proof_with_aggregation | 56.21 ms |
+| 32_new_proof_with_aggregation | 58.23 ms |
+| 64_new_proof_with_aggregation | 61.55 ms |
+| 128_new_proof_with_aggregation | 67.37 ms |
+| 256_new_proof_with_aggregation | 80.29 ms |
+| 512_new_proof_with_aggregation | 104.65 ms |
 
 ## Commit batch update
 |operation | cost|
