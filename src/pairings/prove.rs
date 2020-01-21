@@ -164,7 +164,6 @@ impl Proof {
         // get the list of scalars for each proof
         let ti = hash_to_ti_fr(commit, indices, &value_sub_vector, prover_params.n)?;
 
-
         // form the final scalars, which are t[i]*m[n - indices[i] + j] for each index
         let mut final_scalars: Vec<Fr> = vec![Fr::zero(); 2 * prover_params.n];
         for i in 0..indices.len() {
@@ -177,11 +176,11 @@ impl Proof {
 
         // remove the generators where the scalars are 0s, to form the final basis
         // also convert Fr-s to FrRepr-s to [u64;4]-s
-        let mut final_basis = vec![];
+        let mut final_basis: Vec<VeccomG1Affine> = vec![];
         let mut final_scalars_repr: Vec<FrRepr> = vec![];
-        for i in 0..final_scalars.len() {
-            if !final_scalars[i].is_zero() {
-                final_scalars_repr.push(final_scalars[i].into_repr());
+        for (i, e) in final_scalars.iter().enumerate() {
+            if !e.is_zero() {
+                final_scalars_repr.push(e.into_repr());
                 final_basis.push(prover_params.generators[i]);
             }
         }

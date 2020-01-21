@@ -68,7 +68,7 @@ fn test_batch_new_proof() {
         let s = format!("this is message number {}", i);
         values.push(s);
     }
-    let indices = [1usize, 3, 5];
+    let indices = [5usize, 3, 1];
     let mut value_sub_vector: Vec<String> = vec![];
     for e in indices.iter() {
         value_sub_vector.push(values[*e].clone());
@@ -84,9 +84,9 @@ fn test_batch_new_proof() {
     }
     let proof_list = Proof::batch_new(&prover_params, &values, &indices).unwrap();
 
-    assert_eq!(proof_list[0], proofs[1]);
+    assert_eq!(proof_list[0], proofs[5]);
     assert_eq!(proof_list[1], proofs[3]);
-    assert_eq!(proof_list[2], proofs[5]);
+    assert_eq!(proof_list[2], proofs[1]);
 
     let agg_proof =
         Proof::same_commit_aggregate(&com, &proof_list, &indices, &value_sub_vector, n).unwrap();
