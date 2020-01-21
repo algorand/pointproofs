@@ -17,7 +17,7 @@
 |operation | cost|
 |---:|---:|
 | proof_new | 54.41 ms |
-| 8_new_proof_without_aggregation | 390.62 ms |
+| 8_new_proof_without_aggregation | 55.71 ms |
 | 2_new_proof_with_aggregation | 55.31 ms |
 | 4_new_proof_with_aggregation | 55.43 ms |
 | 8_new_proof_with_aggregation | 55.30 ms |
