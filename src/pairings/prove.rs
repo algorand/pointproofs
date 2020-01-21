@@ -164,26 +164,30 @@ impl Proof {
         // get the list of scalars for each proof
         let ti = hash_to_ti_fr(commit, indices, &value_sub_vector, prover_params.n)?;
 
-        // compute the final scalars, a list of __indices.len() * n__ number of scarlar
-        let mut final_scalars: Vec<FrRepr> = vec![];
-        for e in &ti {
-            for f in &scalars_fr {
-                let mut tmp = *e;
-                tmp.mul_assign(f);
-                final_scalars.push(tmp.into_repr());
+
+        // form the final scalars, which are t[i]*m[n - indices[i] + j] for each index
+        let mut final_scalars: Vec<Fr> = vec![Fr::zero(); 2 * prover_params.n];
+        for i in 0..indices.len() {
+            for j in 0..prover_params.n {
+                let mut tmp = ti[i];
+                tmp.mul_assign(&scalars_fr[j]);
+                final_scalars[prover_params.n - indices[i] + j].add_assign(&tmp);
             }
         }
-        let scalars_u64: Vec<&[u64; 4]> = final_scalars.iter().map(|s| &s.0).collect();
 
-        let mut final_basis: Vec<VeccomG1Affine> = vec![];
-        for e in indices {
-            final_basis = [
-                final_basis.as_slice(),
-                &prover_params.generators[prover_params.n - *e..2 * prover_params.n - *e],
-            ]
-            .concat();
+        // remove the generators where the scalars are 0s, to form the final basis
+        // also convert Fr-s to FrRepr-s to [u64;4]-s
+        let mut final_basis = vec![];
+        let mut final_scalars_repr: Vec<FrRepr> = vec![];
+        for i in 0..final_scalars.len() {
+            if !final_scalars[i].is_zero() {
+                final_scalars_repr.push(final_scalars[i].into_repr());
+                final_basis.push(prover_params.generators[i]);
+            }
         }
+        let scalars_u64: Vec<&[u64; 4]> = final_scalars_repr.iter().map(|s| &s.0).collect();
 
+        // compute the final aggregated proof
         let agg_proof = VeccomG1Affine::sum_of_products(&final_basis, &scalars_u64);
 
         Ok(Proof {
