@@ -89,6 +89,10 @@ impl Proof {
             }
         }
 
+        if !misc::has_unique_elements(indices) {
+            return Err(ERR_DUPLICATED_INDEX.to_owned());
+        }
+
         // check param
         if values.len() != prover_params.n {
             return Err(ERR_INVALID_INDEX.to_owned());
@@ -146,6 +150,10 @@ impl Proof {
             if *e >= prover_params.n {
                 return Err(ERR_INVALID_INDEX.to_owned());
             }
+        }
+
+        if !misc::has_unique_elements(indices) {
+            return Err(ERR_DUPLICATED_INDEX.to_owned());
         }
 
         // check param
@@ -358,6 +366,10 @@ impl Proof {
             return Err(ERR_INDEX_PROOF_NOT_MATCH.to_owned());
         }
 
+        if !misc::has_unique_elements(set) {
+            return Err(ERR_DUPLICATED_INDEX.to_owned());
+        }
+
         // get the list of scalas
         let ti = hash_to_ti_repr(commit, set, value_sub_vector, n)?;
         let scalars_u64: Vec<&[u64; 4]> = ti.iter().map(|s| &s.0).collect();
@@ -407,6 +419,16 @@ impl Proof {
         for e in proofs.iter() {
             if e.ciphersuite != ciphersuite {
                 return Err(ERR_CIPHERSUITE.to_owned());
+            }
+        }
+        for e in set.iter() {
+            if !misc::has_unique_elements(e) {
+                return Err(ERR_DUPLICATED_INDEX.to_owned());
+            }
+            for ee in e.iter() {
+                if *ee >= n {
+                    return Err(ERR_INVALID_INDEX.to_owned());
+                }
             }
         }
 
@@ -487,6 +509,16 @@ impl Proof {
             for ee in e.iter() {
                 if ee.ciphersuite != ciphersuite {
                     return Err(ERR_CIPHERSUITE.to_owned());
+                }
+            }
+        }
+        for e in set.iter() {
+            if !misc::has_unique_elements(e) {
+                return Err(ERR_DUPLICATED_INDEX.to_owned());
+            }
+            for ee in e.iter() {
+                if *ee >= n {
+                    return Err(ERR_INVALID_INDEX.to_owned());
                 }
             }
         }
@@ -607,6 +639,9 @@ impl Proof {
                 return false;
             }
         }
+        if !misc::has_unique_elements(set) {
+            return false;
+        }
 
         // if the length == 1, call normal verification method
         if set.len() == 1 {
@@ -703,6 +738,11 @@ impl Proof {
                 || set[j].len() > verifier_params.n
             {
                 // length does not match
+                return false;
+            }
+        }
+        for e in set.iter() {
+            if !misc::has_unique_elements(e) {
                 return false;
             }
         }

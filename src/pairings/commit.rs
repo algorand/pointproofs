@@ -137,6 +137,9 @@ impl Commitment {
         if changed_index.len() != value_before.len() || changed_index.len() != value_after.len() {
             return Err(ERR_INDEX_VALUE_NOT_MATCH.to_owned());
         }
+        if !misc::has_unique_elements(changed_index) {
+            return Err(ERR_DUPLICATED_INDEX.to_owned());
+        }
 
         // get the scalars from the hashes
         let mut multiplier_set: Vec<FrRepr> = vec![];
