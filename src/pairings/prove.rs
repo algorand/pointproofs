@@ -134,6 +134,9 @@ impl Proof {
         if !check_ciphersuite(prover_params.ciphersuite) {
             return Err(ERR_CIPHERSUITE.to_owned());
         }
+        if prover_params.ciphersuite != commit.ciphersuite {
+            return Err(ERR_CIPHERSUITE.to_owned());
+        }
 
         // check index is valid
         if indices.len() >= prover_params.n {

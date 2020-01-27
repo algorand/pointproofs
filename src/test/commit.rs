@@ -49,6 +49,68 @@ fn negative_test_commit() {
 }
 
 #[test]
+fn negative_test_commit_batch_update() {
+    let n = 8usize;
+    let (prover_params, _verifier_params) =
+        paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, n).unwrap();
+    let mut pp256 = prover_params.clone();
+    pp256.precomp_256();
+
+    let mut init_values = Vec::with_capacity(n);
+    for i in 0..n {
+        let s = format!("this is message number {}", i);
+        init_values.push(s.into_bytes());
+    }
+
+    let mut values: Vec<&[u8]> = Vec::with_capacity(n);
+    for e in init_values.iter().take(n) {
+        values.push(&e);
+    }
+
+    let mut com = Commitment::new(&prover_params, &values).unwrap();
+    let mut com2 = com.clone();
+    com2.ciphersuite = 1;
+
+    // update values
+    let mut new_init_values = Vec::with_capacity(n);
+    for i in 0..n {
+        let s = format!("new string {}", i);
+        new_init_values.push(s.into_bytes());
+    }
+
+    let mut new_values: Vec<&[u8]> = Vec::with_capacity(n);
+    for e in new_init_values.iter().take(n) {
+        new_values.push(&e);
+    }
+
+    // indices
+    let indices = [0, 1, 2, 3];
+    let value_before = [values[0], values[1], values[2], values[3]];
+    let value_after = [new_values[0], new_values[1], new_values[2], new_values[3]];
+
+    // batch and serial updates
+    assert!(com2
+        .batch_update(&prover_params, &indices, &value_before, &value_after)
+        .is_err());
+
+    let mut pp2 = prover_params.clone();
+    pp2.ciphersuite = 1;
+    assert!(com2
+        .batch_update(&pp2, &indices, &value_before, &value_after)
+        .is_err());
+
+    let indices2 = [0, 1, 2, 9];
+    assert!(com
+        .batch_update(&prover_params, &indices2, &value_before, &value_after)
+        .is_err());
+
+    let indices2 = [0, 1, 2];
+    assert!(com
+        .batch_update(&prover_params, &indices2, &value_before, &value_after)
+        .is_err());
+}
+
+#[test]
 fn test_commit_batch_update() {
     let n = 8usize;
     let (prover_params, verifier_params) =

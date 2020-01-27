@@ -3,6 +3,43 @@ use pairings::param::paramgen_from_seed;
 use pairings::*;
 
 #[test]
+fn negative_test_batch_new_proof() {
+    let n = 8usize;
+    let (prover_params, _verifier_params) =
+        paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, n).unwrap();
+
+    let mut pp2 = prover_params.clone();
+    pp2.ciphersuite = 1;
+    let mut pp3 = prover_params.clone();
+    pp3.n = 2;
+
+    let mut values: Vec<String> = vec![];
+    for i in 0..n {
+        let s = format!("this is message number {}", i);
+        values.push(s);
+    }
+    let indices = [5usize, 3, 1];
+    let indices2 = [1; 9];
+    let indices3 = [1, 8];
+    let mut value_sub_vector: Vec<String> = vec![];
+    for e in indices.iter() {
+        value_sub_vector.push(values[*e].clone());
+    }
+
+    let com = Commitment::new(&prover_params, &values).unwrap();
+
+    assert!(Proof::batch_new(&pp2, &values, &indices).is_err());
+    assert!(Proof::batch_new(&pp3, &values, &indices).is_err());
+    assert!(Proof::batch_new(&prover_params, &values, &indices2).is_err());
+    assert!(Proof::batch_new(&prover_params, &values, &indices3).is_err());
+
+    assert!(Proof::batch_new_aggregated(&pp2, &com, &values, &indices).is_err());
+    assert!(Proof::batch_new_aggregated(&pp3, &com, &values, &indices).is_err());
+    assert!(Proof::batch_new_aggregated(&prover_params, &com, &values, &indices2).is_err());
+    assert!(Proof::batch_new_aggregated(&prover_params, &com, &values, &indices3).is_err());
+}
+
+#[test]
 fn negative_test_proof() {
     let n = 8usize;
     let (prover_params, verifier_params) =
