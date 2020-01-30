@@ -824,7 +824,7 @@ impl Proof {
                 t.mul_assign(&tmp3);
                 scalars_u64.push(t.into_repr().0);
             }
-            let scalars_u64_ref: Vec<&[u64; 4]> = scalars_u64.iter().map(|x| x).collect();
+            let scalars_u64_ref: Vec<&[u64; 4]> = scalars_u64.iter().collect();
 
             let param_subset_sum = VeccomG2Affine::sum_of_products(&bases, &scalars_u64_ref);
             g2_vec.push(param_subset_sum.into_affine());
