@@ -13,6 +13,15 @@ Cargo.lock
 **/*.rs.bk
 
 # pre-generated parameters for testing and benchmarking
+data/
+benches/pre-gen-com-and-proof/target/
+benches/pre-gen-com-and-proof/tmp/
+benches/pre-gen-param/target/
+*.param
+*.pp
+*.vp
+*.proof
+
 
 # grcov data
 html
