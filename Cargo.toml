@@ -34,6 +34,7 @@
 [dev-dependencies]
   bencher = "0.1.5"
   criterion = "0.2.11"
+  rand = "0.4"
 
 [[bench]]
   name = "paper"

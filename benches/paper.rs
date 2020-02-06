@@ -2,16 +2,126 @@
 extern crate criterion;
 extern crate ff;
 extern crate pairing_plus as pairing;
+extern crate rand;
 extern crate veccom;
 
 use criterion::Benchmark;
 use criterion::Criterion;
 use pairing::serdes::SerDes;
+use rand::Rng;
 use std::time::Duration;
 use veccom::pairings::*;
 
-criterion_group!(paper, commit_update, aggregate2, single_commit, aggregate,);
+criterion_group!(
+    paper,
+    randomized_batch_new_proof,
+    commit_update,
+    aggregate2,
+    single_commit,
+    aggregate,
+);
 criterion_main!(paper);
+
+fn random_index(n: usize, hamming: usize) -> Vec<usize> {
+    let mut rng = rand::thread_rng();
+    let mut indices = vec![0u8; n];
+    let mut ctr = 0;
+    while ctr < hamming {
+        let try = (rng.gen::<u16>() as usize) % n;
+        if indices[try] == 0 {
+            ctr += 1;
+            indices[try] = 1;
+        }
+    }
+    let mut res: Vec<usize> = vec![];
+    for i in 0..n {
+        if indices[i] == 1 {
+            res.push(i);
+        }
+    }
+    res
+}
+
+fn randomized_batch_new_proof(c: &mut Criterion) {
+    let n = 1024;
+
+    let mut values: Vec<String> = Vec::with_capacity(n);
+    for i in 0..n {
+        values.push(format!("this is message number {}", i));
+    }
+    let mut old_values: Vec<String> = Vec::with_capacity(8);
+    for i in 0..8 {
+        old_values.push(format!("this is message number {}", i));
+    }
+
+    let mut new_values: Vec<String> = Vec::with_capacity(8);
+    for i in 0..8 {
+        new_values.push(format!("this is new message number {}", i));
+    }
+
+    let mut index: Vec<usize> = Vec::with_capacity(8);
+    for i in 0..8 {
+        index.push(i);
+    }
+    // generate parameter for dimension n
+    let (pp, _vp) = param::paramgen_from_seed(
+        "This is a very very long seed for vector commitment benchmarking",
+        0,
+        n,
+    )
+    .unwrap();
+    println!("parameters generated");
+
+    let com = Commitment::new(&pp, &values).unwrap();
+    let mut proofs: Vec<Proof> = vec![];
+    let mut set: Vec<usize> = vec![];
+    let mut value_sub_vector: Vec<String> = vec![];
+    for i in 0..8 {
+        let tmp = Proof::new(&pp, &values, i).unwrap();
+        proofs.push(tmp);
+        set.push(i);
+        value_sub_vector.push(values[i].clone());
+    }
+    println!("pre_generation finished");
+
+    // batch proof generation with aggregation
+    let pp_clone = pp.clone();
+    let values_clone = values.clone();
+    let set_clone = set.clone();
+    let com_clone = com.clone();
+    let bench_str = format!("single_commit_n_{}_proof_batch_new_aggregated", n);
+    let mut bench = Benchmark::new(bench_str, move |b| {
+        b.iter(|| {
+            Proof::batch_new_aggregated(&pp_clone, &com_clone, &values_clone, &set_clone).unwrap()
+        });
+    });
+
+    let num_proof_array = [2, 4, 8, 16, 32, 64, 128, 256, 512];
+    for e in num_proof_array.iter() {
+        let m = *e;
+
+        // batch proof generation with aggregation
+        let pp_clone = pp.clone();
+        let values_clone = values.clone();
+        let com_clone = com.clone();
+        // let set2_clone = set2.clone();
+        let bench_str = format!(
+            "single_commit_n_{}_proof_{}_batch_new_aggregated_rand_indices",
+            n, m
+        );
+        bench = bench.with_function(bench_str, move |b| {
+            b.iter(|| {
+                let set2 = random_index(n, m);
+                Proof::batch_new_aggregated(&pp_clone, &com_clone, &values_clone, &set2).unwrap()
+            });
+        });
+    }
+
+    let bench = bench.warm_up_time(Duration::from_millis(1000));
+    let bench = bench.measurement_time(Duration::from_millis(5000));
+    let bench = bench.sample_size(100);
+    c.bench("paper", bench);
+}
 
 fn single_commit(c: &mut Criterion) {
     let n = 1024;
