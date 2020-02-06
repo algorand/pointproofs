@@ -12,7 +12,8 @@
 | single commit 8 proof aggregate | 1.55 ms |
 | verification (with proof deserialize) |  4.69 ms |
 
-## Batch proof generation
+## Batch proof generation, sequential
+Best case scenario, the input indices are sequential
 
 |operation | cost|
 |---:|---:|
@@ -27,6 +28,22 @@
 | 128_new_proof_with_aggregation | 67.37 ms |
 | 256_new_proof_with_aggregation | 80.29 ms |
 | 512_new_proof_with_aggregation | 104.65 ms |
+
+## Batch proof generation, randomized
+Average case scenario, the input indices are randomized
+
+|operation | cost|
+|---:|---:|
+| proof_new | 54.41 ms |
+| 2_new_proof_with_aggregation | 67.39 ms |
+| 4_new_proof_with_aggregation | 76.82 ms |
+| 8_new_proof_with_aggregation | 83.31 ms |
+| 16_new_proof_with_aggregation | 87.38 ms |
+| 32_new_proof_with_aggregation | 90.28 ms |
+| 64_new_proof_with_aggregation | 93.27 ms |
+| 128_new_proof_with_aggregation | 97.72 ms |
+| 256_new_proof_with_aggregation | 105.87 ms |
+| 512_new_proof_with_aggregation | 121.58 ms |
 
 ## Commit batch update
 |operation | cost|
