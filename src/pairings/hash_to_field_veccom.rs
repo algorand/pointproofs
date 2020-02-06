@@ -23,18 +23,12 @@ pub(crate) fn hash_to_tj_fr<Blob: AsRef<[u8]>>(
     value_sub_vector: &[Vec<Blob>],
     n: usize,
 ) -> Result<Vec<Fr>, String> {
-    let frrepr_vec = hash_to_tj_repr(commits, set, value_sub_vector, n)?;
-    let mut fr_vec: Vec<Fr> = vec![];
-    for frrepr in &frrepr_vec {
-        let fr = match Fr::from_repr(*frrepr) {
-            Ok(p) => p,
-            // the hash_to_ti_repr should already produce valid Fr elements
-            // something is wrong if this errors
-            Err(e) => panic!(e),
-        };
-        fr_vec.push(fr);
-    }
-    Ok(fr_vec)
+    Ok(hash_to_tj_repr(commits, set, value_sub_vector, n)?
+        .iter()
+        // the hash_to_ti_repr should already produce valid Fr elements
+        // so it is safe to unwrap here
+        .map(|s| Fr::from_repr(*s).unwrap())
+        .collect())
 }
 
 /// Hash a two dim array of bytes into non-zero scalars. An internal function for aggregation
@@ -101,15 +95,13 @@ pub(crate) fn hash_to_tj_repr<Blob: AsRef<[u8]>>(
     let digest = hasher.result();
 
     // formulate the output
-    let mut res: Vec<FrRepr> = vec![];
-    for i in 0..commits.len() {
-        // each field element t_i is generated as
-        // t_i = hash_to_field (i | C | S | m[S])
-        let hash_input = [i.to_be_bytes().to_vec()[..].as_ref(), digest.as_ref()].concat();
-        res.push(hash_to_field_repr_veccom(hash_input));
-    }
-
-    Ok(res)
+    Ok((0..commits.len())
+        .map(|i| {
+            // each field element t_i is generated as
+            // t_i = hash_to_field (i | C | S | m[S])
+            hash_to_field_repr_veccom([&i.to_be_bytes()[..], digest.as_ref()].concat())
+        })
+        .collect::<Vec<FrRepr>>())
 }
 
 // A wrapper of `hash_to_ti` that outputs `Fr`s instead of `FrRepr`s.
@@ -123,18 +115,12 @@ pub(crate) fn hash_to_ti_fr<Blob: AsRef<[u8]>>(
     value_sub_vector: &[Blob],
     n: usize,
 ) -> Result<Vec<Fr>, String> {
-    let frrepr_vec = hash_to_ti_repr(commit, set, value_sub_vector, n)?;
-    let mut fr_vec: Vec<Fr> = vec![];
-    for frrepr in &frrepr_vec {
-        let fr = match Fr::from_repr(*frrepr) {
-            Ok(p) => p,
-            // the hash_to_ti_repr should already produce valid Fr elements
-            // something is wrong if this errors
-            Err(e) => panic!(e),
-        };
-        fr_vec.push(fr);
-    }
-    Ok(fr_vec)
+    Ok(hash_to_ti_repr(commit, set, value_sub_vector, n)?
+        .iter()
+        // the hash_to_ti_repr should already produce valid Fr elements
+        // so it is safe to unwrap here
+        .map(|s| Fr::from_repr(*s).unwrap())
+        .collect())
 }
 
 /// Hash a array of bytes into non-zero scalars. An internal function for aggregation
@@ -193,26 +179,20 @@ pub(crate) fn hash_to_ti_repr<Blob: AsRef<[u8]>>(
     let digest = hasher.result();
 
     // formulate the output
-    let mut res: Vec<FrRepr> = vec![];
-    for index in set {
-        // each field element t_i is generated as
-        // t_i = hash_to_field (i | C | S | m[S])
-        let hash_input = [index.to_be_bytes().to_vec()[..].as_ref(), digest.as_ref()].concat();
-        res.push(hash_to_field_repr_veccom(hash_input));
-    }
-
-    Ok(res)
+    Ok(set
+        .iter()
+        .map(|index| {
+            hash_to_field_repr_veccom([&index.to_be_bytes()[..], digest.as_ref()].concat())
+        })
+        .collect())
 }
 
 /// A wrapper of `hash_to_field` that outputs `Fr`s instead of `FrRepr`s.
 /// hash_to_field_veccom use SHA 512 to hash a blob into a non-zero field element
 pub(crate) fn hash_to_field_veccom<Blob: AsRef<[u8]>>(input: Blob) -> Fr {
-    match Fr::from_repr(hash_to_field_repr_veccom(input.as_ref())) {
-        Ok(p) => p,
-        // the hash_to_field_repr_veccom should already produce a valid Fr element
-        // something is wrong if this errors
-        Err(e) => panic!(e),
-    }
+    // the hash_to_field_repr_veccom should already produce a valid Fr element
+    // so it is safe to unwrap here
+    Fr::from_repr(hash_to_field_repr_veccom(input.as_ref())).unwrap()
 }
 
 /// Hashes a blob into a non-zero field element.

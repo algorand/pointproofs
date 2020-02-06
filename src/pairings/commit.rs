@@ -137,6 +137,9 @@ impl Commitment {
         if changed_index.len() != value_before.len() || changed_index.len() != value_after.len() {
             return Err(ERR_INDEX_VALUE_NOT_MATCH.to_owned());
         }
+        if !misc::has_unique_elements(changed_index) {
+            return Err(ERR_DUPLICATED_INDEX.to_owned());
+        }
 
         // get the scalars from the hashes
         let mut multiplier_set: Vec<FrRepr> = vec![];
@@ -150,16 +153,17 @@ impl Commitment {
         let scalars_u64: Vec<&[u64; 4]> = multiplier_set.iter().map(|s| &s.0).collect();
 
         // form the basis for `sum_of_products`
-        let mut basis: Vec<VeccomG1Affine> = vec![];
-        for e in changed_index.iter().take(value_before.len()) {
-            basis.push(prover_params.generators[*e]);
-        }
-        let mut pre: Vec<VeccomG1Affine> = vec![];
+        let basis = changed_index
+            .iter()
+            .map(|i| prover_params.generators[*i])
+            .collect::<Vec<VeccomG1Affine>>();
+
         // compute delta = \prod g[index]^multiplier
         let delta = {
             // to use sum_of_products with pre_computation,
             // we need to form the right basis
             if prover_params.precomp.len() == 256 * prover_params.generators.len() {
+                let mut pre: Vec<VeccomG1Affine> = vec![];
                 for e in changed_index.iter().take(value_before.len()) {
                     pre = [
                         pre,

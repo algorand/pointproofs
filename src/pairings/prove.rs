@@ -89,6 +89,10 @@ impl Proof {
             }
         }
 
+        if !misc::has_unique_elements(indices) {
+            return Err(ERR_DUPLICATED_INDEX.to_owned());
+        }
+
         // check param
         if values.len() != prover_params.n {
             return Err(ERR_INVALID_INDEX.to_owned());
@@ -101,20 +105,16 @@ impl Proof {
             .collect();
         let scalars_u64: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
 
-        let mut proof_list: Vec<Self> = vec![];
-        for e in indices {
-            // generate the proof use `sum of product` function
-            let proof = VeccomG1Affine::sum_of_products(
-                &prover_params.generators[prover_params.n - *e..2 * prover_params.n - *e],
-                &scalars_u64,
-            );
-            proof_list.push(Self {
+        Ok(indices
+            .iter()
+            .map(|e| Self {
                 ciphersuite: prover_params.ciphersuite,
-                proof,
+                proof: VeccomG1Affine::sum_of_products(
+                    &prover_params.generators[prover_params.n - *e..2 * prover_params.n - *e],
+                    &scalars_u64,
+                ),
             })
-        }
-
-        Ok(proof_list)
+            .collect())
     }
 
     /// Generate a new set of proofs.
@@ -134,6 +134,9 @@ impl Proof {
         if !check_ciphersuite(prover_params.ciphersuite) {
             return Err(ERR_CIPHERSUITE.to_owned());
         }
+        if prover_params.ciphersuite != commit.ciphersuite {
+            return Err(ERR_CIPHERSUITE.to_owned());
+        }
 
         // check index is valid
         if indices.len() >= prover_params.n {
@@ -143,6 +146,10 @@ impl Proof {
             if *e >= prover_params.n {
                 return Err(ERR_INVALID_INDEX.to_owned());
             }
+        }
+
+        if !misc::has_unique_elements(indices) {
+            return Err(ERR_DUPLICATED_INDEX.to_owned());
         }
 
         // check param
@@ -164,7 +171,6 @@ impl Proof {
         // get the list of scalars for each proof
         let ti = hash_to_ti_fr(commit, indices, &value_sub_vector, prover_params.n)?;
 
-
         // form the final scalars, which are t[i]*m[n - indices[i] + j] for each index
         let mut final_scalars: Vec<Fr> = vec![Fr::zero(); 2 * prover_params.n];
         for i in 0..indices.len() {
@@ -177,11 +183,11 @@ impl Proof {
 
         // remove the generators where the scalars are 0s, to form the final basis
         // also convert Fr-s to FrRepr-s to [u64;4]-s
-        let mut final_basis = vec![];
+        let mut final_basis: Vec<VeccomG1Affine> = vec![];
         let mut final_scalars_repr: Vec<FrRepr> = vec![];
-        for i in 0..final_scalars.len() {
-            if !final_scalars[i].is_zero() {
-                final_scalars_repr.push(final_scalars[i].into_repr());
+        for (i, e) in final_scalars.iter().enumerate() {
+            if !e.is_zero() {
+                final_scalars_repr.push(e.into_repr());
                 final_basis.push(prover_params.generators[i]);
             }
         }
@@ -301,11 +307,9 @@ impl Proof {
 
         // step 1. compute hash_inverse
         let hash = hash_to_field_veccom(&value);
-        let hash_inverse = match hash.inverse() {
-            Some(p) => p,
-            // should not arrive here since hash to field will never return 0
-            None => panic!("hash_to_field_veccom failed"),
-        };
+        // we can safely assume that hash is invertible
+        // see `hash_to_field` function
+        let hash_inverse = hash.inverse().unwrap();
 
         // step 2, compute com^hash_inverse and proof^{-hash_inverse}
         let mut com_mut = com.commit;
@@ -354,6 +358,10 @@ impl Proof {
         // check that the length of proofs and sets match
         if proofs.len() != set.len() || proofs.len() != value_sub_vector.len() {
             return Err(ERR_INDEX_PROOF_NOT_MATCH.to_owned());
+        }
+
+        if !misc::has_unique_elements(set) {
+            return Err(ERR_DUPLICATED_INDEX.to_owned());
         }
 
         // get the list of scalas
@@ -405,6 +413,16 @@ impl Proof {
         for e in proofs.iter() {
             if e.ciphersuite != ciphersuite {
                 return Err(ERR_CIPHERSUITE.to_owned());
+            }
+        }
+        for e in set.iter() {
+            if !misc::has_unique_elements(e) {
+                return Err(ERR_DUPLICATED_INDEX.to_owned());
+            }
+            for ee in e.iter() {
+                if *ee >= n {
+                    return Err(ERR_INVALID_INDEX.to_owned());
+                }
             }
         }
 
@@ -488,6 +506,16 @@ impl Proof {
                 }
             }
         }
+        for e in set.iter() {
+            if !misc::has_unique_elements(e) {
+                return Err(ERR_DUPLICATED_INDEX.to_owned());
+            }
+            for ee in e.iter() {
+                if *ee >= n {
+                    return Err(ERR_INVALID_INDEX.to_owned());
+                }
+            }
+        }
 
         // check the length are correct
         if commits.len() != proofs.len()
@@ -542,12 +570,7 @@ impl Proof {
         let scalars_u64: Vec<&[u64; 4]> = scalars_repr.iter().map(|s| &s.0).collect();
 
         // form the final basis
-        let mut bases: Vec<VeccomG1> = vec![];
-        for e in proofs {
-            for f in e {
-                bases.push(f.proof);
-            }
-        }
+        let mut bases: Vec<VeccomG1> = proofs.concat().iter().map(|x| x.proof).collect();
         CurveProjective::batch_normalization(&mut bases);
         let bases_affine: Vec<VeccomG1Affine> = bases.iter().map(|s| s.into_affine()).collect();
 
@@ -605,6 +628,9 @@ impl Proof {
                 return false;
             }
         }
+        if !misc::has_unique_elements(set) {
+            return false;
+        }
 
         // if the length == 1, call normal verification method
         if set.len() == 1 {
@@ -621,10 +647,9 @@ impl Proof {
         let mut tmp = Fr::zero();
         for i in 0..set.len() {
             let mut mi = hash_to_field_veccom(value_sub_vector[i].as_ref());
-            let fr = match Fr::from_repr(ti[i]) {
-                Ok(p) => p,
-                Err(_e) => return false,
-            };
+            // fr is gauranteed to be in the field so
+            // it is safe to unwrap
+            let fr = Fr::from_repr(ti[i]).unwrap();
             mi.mul_assign(&fr);
             tmp.add_assign(&mi);
         }
@@ -643,11 +668,10 @@ impl Proof {
         com_mut.mul_assign(tmp);
 
         // 2.2 g2^{\sum_{i \in set} \alpha^{N+1-i} t_i}
-
-        let mut bases: Vec<VeccomG2Affine> = vec![];
-        for index in set.iter().take(ti.len()) {
-            bases.push(verifier_params.generators[verifier_params.n - index - 1]);
-        }
+        let bases: Vec<VeccomG2Affine> = set
+            .iter()
+            .map(|index| verifier_params.generators[verifier_params.n - index - 1])
+            .collect();
         let scalars_u64: Vec<&[u64; 4]> = ti.iter().map(|s| &s.0).collect();
         let param_subset_sum = VeccomG2Affine::sum_of_products(&bases, &scalars_u64);
 
@@ -704,6 +728,11 @@ impl Proof {
                 return false;
             }
         }
+        for e in set.iter() {
+            if !misc::has_unique_elements(e) {
+                return false;
+            }
+        }
 
         // handled the case where there is only 1 commit
         if num_commit == 1 {
@@ -748,10 +777,9 @@ impl Proof {
                 tmp2.add_assign(&tmp3);
             }
             // tmp2 = tj * tmp2
-            let tmp3 = match Fr::from_repr(tj[j]) {
-                Ok(p) => p,
-                Err(_e) => return false,
-            };
+            // safe to unwrap here
+            // the output of hash should always be a field element
+            let tmp3 = Fr::from_repr(tj[j]).unwrap();
             tmp2.mul_assign(&tmp3);
             // tmp += tj * (sum_i m_ij * t_ij)
             tmp.add_assign(&tmp2);
@@ -770,10 +798,7 @@ impl Proof {
 
         // g1_vec stores the g1 components for the pairing product
         // for j \in [num_commit], store com[j]
-        let mut g1_vec: Vec<VeccomG1Affine> = vec![];
-        for c in com {
-            g1_vec.push(c.commit.into_affine());
-        }
+        let mut g1_vec: Vec<VeccomG1Affine> = com.iter().map(|x| x.commit.into_affine()).collect();
         // the last element for g1_vec is proof^{-1/tmp}
         let mut tmp2 = self.proof;
         tmp2.negate();
@@ -785,11 +810,9 @@ impl Proof {
         let mut g2_vec: Vec<VeccomG2Affine> = vec![];
         for j in 0..num_commit {
             let mut tmp3 = tmp_inverse;
-            let scalar = match Fr::from_repr(tj[j]) {
-                Ok(p) => p,
-                // the output of hash should always be a field element
-                Err(_e) => panic!("some thing is wrong, check hash_to_field function"),
-            };
+            // safe to unwrap here
+            // the output of hash should always be a field element
+            let scalar = Fr::from_repr(tj[j]).unwrap();
             tmp3.mul_assign(&scalar);
 
             // subset_sum = \prod alpha^{n + 1 - i} * t_i,j}
@@ -801,11 +824,7 @@ impl Proof {
                 t.mul_assign(&tmp3);
                 scalars_u64.push(t.into_repr().0);
             }
-
-            let mut scalars_u64_ref: Vec<&[u64; 4]> = vec![];
-            for e in scalars_u64.iter().take(ti_s[j].len()) {
-                scalars_u64_ref.push(&e);
-            }
+            let scalars_u64_ref: Vec<&[u64; 4]> = scalars_u64.iter().collect();
 
             let param_subset_sum = VeccomG2Affine::sum_of_products(&bases, &scalars_u64_ref);
             g2_vec.push(param_subset_sum.into_affine());
