@@ -14,6 +14,12 @@ impl Commitment {
     ///     * input: a list of n values
     ///     * output: a commitment
     ///     * error: invalid ciphersuite/parameters
+    /// note that if the #values does not match the parameter n,
+    /// an error will be returned.
+    /// if one were to generate a commitment for a vector of length
+    /// less than n, than the caller should pad the vector.
+    /// In this scenario, the caller should define the right
+    /// format for padding.
     pub fn new<Blob: AsRef<[u8]>>(
         prover_params: &ProverParams,
         values: &[Blob],
@@ -114,6 +120,8 @@ impl Commitment {
     ///     * input: the new values
     ///     * output: mutate self to the new commitment
     ///     * error: invalid ciphersuite, parameters
+    /// Note that if their exist duplicated indices, an error
+    /// will be returned.
     pub fn batch_update<Blob: AsRef<[u8]>>(
         &mut self,
         prover_params: &ProverParams,
@@ -133,6 +141,9 @@ impl Commitment {
             if prover_params.n <= *index {
                 return Err(ERR_INVALID_INDEX.to_owned());
             };
+        }
+        if changed_index.len() >= prover_params.n {
+            return Err(ERR_INVALID_INDEX.to_owned());
         }
         if changed_index.len() != value_before.len() || changed_index.len() != value_after.len() {
             return Err(ERR_INDEX_VALUE_NOT_MATCH.to_owned());
