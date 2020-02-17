@@ -89,7 +89,7 @@ impl Proof {
         }
 
         // check index is valid
-        if indices.len() > prover_params.n || indices.len() == 0 {
+        if indices.len() > prover_params.n || indices.is_empty() {
             return Err(ERR_INVALID_INDEX.to_owned());
         };
         for e in indices {
@@ -151,7 +151,7 @@ impl Proof {
         }
 
         // check index is valid
-        if indices.len() > prover_params.n || indices.len() == 0 {
+        if indices.len() > prover_params.n || indices.is_empty() {
             return Err(ERR_INVALID_INDEX.to_owned());
         };
         for e in indices {

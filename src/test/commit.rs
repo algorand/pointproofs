@@ -133,12 +133,12 @@ fn test_commit_edge_cases() {
     let mut values: Vec<&[u8]> = Vec::with_capacity(n);
     assert!(Commitment::new(&prover_params, &values).is_err());
 
-    for i in 0..4 {
-        values.push(&init_values[i]);
+    for e in init_values.iter().take(4) {
+        values.push(&e);
     }
     assert!(Commitment::new(&prover_params, &values).is_err());
-    for i in 4..n {
-        values.push(&init_values[i]);
+    for e in init_values.iter().take(n).skip(4) {
+        values.push(&e);
     }
 
     // commit update with value.len \in {0, n}
@@ -241,8 +241,8 @@ fn test_commit_batch_update() {
 #[test]
 fn test_commit() {
     let n = 8usize;
-    let (prover_params, verifier_params) =
-        paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, n).unwrap();
+    let mut f = std::fs::File::open("3.param").unwrap();
+    let (prover_params, verifier_params) = param::read_param(&mut f).unwrap();
 
     let mut prover_params3 = prover_params.clone();
     prover_params3.precomp_3();
