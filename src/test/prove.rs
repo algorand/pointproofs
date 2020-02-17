@@ -95,6 +95,48 @@ fn negative_test_proof() {
 }
 
 #[test]
+fn test_proof_edge_case() {
+    let n = 8usize;
+    let (prover_params, _verifier_params) =
+        paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, n).unwrap();
+
+    let mut values: Vec<String> = vec![];
+    for i in 0..n {
+        let s = format!("this is message number {}", i);
+        values.push(s);
+    }
+
+    // #values = 0
+    let indices = [];
+    // let value_sub_vector: Vec<String> = vec![];
+    let com = Commitment::new(&prover_params, &values).unwrap();
+
+    let mut proofs = Vec::with_capacity(n);
+
+    // Check all proofs, together with conversion to/from bytes
+    for i in 0..n {
+        proofs.push(Proof::new(&prover_params, &values, i).unwrap());
+    }
+    assert!(Proof::batch_new(&prover_params, &values, &indices).is_err());
+    assert!(Proof::batch_new_aggregated(&prover_params, &com, &values, &indices).is_err());
+
+    // #values = n
+    let mut indices = vec![];
+    for i in 0..n {
+        indices.push(i);
+    }
+    let proof_list = Proof::batch_new(&prover_params, &values, &indices).unwrap();
+    let mut proof_list2 = vec![];
+    for i in 0..n {
+        proof_list2.push(Proof::new(&prover_params, &values, i).unwrap());
+    }
+    assert_eq!(proof_list, proof_list2);
+    let agg_proof = Proof::batch_new_aggregated(&prover_params, &com, &values, &indices).unwrap();
+    let agg_proofs = Proof::same_commit_aggregate(&com, &proof_list, &indices, &values, n).unwrap();
+    assert_eq!(agg_proof, agg_proofs);
+}
+
+#[test]
 fn test_batch_new_proof() {
     let n = 8usize;
     let (prover_params, verifier_params) =

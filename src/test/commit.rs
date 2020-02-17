@@ -111,6 +111,56 @@ fn negative_test_commit_batch_update() {
 }
 
 #[test]
+fn test_commit_edge_cases() {
+    let n = 8usize;
+    let (prover_params, _verifier_params) =
+        paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, n).unwrap();
+    let mut pp256 = prover_params.clone();
+    pp256.precomp_256();
+
+    let mut init_values = Vec::with_capacity(n);
+    for i in 0..n {
+        let s = format!("this is message number {}", i);
+        init_values.push(s.into_bytes());
+    }
+    let mut new_init_values = Vec::with_capacity(n);
+    for i in 0..n {
+        let s = format!("new string {}", i);
+        new_init_values.push(s.into_bytes());
+    }
+
+    // new commitment with value.len != n
+    let mut values: Vec<&[u8]> = Vec::with_capacity(n);
+    assert!(Commitment::new(&prover_params, &values).is_err());
+
+    for i in 0..4 {
+        values.push(&init_values[i]);
+    }
+    assert!(Commitment::new(&prover_params, &values).is_err());
+    for i in 4..n {
+        values.push(&init_values[i]);
+    }
+
+    // commit update with value.len \in {0, n}
+    let com = Commitment::new(&prover_params, &values).unwrap();
+    let mut com2 = com.clone();
+    let value_before: Vec<&[u8]> = Vec::with_capacity(n);
+    let mut value_after: Vec<&[u8]> = Vec::with_capacity(n);
+    let indices = [];
+    com2.batch_update(&prover_params, &indices, &value_before, &value_after)
+        .unwrap();
+    assert_eq!(com, com2);
+
+    for e in new_init_values.iter().take(n) {
+        value_after.push(&e);
+    }
+    let indices = [0, 1, 2, 3, 4, 5, 6, 7];
+    assert!(com2
+        .batch_update(&prover_params, &indices, &values, &value_after)
+        .is_err());
+}
+
+#[test]
 fn test_commit_batch_update() {
     let n = 8usize;
     let (prover_params, verifier_params) =

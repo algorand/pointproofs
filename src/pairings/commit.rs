@@ -122,6 +122,9 @@ impl Commitment {
     ///     * error: invalid ciphersuite, parameters
     /// Note that if their exist duplicated indices, an error
     /// will be returned.
+    /// Also note that changed_index.len() should be within [0, n)
+    /// 0 is valid -- the output commit stays unchanged
+    /// n is invalid -- in this case the caller should call Commitment::new
     pub fn batch_update<Blob: AsRef<[u8]>>(
         &mut self,
         prover_params: &ProverParams,

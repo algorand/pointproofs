@@ -75,6 +75,9 @@ impl Proof {
     ///     * input: the list of indices of the proof
     ///     * output: a list of new proofs
     ///     * error: invalid ciphersuite/parameters
+    /// Note that indices.len should be within (0, n]
+    /// 0 is invalid -- no proof will be generated
+    /// n is valid -- generating proof for the whole vector
     pub fn batch_new<Blob: AsRef<[u8]>>(
         prover_params: &ProverParams,
         values: &[Blob],
@@ -86,7 +89,7 @@ impl Proof {
         }
 
         // check index is valid
-        if indices.len() >= prover_params.n {
+        if indices.len() > prover_params.n || indices.len() == 0 {
             return Err(ERR_INVALID_INDEX.to_owned());
         };
         for e in indices {
@@ -130,6 +133,9 @@ impl Proof {
     ///     * input: the list of indices of the proof
     ///     * output: an aggregation of the list of new proofs
     ///     * error: invalid ciphersuite/parameters
+    /// Note that indices.len should be within (0, n]
+    /// 0 is invalid -- no proof will be generated
+    /// n is valid -- generating proof for the whole vector
     pub fn batch_new_aggregated<Blob: AsRef<[u8]>>(
         prover_params: &ProverParams,
         commit: &Commitment,
@@ -145,7 +151,7 @@ impl Proof {
         }
 
         // check index is valid
-        if indices.len() >= prover_params.n {
+        if indices.len() > prover_params.n || indices.len() == 0 {
             return Err(ERR_INVALID_INDEX.to_owned());
         };
         for e in indices {
