@@ -17,7 +17,7 @@ impl Commitment {
     /// note that if the #values does not match the parameter n,
     /// an error will be returned.
     /// if one were to generate a commitment for a vector of length
-    /// less than n, than the caller should pad the vector.
+    /// less than n, then the caller should pad the vector.
     /// In this scenario, the caller should define the right
     /// format for padding.
     pub fn new<Blob: AsRef<[u8]>>(
