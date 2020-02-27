@@ -34,8 +34,8 @@ fn random_index(n: usize, hamming: usize) -> Vec<usize> {
         }
     }
     let mut res: Vec<usize> = vec![];
-    for i in 0..n {
-        if indices[i] == 1 {
+    for (i, e) in indices.iter().enumerate().take(n) {
+        if *e == 1 {
             res.push(i);
         }
     }
@@ -100,7 +100,7 @@ fn randomized_batch_new_proof(c: &mut Criterion) {
 
     let pp256_clone = pp256.clone();
     let values_clone = values.clone();
-    let set_clone = set.clone();
+
     let com_clone = com.clone();
     let bench_str = format!(
         "single_commit_n_{}_proof_batch_new_aggregated_with_pre256",
@@ -108,8 +108,7 @@ fn randomized_batch_new_proof(c: &mut Criterion) {
     );
     bench = bench.with_function(bench_str, move |b| {
         b.iter(|| {
-            Proof::batch_new_aggregated(&pp256_clone, &com_clone, &values_clone, &set_clone)
-                .unwrap()
+            Proof::batch_new_aggregated(&pp256_clone, &com_clone, &values_clone, &set).unwrap()
         });
     });
 
@@ -188,7 +187,7 @@ fn single_commit(c: &mut Criterion) {
     vp256.precomp_256();
     println!("parameters generated");
 
-    let com = Commitment::new(&pp, &values).unwrap();
+    let mut com = Commitment::new(&pp, &values).unwrap();
     let mut proofs: Vec<Proof> = vec![];
     let mut set: Vec<usize> = vec![];
     let mut value_sub_vector: Vec<String> = vec![];
@@ -238,7 +237,7 @@ fn single_commit(c: &mut Criterion) {
     let proofs_clone = proofs.clone();
     let set_clone = set.clone();
     let com_clone = com.clone();
-    let value_sub_vector_clone = value_sub_vector.clone();
+    let value_sub_vector_clone = value_sub_vector;
     let bench_str = format!("single_commit_n_{}_proof_aggregated", n);
     bench = bench.with_function(bench_str, move |b| {
         b.iter(|| {
@@ -267,7 +266,7 @@ fn single_commit(c: &mut Criterion) {
     // batch proof generation with aggregation with pre computation
     let pp256_clone = pp256.clone();
     let values_clone = values.clone();
-    let set_clone = set.clone();
+    let set_clone = set;
     let com_clone = com.clone();
     let bench_str = format!(
         "single_commit_n_{}_proof_batch_new_aggregated_with_pre256",
@@ -369,7 +368,6 @@ fn single_commit(c: &mut Criterion) {
 
     // Verify 8 aggregated proofs
     // verification with des
-    let vp_clone = vp.clone();
     let proof = proofs[0].clone();
     let com_clone = com.clone();
     let value = values[0].clone();
@@ -380,7 +378,7 @@ fn single_commit(c: &mut Criterion) {
 
         b.iter(|| {
             let proof_rec = Proof::deserialize::<&[u8]>(&mut proof_str[..].as_ref(), true).unwrap();
-            proof_rec.verify(&vp_clone, &com_clone, &value, 0);
+            proof_rec.verify(&vp, &com_clone, &value, 0);
         });
     });
 
@@ -397,13 +395,10 @@ fn single_commit(c: &mut Criterion) {
     });
 
     // commit batch update
-    let mut com_clone = com.clone();
-    let pp_clone = pp.clone();
     let bench_str = format!("single_commit_n_{}_commit_batch_update", n);
     let bench = bench.with_function(bench_str, move |b| {
         b.iter(|| {
-            com_clone
-                .batch_update(&pp_clone, &index, &old_values, &new_values)
+            com.batch_update(&pp, &index, &old_values, &new_values)
                 .unwrap();
         });
     });
@@ -446,7 +441,7 @@ fn commit_update(c: &mut Criterion) {
     pp256.precomp_256();
     println!("parameters generated");
 
-    let com = Commitment::new(&pp, &values).unwrap();
+    let mut com = Commitment::new(&pp, &values).unwrap();
     let mut proofs: Vec<Proof> = vec![];
     let mut set: Vec<usize> = vec![];
     let mut value_sub_vector: Vec<String> = vec![];
@@ -483,7 +478,6 @@ fn commit_update(c: &mut Criterion) {
 
     // commit batch update
     let mut com_clone = com.clone();
-    let pp_clone = pp.clone();
     let index_clone = index.clone();
     let old_values_clone = old_values.clone();
     let new_values_clone = new_values.clone();
@@ -491,24 +485,16 @@ fn commit_update(c: &mut Criterion) {
     let bench = bench.with_function(bench_str, move |b| {
         b.iter(|| {
             com_clone
-                .batch_update(
-                    &pp_clone,
-                    &index_clone,
-                    &old_values_clone,
-                    &new_values_clone,
-                )
+                .batch_update(&pp, &index_clone, &old_values_clone, &new_values_clone)
                 .unwrap();
         });
     });
 
     // commit batch update
-    let mut com_clone = com.clone();
-    let pp256_clone = pp256.clone();
     let bench_str = format!("single_commit_n_{}_commit_batch_update_with_pre256", n);
     let bench = bench.with_function(bench_str, move |b| {
         b.iter(|| {
-            com_clone
-                .batch_update(&pp256_clone, &index, &old_values, &new_values)
+            com.batch_update(&pp256, &index, &old_values, &new_values)
                 .unwrap();
         });
     });
@@ -542,9 +528,9 @@ fn aggregate2(c: &mut Criterion) {
         values.push(tmp_value);
     }
     let mut com_list: Vec<Commitment> = vec![];
-    for i in 0..num_com {
+    for e in values.iter().take(num_com) {
         // commit
-        let tmp_com = Commitment::new(&pp, &values[i]).unwrap();
+        let tmp_com = Commitment::new(&pp, e).unwrap();
         com_list.push(tmp_com);
     }
 
@@ -586,7 +572,7 @@ fn aggregate2(c: &mut Criterion) {
 
         let mut agg_proof_bytes: Vec<u8> = vec![];
         agg_proof.serialize(&mut agg_proof_bytes, true).unwrap();
-        let mut agg_proof_bytes2 = agg_proof_bytes.clone();
+        let agg_proof_bytes2 = agg_proof_bytes.clone();
         let vp_clone = vp.clone();
         let com_list_clone = com_list.clone();
         let commit_index_clone = commit_index.clone();
