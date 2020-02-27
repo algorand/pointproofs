@@ -102,7 +102,7 @@ fn test_serdes_verifier_param() {
         assert!(verifier_params.serialize(&mut buf, true).is_ok());
         let len = buf.len();
 
-        assert_eq!(len, 585 + n * 48);
+        assert_eq!(len, 593 + n * 48);
 
         assert!(VerifierParams::deserialize(&mut buf[..].as_ref(), false).is_err());
         let verifier_params_recover =
@@ -135,7 +135,7 @@ fn test_serdes_verifier_param_slow() {
         assert!(verifier_params.serialize(&mut buf, true).is_ok());
         let len = buf.len();
 
-        assert_eq!(len, 585 + n * 48);
+        assert_eq!(len, 593 + n * 48);
 
         assert!(VerifierParams::deserialize(&mut buf[..].as_ref(), false).is_err());
         let verifier_params_recover =

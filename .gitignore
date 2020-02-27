@@ -17,7 +17,7 @@ data/
 benches/pre-gen-com-and-proof/target/
 benches/pre-gen-com-and-proof/tmp/
 benches/pre-gen-param/target/
-*.param
+benches/pre-gen-param/*.param
 *.pp
 *.vp
 *.proof

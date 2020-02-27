@@ -2,6 +2,7 @@
 //! This module defines system parameters and functions to generate/validate them.
 
 use ff::Field;
+use pairing::serdes::SerDes;
 use pairing::{bls12_381::*, CurveAffine, CurveProjective};
 use pairings::err::*;
 use pairings::hash_to_field_veccom::hash_to_field_veccom;
@@ -102,9 +103,33 @@ fn paramgen_from_alpha(
             ciphersuite,
             n,
             generators: g2_vec,
+            pp_len: 0,
+            precomp: Vec::with_capacity(0),
             gt_elt: gt,
         },
     )
+}
+
+impl VerifierParams {
+    /// pre-process the public parameters with precomputation value set to 3
+    pub fn precomp_3(&mut self) {
+        let twice_n = self.generators.len();
+        self.precomp = vec![VeccomG2Affine::zero(); 3 * twice_n];
+        for i in 0..twice_n {
+            self.generators[i].precomp_3(&mut self.precomp[i * 3..(i + 1) * 3]);
+        }
+        self.pp_len = self.n * 6;
+    }
+
+    /// pre-process the public parameters with precomputation value set to 256
+    pub fn precomp_256(&mut self) {
+        let twice_n = self.generators.len();
+        self.precomp = vec![VeccomG2Affine::zero(); 256 * twice_n];
+        for i in 0..twice_n {
+            self.generators[i].precomp_256(&mut self.precomp[i * 256..(i + 1) * 256]);
+        }
+        self.pp_len = self.n * 512;
+    }
 }
 
 impl ProverParams {
@@ -239,38 +264,86 @@ impl std::cmp::PartialEq for VerifierParams {
 //     //    pp256.serialize(&mut f2, true).unwrap();
 //     (pp, pp3, pp256, vp)
 // }
+
+// read a parameter pair
+// the parameter is organized as
+// pub struct VeccomParams {
+//     /// ciphersuite id
+//     pub ciphersuite: u8,
 //
-// // read a parameter pair
-// #[allow(dead_code)]
-// pub fn read_param<R: std::io::Read>(
-//     reader: &mut R,
-// ) -> Result<(ProverParams, VerifierParams), String> {
-//     let param = match VeccomParams::deserialize(reader, true) {
-//         Err(e) => return Err(format!("read_param:{}", e.to_string())),
-//         Ok(p) => p,
-//     };
+//     /// parameter N
+//     pub n: usize,
 //
-//     if !consistent(&param) {
-//         return Err("Input params are not consistent".to_owned());
-//     };
+//     /// g1^{alpha}, ..., g1^{alpha^N}
+//     pub g1_alpha_1_to_n: Vec<G1Affine>,
 //
-//     let pp = ProverParams {
-//         ciphersuite: param.ciphersuite,
-//         n: param.n,
-//         generators: [
-//             param.g1_alpha_1_to_n,
-//             vec![VeccomG1::zero().into_affine()],
-//             param.g1_alpha_nplus2_to_2n,
-//         ]
-//         .concat(),
-//         pp_len: 0,
-//         precomp: vec![],
-//     };
-//     let vp = VerifierParams {
-//         ciphersuite: param.ciphersuite,
-//         n: param.n,
-//         generators: param.g2_alpha_1_to_n,
-//         gt_elt: param.gt_alpha_nplus1,
-//     };
-//     Ok((pp, vp))
+//     /// g1^{alpha^{N+2}}, g1^{alpha^{N+3}}, ..., g1^{alpha^{2N}}
+//     pub g1_alpha_nplus2_to_2n: Vec<G1Affine>,
+//
+//     /// g2^{alpha}, g2^{alpha^2}, ..., g2^{alpha^N}
+//     pub g2_alpha_1_to_n: Vec<G2Affine>,
+//
+//     /// g2^{alpha^{N+2}}, g2^{alpha^{N+3}}, ..., g2^{alpha^{2N}}
+//     pub g2_alpha_nplus2_to_2n: Vec<G2Affine>,
+//
+//     /// e(g2,g1)^{alpha^{N+1}}
+//     pub gt_alpha_nplus1: Fq12,
 // }
+pub fn read_param<R: std::io::Read>(
+    reader: &mut R,
+) -> Result<(ProverParams, VerifierParams), String> {
+    let param = match veccom_paramgen::VeccomParams::deserialize(reader, true) {
+        Err(e) => return Err(format!("read_param: {}", e.to_string())),
+        Ok(p) => p,
+    };
+
+    if !veccom_paramgen::consistent(&param) {
+        return Err("Input params are not consistent".to_owned());
+    };
+
+    //
+    // uncomment the following if the groups are unswitched
+    /*
+        let pp = ProverParams {
+            ciphersuite: 0,
+            n: param.n,
+            generators: [
+                param.g1_alpha_1_to_n,
+                vec![VeccomG2::zero().into_affine()],
+                param.g1_alpha_nplus2_to_2n,
+            ]
+            .concat(),
+            pp_len: 0,
+            precomp: vec![],
+        };
+        let vp = VerifierParams {
+            ciphersuite: 0,
+            n: param.n,
+            generators: param.g2_alpha_1_to_n,
+            gt_elt: param.gt_alpha_nplus1,
+        };
+    */
+
+    // groups switched
+    let pp = ProverParams {
+        ciphersuite: 0,
+        n: param.n,
+        generators: [
+            param.g2_alpha_1_to_n,
+            vec![VeccomG1::zero().into_affine()],
+            param.g2_alpha_nplus2_to_2n,
+        ]
+        .concat(),
+        pp_len: 0,
+        precomp: vec![],
+    };
+    let vp = VerifierParams {
+        ciphersuite: 0,
+        n: param.n,
+        generators: param.g1_alpha_1_to_n,
+        pp_len: 0,
+        precomp: vec![],
+        gt_elt: param.gt_alpha_nplus1,
+    };
+    Ok((pp, vp))
+}

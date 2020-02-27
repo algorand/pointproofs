@@ -14,6 +14,12 @@ impl Proof {
     ///     * input: the index of the proof
     ///     * output: a new proof
     ///     * error: invalid ciphersuite/parameters
+    /// note that if the #values does not match the parameter n,
+    /// an error will be returned.
+    /// if one were to generate a commitment for a vector of length
+    /// less than n, then the caller should pad the vector.
+    /// In this scenario, the caller should define the right
+    /// format for padding.
     pub fn new<Blob: AsRef<[u8]>>(
         prover_params: &ProverParams,
         values: &[Blob],
@@ -69,6 +75,9 @@ impl Proof {
     ///     * input: the list of indices of the proof
     ///     * output: a list of new proofs
     ///     * error: invalid ciphersuite/parameters
+    /// Note that indices.len should be within (0, n]
+    /// 0 is invalid -- no proof will be generated
+    /// n is valid -- generating proof for the whole vector
     pub fn batch_new<Blob: AsRef<[u8]>>(
         prover_params: &ProverParams,
         values: &[Blob],
@@ -80,7 +89,7 @@ impl Proof {
         }
 
         // check index is valid
-        if indices.len() >= prover_params.n {
+        if indices.len() > prover_params.n || indices.is_empty() {
             return Err(ERR_INVALID_INDEX.to_owned());
         };
         for e in indices {
@@ -104,17 +113,31 @@ impl Proof {
             .map(|s| hash_to_field_repr_veccom(&s.as_ref()))
             .collect();
         let scalars_u64: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
-
-        Ok(indices
-            .iter()
-            .map(|e| Self {
-                ciphersuite: prover_params.ciphersuite,
-                proof: VeccomG1Affine::sum_of_products(
-                    &prover_params.generators[prover_params.n - *e..2 * prover_params.n - *e],
-                    &scalars_u64,
-                ),
-            })
-            .collect())
+        if prover_params.precomp.len() == 512 * prover_params.n {
+            Ok(indices
+                .iter()
+                .map(|e| Self {
+                    ciphersuite: prover_params.ciphersuite,
+                    proof: VeccomG1Affine::sum_of_products_precomp_256(
+                        &prover_params.generators[prover_params.n - *e..2 * prover_params.n - *e],
+                        &scalars_u64,
+                        &prover_params.precomp
+                            [(prover_params.n - *e) * 256..(2 * prover_params.n - *e) * 256],
+                    ),
+                })
+                .collect())
+        } else {
+            Ok(indices
+                .iter()
+                .map(|e| Self {
+                    ciphersuite: prover_params.ciphersuite,
+                    proof: VeccomG1Affine::sum_of_products(
+                        &prover_params.generators[prover_params.n - *e..2 * prover_params.n - *e],
+                        &scalars_u64,
+                    ),
+                })
+                .collect())
+        }
     }
 
     /// Generate a new set of proofs.
@@ -124,6 +147,9 @@ impl Proof {
     ///     * input: the list of indices of the proof
     ///     * output: an aggregation of the list of new proofs
     ///     * error: invalid ciphersuite/parameters
+    /// Note that indices.len should be within (0, n]
+    /// 0 is invalid -- no proof will be generated
+    /// n is valid -- generating proof for the whole vector
     pub fn batch_new_aggregated<Blob: AsRef<[u8]>>(
         prover_params: &ProverParams,
         commit: &Commitment,
@@ -139,7 +165,7 @@ impl Proof {
         }
 
         // check index is valid
-        if indices.len() >= prover_params.n {
+        if indices.len() > prover_params.n || indices.is_empty() {
             return Err(ERR_INVALID_INDEX.to_owned());
         };
         for e in indices {
@@ -185,16 +211,35 @@ impl Proof {
         // also convert Fr-s to FrRepr-s to [u64;4]-s
         let mut final_basis: Vec<VeccomG1Affine> = vec![];
         let mut final_scalars_repr: Vec<FrRepr> = vec![];
+        let mut final_basis_pp: Vec<VeccomG1Affine> = vec![];
         for (i, e) in final_scalars.iter().enumerate() {
             if !e.is_zero() {
                 final_scalars_repr.push(e.into_repr());
                 final_basis.push(prover_params.generators[i]);
+
+                if prover_params.precomp.len() == 512 * prover_params.n {
+                    final_basis_pp = [
+                        final_basis_pp,
+                        prover_params.precomp[i * 256..(i + 1) * 256].to_vec(),
+                    ]
+                    .concat();
+                }
             }
         }
         let scalars_u64: Vec<&[u64; 4]> = final_scalars_repr.iter().map(|s| &s.0).collect();
 
         // compute the final aggregated proof
-        let agg_proof = VeccomG1Affine::sum_of_products(&final_basis, &scalars_u64);
+        let agg_proof = {
+            if prover_params.precomp.len() == 512 * prover_params.n {
+                VeccomG1Affine::sum_of_products_precomp_256(
+                    &final_basis,
+                    &scalars_u64,
+                    &final_basis_pp,
+                )
+            } else {
+                VeccomG1Affine::sum_of_products(&final_basis, &scalars_u64)
+            }
+        };
 
         Ok(Proof {
             ciphersuite: prover_params.ciphersuite,
@@ -673,7 +718,23 @@ impl Proof {
             .map(|index| verifier_params.generators[verifier_params.n - index - 1])
             .collect();
         let scalars_u64: Vec<&[u64; 4]> = ti.iter().map(|s| &s.0).collect();
-        let param_subset_sum = VeccomG2Affine::sum_of_products(&bases, &scalars_u64);
+        let param_subset_sum = {
+            if verifier_params.precomp.len() == 256 * verifier_params.n {
+                let mut bases_precomp: Vec<VeccomG2Affine> = vec![];
+                for e in set.iter() {
+                    bases_precomp = [
+                        bases_precomp,
+                        verifier_params.precomp
+                            [(verifier_params.n - *e - 1) * 256..(verifier_params.n - *e) * 256]
+                            .to_vec(),
+                    ]
+                    .concat();
+                }
+                VeccomG2Affine::sum_of_products_precomp_256(&bases, &scalars_u64, &bases_precomp)
+            } else {
+                VeccomG2Affine::sum_of_products(&bases, &scalars_u64)
+            }
+        };
 
         // 2.3 proof ^ {-tmp}
         let mut proof_mut = self.proof;
@@ -826,7 +887,27 @@ impl Proof {
             }
             let scalars_u64_ref: Vec<&[u64; 4]> = scalars_u64.iter().collect();
 
-            let param_subset_sum = VeccomG2Affine::sum_of_products(&bases, &scalars_u64_ref);
+            let param_subset_sum = {
+                if verifier_params.precomp.len() == 256 * verifier_params.n {
+                    let mut bases_precomp: Vec<VeccomG2Affine> = vec![];
+                    for i in 0..ti_s[j].len() {
+                        bases_precomp = [
+                            bases_precomp,
+                            verifier_params.precomp[(verifier_params.n - set[j][i] - 1) * 256
+                                ..(verifier_params.n - set[j][i] - 1) * 256]
+                                .to_vec(),
+                        ]
+                        .concat();
+                    }
+                    VeccomG2Affine::sum_of_products_precomp_256(
+                        &bases,
+                        &scalars_u64_ref,
+                        &bases_precomp,
+                    )
+                } else {
+                    VeccomG2Affine::sum_of_products(&bases, &scalars_u64_ref)
+                }
+            };
             g2_vec.push(param_subset_sum.into_affine());
         }
         // the last element for g1_vec is g2

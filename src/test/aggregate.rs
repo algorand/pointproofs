@@ -71,6 +71,12 @@ fn test_same_commit_aggregation_small() {
     let (prover_params, verifier_params) =
         paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, n).unwrap();
 
+    let mut verifier_params3 = verifier_params.clone();
+    verifier_params3.precomp_3();
+
+    let mut verifier_params256 = verifier_params.clone();
+    verifier_params256.precomp_256();
+
     let mut init_values = Vec::with_capacity(n);
     for i in 0..n {
         let s = format!("this is message number {}", i);
@@ -108,13 +114,29 @@ fn test_same_commit_aggregation_small() {
     assert_eq!(agg_proof, agg_proof2);
 
     assert!(agg_proof.same_commit_batch_verify(&verifier_params, &com, &set, &value_sub_vector));
+    assert!(agg_proof.same_commit_batch_verify(&verifier_params3, &com, &set, &value_sub_vector));
+    assert!(agg_proof.same_commit_batch_verify(&verifier_params256, &com, &set, &value_sub_vector));
     assert!(agg_proof.cross_commit_batch_verify(
         &verifier_params,
+        &[com.clone()],
+        &[set.clone()],
+        &[value_sub_vector.clone()]
+    ));
+    assert!(agg_proof.cross_commit_batch_verify(
+        &verifier_params3,
+        &[com.clone()],
+        &[set.clone()],
+        &[value_sub_vector.clone()]
+    ));
+    assert!(agg_proof.cross_commit_batch_verify(
+        &verifier_params256,
         &[com.clone()],
         &[set],
         &[value_sub_vector]
     ));
     assert!(proofs[0].same_commit_batch_verify(&verifier_params, &com, &[1], &[values[1]]));
+    assert!(proofs[0].same_commit_batch_verify(&verifier_params3, &com, &[1], &[values[1]]));
+    assert!(proofs[0].same_commit_batch_verify(&verifier_params256, &com, &[1], &[values[1]]));
 }
 
 #[test]
