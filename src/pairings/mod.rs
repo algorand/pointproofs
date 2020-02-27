@@ -87,6 +87,8 @@ pub struct VerifierParams {
     pub(crate) ciphersuite: Ciphersuite,
     pub(crate) n: usize,
     generators: Vec<VeccomG2Affine>,
+    pp_len: usize,
+    precomp: Vec<VeccomG2Affine>,
     gt_elt: Fq12,
 }
 /// Size for serialized verifier parameter:

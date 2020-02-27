@@ -103,9 +103,33 @@ fn paramgen_from_alpha(
             ciphersuite,
             n,
             generators: g2_vec,
+            pp_len: 0,
+            precomp: Vec::with_capacity(0),
             gt_elt: gt,
         },
     )
+}
+
+impl VerifierParams {
+    /// pre-process the public parameters with precomputation value set to 3
+    pub fn precomp_3(&mut self) {
+        let twice_n = self.generators.len();
+        self.precomp = vec![VeccomG2Affine::zero(); 3 * twice_n];
+        for i in 0..twice_n {
+            self.generators[i].precomp_3(&mut self.precomp[i * 3..(i + 1) * 3]);
+        }
+        self.pp_len = self.n * 6;
+    }
+
+    /// pre-process the public parameters with precomputation value set to 256
+    pub fn precomp_256(&mut self) {
+        let twice_n = self.generators.len();
+        self.precomp = vec![VeccomG2Affine::zero(); 256 * twice_n];
+        for i in 0..twice_n {
+            self.generators[i].precomp_256(&mut self.precomp[i * 256..(i + 1) * 256]);
+        }
+        self.pp_len = self.n * 512;
+    }
 }
 
 impl ProverParams {
@@ -317,6 +341,8 @@ pub fn read_param<R: std::io::Read>(
         ciphersuite: 0,
         n: param.n,
         generators: param.g1_alpha_1_to_n,
+        pp_len: 0,
+        precomp: vec![],
         gt_elt: param.gt_alpha_nplus1,
     };
     Ok((pp, vp))

@@ -369,6 +369,12 @@ fn test_batch_new_proof() {
     let mut prover_params256 = prover_params.clone();
     prover_params256.precomp_256();
 
+    let mut verifier_params3 = verifier_params.clone();
+    verifier_params3.precomp_3();
+
+    let mut verifier_params256 = verifier_params.clone();
+    verifier_params256.precomp_256();
+
     let mut values: Vec<String> = vec![];
     for i in 0..n {
         let s = format!("this is message number {}", i);
@@ -429,4 +435,12 @@ fn test_batch_new_proof() {
         &indices,
         &value_sub_vector
     ));
+    assert!(
+        agg_proof.same_commit_batch_verify(&verifier_params3, &com, &indices, &value_sub_vector),
+        "pre_compute3 failed"
+    );
+    assert!(
+        agg_proof.same_commit_batch_verify(&verifier_params256, &com, &indices, &value_sub_vector),
+        "pre_compute256 failed"
+    );
 }

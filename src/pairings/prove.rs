@@ -718,7 +718,23 @@ impl Proof {
             .map(|index| verifier_params.generators[verifier_params.n - index - 1])
             .collect();
         let scalars_u64: Vec<&[u64; 4]> = ti.iter().map(|s| &s.0).collect();
-        let param_subset_sum = VeccomG2Affine::sum_of_products(&bases, &scalars_u64);
+        let param_subset_sum = {
+            if verifier_params.precomp.len() == 256 * verifier_params.n {
+                let mut bases_precomp: Vec<VeccomG2Affine> = vec![];
+                for e in set.iter() {
+                    bases_precomp = [
+                        bases_precomp,
+                        verifier_params.precomp
+                            [(verifier_params.n - *e - 1) * 256..(verifier_params.n - *e) * 256]
+                            .to_vec(),
+                    ]
+                    .concat();
+                }
+                VeccomG2Affine::sum_of_products_precomp_256(&bases, &scalars_u64, &bases_precomp)
+            } else {
+                VeccomG2Affine::sum_of_products(&bases, &scalars_u64)
+            }
+        };
 
         // 2.3 proof ^ {-tmp}
         let mut proof_mut = self.proof;
@@ -871,7 +887,27 @@ impl Proof {
             }
             let scalars_u64_ref: Vec<&[u64; 4]> = scalars_u64.iter().collect();
 
-            let param_subset_sum = VeccomG2Affine::sum_of_products(&bases, &scalars_u64_ref);
+            let param_subset_sum = {
+                if verifier_params.precomp.len() == 256 * verifier_params.n {
+                    let mut bases_precomp: Vec<VeccomG2Affine> = vec![];
+                    for i in 0..ti_s[j].len() {
+                        bases_precomp = [
+                            bases_precomp,
+                            verifier_params.precomp[(verifier_params.n - set[j][i] - 1) * 256
+                                ..(verifier_params.n - set[j][i] - 1) * 256]
+                                .to_vec(),
+                        ]
+                        .concat();
+                    }
+                    VeccomG2Affine::sum_of_products_precomp_256(
+                        &bases,
+                        &scalars_u64_ref,
+                        &bases_precomp,
+                    )
+                } else {
+                    VeccomG2Affine::sum_of_products(&bases, &scalars_u64_ref)
+                }
+            };
             g2_vec.push(param_subset_sum.into_affine());
         }
         // the last element for g1_vec is g2

@@ -362,6 +362,8 @@ impl SerDes for VerifierParams {
             ciphersuite: csid[0],
             n,
             generators,
+            pp_len: 0,
+            precomp: vec![],
             gt_elt,
         })
     }
