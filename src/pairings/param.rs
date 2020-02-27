@@ -293,7 +293,7 @@ pub fn read_param<R: std::io::Read>(
     reader: &mut R,
 ) -> Result<(ProverParams, VerifierParams), String> {
     let param = match veccom_paramgen::VeccomParams::deserialize(reader, true) {
-        Err(e) => return Err(format!("read_param:{}", e.to_string())),
+        Err(e) => return Err(format!("read_param: {}", e.to_string())),
         Ok(p) => p,
     };
 

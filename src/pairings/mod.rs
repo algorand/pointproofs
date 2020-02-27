@@ -92,8 +92,8 @@ pub struct VerifierParams {
     gt_elt: Fq12,
 }
 /// Size for serialized verifier parameter:
-/// ciphersuite `(1 byte) + n (8 bytes) + n * G1 (48 bytes) + Gt (576 bytes)`
-pub const VP_LEN: usize = 49737; // n = 1024
+/// ciphersuite `(1 byte) + n (8 bytes) + n * G1 (48 bytes) + pp_len (8 bytes) + Gt (576 bytes)`
+pub const VP_LEN: usize = 49745; // n = 1024
 
 /// Structure to hold a commitment.
 #[derive(Clone, Debug, PartialEq)]

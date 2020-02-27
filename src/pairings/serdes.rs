@@ -275,7 +275,7 @@ impl SerDes for ProverParams {
 impl SerDes for VerifierParams {
     /// Convert a ProverParam into a blob:
     ///
-    /// `|ciphersuite id | n | generators | gt_element` => bytes
+    /// `|ciphersuite id | n | generators | pp_len | pre_comp | gt_element` => bytes
     ///
     /// Returns an error if ciphersuite id is invalid or serialization fails.
     fn serialize<W: std::io::Write>(
@@ -306,13 +306,20 @@ impl SerDes for VerifierParams {
             e.serialize(&mut writer, true)?;
         }
 
+        writer.write_all(&self.pp_len.to_le_bytes())?;
+        if self.pp_len != 0 {
+            for e in self.precomp.iter() {
+                e.serialize(&mut writer, true)?;
+            }
+        }
+
         self.gt_elt.serialize(&mut writer, true)?;
 
         Ok(())
     }
     /// Convert a blob into a ProverParam:
     ///
-    /// bytes => `|ciphersuite id | n | generators | gt_element`
+    /// bytes => `|ciphersuite id | n | generators | pp_len | pre_comp | gt_element`
     ///
     /// Returns an error if ciphersuite id is invalid or serialization fails.
     fn deserialize<R: std::io::Read>(
@@ -355,6 +362,17 @@ impl SerDes for VerifierParams {
             let g = VeccomG2Affine::deserialize(reader, true)?;
             generators.push(g);
         }
+
+        let mut buf = [0u8; 8];
+        reader.read_exact(&mut buf)?;
+        let pp_len = usize::from_le_bytes(buf);
+
+        let mut precomp: Vec<VeccomG1Affine> = vec![];
+        for _i in 0..pp_len {
+            let g = VeccomG1Affine::deserialize(reader, true)?;
+            precomp.push(g);
+        }
+
         let gt_elt = Fq12::deserialize(reader, true)?;
 
         // format the output
