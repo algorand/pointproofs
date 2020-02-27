@@ -25,7 +25,7 @@ pub struct vcp_value {
 /// serialized prover parameter struct
 #[repr(C)]
 pub struct vcp_pp_bytes {
-    data: [u8; RAW_PP_LEN],
+    data: [u8; PP_LEN],
 }
 
 /// serialized verifer parameter struct
@@ -86,7 +86,7 @@ pub unsafe extern "C" fn vcp_pp_serial(pprover: vcp_pp) -> vcp_pp_bytes {
         "prover parameter serialization failed"
     );
     buf.shrink_to_fit();
-    let mut data = [0u8; RAW_PP_LEN];
+    let mut data = [0u8; PP_LEN];
     data.copy_from_slice(&buf);
     vcp_pp_bytes { data }
 }

@@ -6,7 +6,7 @@ use pairing::Engine;
 
 // Uncomment the following if we want the proofs/commits lie in BLS12::G1
 // the groups are not switched
-/*
+
 /// A wrapper of BLS::G1. Groups are not switched and proof/commits are in BLS::G1
 pub type VeccomG1 = G1;
 /// A wrapper of BLS::G2. Groups are not switched and proof/commits are in BLS::G1
@@ -15,6 +15,9 @@ pub type VeccomG2 = G2;
 pub type VeccomG1Affine = G1Affine;
 /// A wrapper of BLS::G2Affine. Groups are not switched and proof/commits are in BLS::G1
 pub type VeccomG2Affine = G2Affine;
+pub const VECCOMG1_LEN: usize = 48;
+pub const VECCOMG2_LEN: usize = 96;
+
 /// A wrapper of BLS::pairing_product. Groups are switched and proof/commits are in BLS::G1
 pub(crate) fn veccom_pairing(p1: VeccomG1Affine, q1: VeccomG2Affine) -> Fq12 {
     Bls12::pairing(p1, q1)
@@ -35,8 +38,23 @@ pub(crate) fn veccom_pairing_multi_product(
 ) -> Fq12 {
     Bls12::pairing_multi_product(g1_vec, g2_vec)
 }
-*/
+/// Size for serialized verifier parameter:
+/// ciphersuite `(1 byte) + n (8 bytes) + n * G2 (96 bytes) + pp_len (8 bytes) + Gt (576 bytes)`
+pub const VP_LEN: usize = 98897; // n = 1024
+/// Size for serialized prover parameter:
+/// ciphersuite `(1 byte) + n (8 bytes) + 2n * G1 (48 bytes) + pp_len (8 bytes)`.
+/// Does not include the size for pre-computed parameters.
+pub const PP_LEN: usize = 98321; // n = 1024
 
+/// Size for serialized commitment.
+pub const COMMIT_LEN: usize = 49;
+
+/// Size for serialized proof.
+pub const PROOF_LEN: usize = 49;
+
+// Uncomment the following if we want the proofs/commits lie in BLS12::G2
+// the groups are switched
+/*
 // the groups are switched
 /// A wrapper of BLS::G2. Groups are switched and proof/commits are in BLS::G2
 pub type VeccomG1 = G2;
@@ -46,6 +64,10 @@ pub type VeccomG2 = G1;
 pub type VeccomG1Affine = G2Affine;
 /// A wrapper of BLS::G1Affine. Groups are switched and proof/commits are in BLS::G2
 pub type VeccomG2Affine = G1Affine;
+
+pub const VECCOMG1_LEN: usize = 96;
+pub const VECCOMG2_LEN: usize = 48;
+
 /// A wrapper of BLS::pairing. Groups are switched and proof/commits are in BLS::G2
 pub(crate) fn veccom_pairing(p1: VeccomG1Affine, q1: VeccomG2Affine) -> Fq12 {
     Bls12::pairing(q1, p1)
@@ -66,6 +88,21 @@ pub(crate) fn veccom_pairing_multi_product(
 ) -> Fq12 {
     Bls12::pairing_multi_product(g2_vec, g1_vec)
 }
+/// Size for serialized verifier parameter:
+/// ciphersuite `(1 byte) + n (8 bytes) + n * G1 (48 bytes) + pp_len (8 bytes) + Gt (576 bytes)`
+pub const VP_LEN: usize = 49745; // n = 1024
+
+/// Size for serialized prover parameter:
+/// ciphersuite `(1 byte) + n (8 bytes) + 2n * G2 (96 bytes) + pp_len (8 bytes)`.
+/// Does not include the size for pre-computed parameters.
+pub const PP_LEN: usize = 196_625; // n = 1024
+
+/// Size for serialized commitment.
+pub const COMMIT_LEN: usize = 97;
+
+/// Size for serialized proof.
+pub const PROOF_LEN: usize = 97;
+*/
 
 /// Structure for porver parameters.
 #[derive(Clone, Debug)]
@@ -76,10 +113,6 @@ pub struct ProverParams {
     pp_len: usize,
     precomp: Vec<VeccomG1Affine>,
 }
-/// Size for serialized prover parameter:
-/// ciphersuite `(1 byte) + n (8 bytes) + 2n * G2 (96 bytes) + pp_len (8 bytes)`.
-/// Does not include the size for pre-computed parameters.
-pub const RAW_PP_LEN: usize = 196_625; // n = 1024
 
 /// Structure for verifier parameters.
 #[derive(Clone, Debug)]
@@ -91,9 +124,6 @@ pub struct VerifierParams {
     precomp: Vec<VeccomG2Affine>,
     gt_elt: Fq12,
 }
-/// Size for serialized verifier parameter:
-/// ciphersuite `(1 byte) + n (8 bytes) + n * G1 (48 bytes) + pp_len (8 bytes) + Gt (576 bytes)`
-pub const VP_LEN: usize = 49745; // n = 1024
 
 /// Structure to hold a commitment.
 #[derive(Clone, Debug, PartialEq)]
@@ -101,8 +131,6 @@ pub struct Commitment {
     pub(crate) ciphersuite: Ciphersuite,
     pub(crate) commit: VeccomG1,
 }
-/// Size for serialized commitment.
-pub const COMMIT_LEN: usize = 97;
 
 /// Structure to hold a proof.
 #[derive(Clone, Debug, PartialEq)]
@@ -110,8 +138,6 @@ pub struct Proof {
     pub(crate) ciphersuite: Ciphersuite,
     pub(crate) proof: VeccomG1,
 }
-/// Size for serialized proof.
-pub const PROOF_LEN: usize = 97;
 
 pub(crate) mod commit;
 pub mod param;

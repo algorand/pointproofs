@@ -14,7 +14,7 @@ fn test_serdes_prover_param() {
         assert!(prover_params.serialize(&mut buf, false).is_err());
         assert!(prover_params.serialize(&mut buf, true).is_ok());
 
-        assert_eq!(buf.len(), 17 + n * 192);
+        assert_eq!(buf.len(), 17 + n * VECCOMG1_LEN * 2);
 
         let mut invalid_buf = buf.clone();
         let mut valid_buf = buf.clone();
@@ -58,7 +58,7 @@ fn test_serdes_prover_param_slow() {
         assert!(prover_params.serialize(&mut buf, false).is_err());
         assert!(prover_params.serialize(&mut buf, true).is_ok());
 
-        assert_eq!(buf.len(), 17 + n * 192);
+        assert_eq!(buf.len(), 17 + n * VECCOMG1_LEN * 2);
 
         let mut invalid_buf = buf.clone();
         let mut valid_buf = buf.clone();
@@ -102,7 +102,7 @@ fn test_serdes_verifier_param() {
         assert!(verifier_params.serialize(&mut buf, true).is_ok());
         let len = buf.len();
 
-        assert_eq!(len, 593 + n * 48);
+        assert_eq!(len, 593 + n * VECCOMG2_LEN);
 
         assert!(VerifierParams::deserialize(&mut buf[..].as_ref(), false).is_err());
         let verifier_params_recover =
@@ -135,7 +135,7 @@ fn test_serdes_verifier_param_slow() {
         assert!(verifier_params.serialize(&mut buf, true).is_ok());
         let len = buf.len();
 
-        assert_eq!(len, 593 + n * 48);
+        assert_eq!(len, 593 + n * VECCOMG2_LEN);
 
         assert!(VerifierParams::deserialize(&mut buf[..].as_ref(), false).is_err());
         let verifier_params_recover =

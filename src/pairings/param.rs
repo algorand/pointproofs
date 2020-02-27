@@ -303,27 +303,29 @@ pub fn read_param<R: std::io::Read>(
 
     //
     // uncomment the following if the groups are unswitched
-    /*
-        let pp = ProverParams {
-            ciphersuite: 0,
-            n: param.n,
-            generators: [
-                param.g1_alpha_1_to_n,
-                vec![VeccomG2::zero().into_affine()],
-                param.g1_alpha_nplus2_to_2n,
-            ]
-            .concat(),
-            pp_len: 0,
-            precomp: vec![],
-        };
-        let vp = VerifierParams {
-            ciphersuite: 0,
-            n: param.n,
-            generators: param.g2_alpha_1_to_n,
-            gt_elt: param.gt_alpha_nplus1,
-        };
-    */
 
+    let pp = ProverParams {
+        ciphersuite: 0,
+        n: param.n,
+        generators: [
+            param.g1_alpha_1_to_n,
+            vec![VeccomG1::zero().into_affine()],
+            param.g1_alpha_nplus2_to_2n,
+        ]
+        .concat(),
+        pp_len: 0,
+        precomp: vec![],
+    };
+    let vp = VerifierParams {
+        ciphersuite: 0,
+        n: param.n,
+        generators: param.g2_alpha_1_to_n,
+        pp_len: 0,
+        precomp: vec![],
+        gt_elt: param.gt_alpha_nplus1,
+    };
+
+    /*
     // groups switched
     let pp = ProverParams {
         ciphersuite: 0,
@@ -345,5 +347,7 @@ pub fn read_param<R: std::io::Read>(
         precomp: vec![],
         gt_elt: param.gt_alpha_nplus1,
     };
+    */
+
     Ok((pp, vp))
 }
