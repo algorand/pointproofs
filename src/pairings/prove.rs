@@ -48,7 +48,9 @@ impl Proof {
 
         // generate the proof use `sum of product` function
         let proof = {
-            if prover_params.precomp.len() == 512 * prover_params.n {
+            // the second condition `n <= 1024` comes from benchmarking
+            // pre-computation is faster only when the #basis is <1024
+            if prover_params.precomp.len() == 512 * prover_params.n && prover_params.n <= 1024 {
                 VeccomG1Affine::sum_of_products_precomp_256(
                     &prover_params.generators[prover_params.n - index..2 * prover_params.n - index],
                     &scalars_u64,
@@ -113,7 +115,10 @@ impl Proof {
             .map(|s| hash_to_field_repr_veccom(&s.as_ref()))
             .collect();
         let scalars_u64: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
-        if prover_params.precomp.len() == 512 * prover_params.n {
+
+        // the second condition `n <= 1024` comes from benchmarking
+        // pre-computation is faster only when the #basis is <1024
+        if prover_params.precomp.len() == 512 * prover_params.n && scalars_fr_repr.len() <= 1024 {
             Ok(indices
                 .iter()
                 .map(|e| Self {
@@ -216,8 +221,14 @@ impl Proof {
             if !e.is_zero() {
                 final_scalars_repr.push(e.into_repr());
                 final_basis.push(prover_params.generators[i]);
-
-                if prover_params.precomp.len() == 512 * prover_params.n {
+            }
+        }
+        // the second condition `n <= 1024` comes from benchmarking
+        // pre-computation is faster only when the #basis is <1024
+        if prover_params.precomp.len() == 512 * prover_params.n && final_scalars_repr.len() <= 1024
+        {
+            for (i, e) in final_scalars.iter().enumerate() {
+                if !e.is_zero() {
                     final_basis_pp = [
                         final_basis_pp,
                         prover_params.precomp[i * 256..(i + 1) * 256].to_vec(),
@@ -230,7 +241,9 @@ impl Proof {
 
         // compute the final aggregated proof
         let agg_proof = {
-            if prover_params.precomp.len() == 512 * prover_params.n {
+            if prover_params.precomp.len() == 512 * prover_params.n
+                && final_scalars_repr.len() <= 1024
+            {
                 VeccomG1Affine::sum_of_products_precomp_256(
                     &final_basis,
                     &scalars_u64,
@@ -643,7 +656,7 @@ impl Proof {
         //   e(com, g2^{\sum_{i \in set} \alpha^{N+1-i} t_i})
         //    ?= e(proof, g2) * e(g1, g2)^{alpha^{N+1} \sum value_i*t_i}
         // which is to check
-        //   e(com^tmp, g2^{\sum_{i \in set} \alpha^{N+1-i} t_i})
+        //   e(com, g2^{\sum_{i \in set} \alpha^{N+1-i} t_i * tmp})
         //    * e(proof^{-tmp}, g2)
         //    ?= e(g1, g2)^{alpha^N+1}
         // where
@@ -683,7 +696,7 @@ impl Proof {
         }
         // 1. compute tmp
         // 1.1 get the list of scalas, return false if this failed
-        let ti = match hash_to_ti_repr(com, set, value_sub_vector, verifier_params.n) {
+        let mut ti = match hash_to_ti_fr(com, set, value_sub_vector, verifier_params.n) {
             Err(_e) => return false,
             Ok(p) => p,
         };
@@ -692,10 +705,7 @@ impl Proof {
         let mut tmp = Fr::zero();
         for i in 0..set.len() {
             let mut mi = hash_to_field_veccom(value_sub_vector[i].as_ref());
-            // fr is gauranteed to be in the field so
-            // it is safe to unwrap
-            let fr = Fr::from_repr(ti[i]).unwrap();
-            mi.mul_assign(&fr);
+            mi.mul_assign(&ti[i]);
             tmp.add_assign(&mi);
         }
 
@@ -704,22 +714,27 @@ impl Proof {
         let mut tmp = tmp.inverse().unwrap();
 
         // 2 check
-        //   e(com^tmp, g2^{\sum_{i \in set} \alpha^{N+1-i} t_i})
+        //   e(com, g2^{\sum_{i \in set} \alpha^{N+1-i} t_i * tmp})
         //    * e(proof^{-tmp}, g2)
         //    ?= e(g1, g2)^{alpha^N+1}
 
-        // 2.1 com ^ tmp
-        let mut com_mut = com.commit;
-        com_mut.mul_assign(tmp);
+        // 2.1 compute t_i*tmp
+        let mut ti_repr: Vec<FrRepr> = vec![];
+        for i in 0..ti.len() {
+            ti[i].mul_assign(&tmp);
+            ti_repr.push(ti[i].into_repr());
+        }
 
-        // 2.2 g2^{\sum_{i \in set} \alpha^{N+1-i} t_i}
+        // 2.2 g2^{\sum_{i \in set} \alpha^{N+1-i} t_i*tmp}
         let bases: Vec<VeccomG2Affine> = set
             .iter()
             .map(|index| verifier_params.generators[verifier_params.n - index - 1])
             .collect();
-        let scalars_u64: Vec<&[u64; 4]> = ti.iter().map(|s| &s.0).collect();
+        let scalars_u64: Vec<&[u64; 4]> = ti_repr.iter().map(|s| &s.0).collect();
         let param_subset_sum = {
-            if verifier_params.precomp.len() == 256 * verifier_params.n {
+            // the second condition `n <= 1024` comes from benchmarking
+            // pre-computation is faster only when the #basis is <1024
+            if verifier_params.precomp.len() == 256 * verifier_params.n && bases.len() <= 1024 {
                 let mut bases_precomp: Vec<VeccomG2Affine> = vec![];
                 for e in set.iter() {
                     bases_precomp = [
@@ -743,7 +758,8 @@ impl Proof {
 
         // 3 pairing product
         veccom_pairing_product(
-            com_mut.into_affine(),
+            com.commit.into_affine(),
+            //com_mut.into_affine(),
             param_subset_sum.into_affine(),
             proof_mut.into_affine(),
             VeccomG2Affine::one(),
@@ -888,7 +904,9 @@ impl Proof {
             let scalars_u64_ref: Vec<&[u64; 4]> = scalars_u64.iter().collect();
 
             let param_subset_sum = {
-                if verifier_params.precomp.len() == 256 * verifier_params.n {
+                // the second condition `n <= 1024` comes from benchmarking
+                // pre-computation is faster only when the #basis is <1024
+                if verifier_params.precomp.len() == 256 * verifier_params.n && bases.len() <= 1024 {
                     let mut bases_precomp: Vec<VeccomG2Affine> = vec![];
                     for i in 0..ti_s[j].len() {
                         bases_precomp = [
