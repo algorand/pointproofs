@@ -363,6 +363,12 @@ fn test_batch_new_proof() {
     let (prover_params, verifier_params) =
         paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, n).unwrap();
 
+    let mut prover_params3 = prover_params.clone();
+    prover_params3.precomp_3();
+
+    let mut prover_params256 = prover_params.clone();
+    prover_params256.precomp_256();
+
     let mut values: Vec<String> = vec![];
     for i in 0..n {
         let s = format!("this is message number {}", i);
@@ -383,6 +389,16 @@ fn test_batch_new_proof() {
         proofs.push(Proof::new(&prover_params, &values, i).unwrap());
     }
     let proof_list = Proof::batch_new(&prover_params, &values, &indices).unwrap();
+    assert_eq!(
+        proof_list,
+        Proof::batch_new(&prover_params3, &values, &indices).unwrap(),
+        "pre_compute3 failed"
+    );
+    assert_eq!(
+        proof_list,
+        Proof::batch_new(&prover_params256, &values, &indices).unwrap(),
+        "pre_compute256 failed"
+    );
 
     assert_eq!(proof_list[0], proofs[5]);
     assert_eq!(proof_list[1], proofs[3]);
@@ -392,6 +408,16 @@ fn test_batch_new_proof() {
         Proof::same_commit_aggregate(&com, &proof_list, &indices, &value_sub_vector, n).unwrap();
 
     let agg_proof2 = Proof::batch_new_aggregated(&prover_params, &com, &values, &indices).unwrap();
+    assert_eq!(
+        agg_proof2,
+        Proof::batch_new_aggregated(&prover_params3, &com, &values, &indices).unwrap(),
+        "pre_compute3 failed"
+    );
+    assert_eq!(
+        agg_proof2,
+        Proof::batch_new_aggregated(&prover_params256, &com, &values, &indices).unwrap(),
+        "pre_compute256 failed"
+    );
 
     assert_eq!(
         agg_proof.proof.into_affine(),

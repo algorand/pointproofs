@@ -113,17 +113,31 @@ impl Proof {
             .map(|s| hash_to_field_repr_veccom(&s.as_ref()))
             .collect();
         let scalars_u64: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
-
-        Ok(indices
-            .iter()
-            .map(|e| Self {
-                ciphersuite: prover_params.ciphersuite,
-                proof: VeccomG1Affine::sum_of_products(
-                    &prover_params.generators[prover_params.n - *e..2 * prover_params.n - *e],
-                    &scalars_u64,
-                ),
-            })
-            .collect())
+        if prover_params.precomp.len() == 512 * prover_params.n {
+            Ok(indices
+                .iter()
+                .map(|e| Self {
+                    ciphersuite: prover_params.ciphersuite,
+                    proof: VeccomG1Affine::sum_of_products_precomp_256(
+                        &prover_params.generators[prover_params.n - *e..2 * prover_params.n - *e],
+                        &scalars_u64,
+                        &prover_params.precomp
+                            [(prover_params.n - *e) * 256..(2 * prover_params.n - *e) * 256],
+                    ),
+                })
+                .collect())
+        } else {
+            Ok(indices
+                .iter()
+                .map(|e| Self {
+                    ciphersuite: prover_params.ciphersuite,
+                    proof: VeccomG1Affine::sum_of_products(
+                        &prover_params.generators[prover_params.n - *e..2 * prover_params.n - *e],
+                        &scalars_u64,
+                    ),
+                })
+                .collect())
+        }
     }
 
     /// Generate a new set of proofs.
@@ -197,16 +211,35 @@ impl Proof {
         // also convert Fr-s to FrRepr-s to [u64;4]-s
         let mut final_basis: Vec<VeccomG1Affine> = vec![];
         let mut final_scalars_repr: Vec<FrRepr> = vec![];
+        let mut final_basis_pp: Vec<VeccomG1Affine> = vec![];
         for (i, e) in final_scalars.iter().enumerate() {
             if !e.is_zero() {
                 final_scalars_repr.push(e.into_repr());
                 final_basis.push(prover_params.generators[i]);
+
+                if prover_params.precomp.len() == 512 * prover_params.n {
+                    final_basis_pp = [
+                        final_basis_pp,
+                        prover_params.precomp[i * 256..(i + 1) * 256].to_vec(),
+                    ]
+                    .concat();
+                }
             }
         }
         let scalars_u64: Vec<&[u64; 4]> = final_scalars_repr.iter().map(|s| &s.0).collect();
 
         // compute the final aggregated proof
-        let agg_proof = VeccomG1Affine::sum_of_products(&final_basis, &scalars_u64);
+        let agg_proof = {
+            if prover_params.precomp.len() == 512 * prover_params.n {
+                VeccomG1Affine::sum_of_products_precomp_256(
+                    &final_basis,
+                    &scalars_u64,
+                    &final_basis_pp,
+                )
+            } else {
+                VeccomG1Affine::sum_of_products(&final_basis, &scalars_u64)
+            }
+        };
 
         Ok(Proof {
             ciphersuite: prover_params.ciphersuite,
