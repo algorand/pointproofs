@@ -154,7 +154,7 @@ This file is still under construction
   * Error: ciphersuite does not match #elements in parameters
   * Steps:
     1. hash `value`s into `scalar`s
-    2. commit = \prod prover_params[i]^scalar[i]
+    2. commit = \prod prover_params[i]^scalar[i] for i in indices
 
   ``` rust
   pub fn update<Blob: AsRef<[u8]>>(
@@ -200,7 +200,7 @@ This file is still under construction
     1. for `i` in `indices`
       1. hash `value_before[i]`s into `old_scalar[i]`
       2. hash `value_after[i]`s into `new_scalar[i]`
-    2. `commit = commit * \prod prover_params[changed_index]^(new_scalar[i]-old_scalar[i])`
+    2. `commit = commit * \prod prover_params[i]^(new_scalar[i]-old_scalar[i])` for i in indices
 
 ## Proofs
 
@@ -230,7 +230,7 @@ This file is still under construction
   * Error: index out of range
   * Steps:
     1. hash the `value`s into `scarlar`s
-    2. `proof = \prod prover_params[n - index + i]^scalar[i]`
+    2. `proof = \prod prover_params[n - index + i]^scalar[i]` for i in range(n) except index 
 
 
   ``` rust
