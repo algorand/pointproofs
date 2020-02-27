@@ -35,6 +35,8 @@
   bencher = "0.1.5"
   criterion = "0.2.11"
   rand = "0.5"
+  rand_core = ""
+  rand_xorshift = ""
 
 #
 # [[bench]]
@@ -42,8 +44,12 @@
 #   harness = false
 
 [[bench]]
-  name = "paper"
+  name = "sum_of_prod"
   harness = false
+
+# [[bench]]
+#   name = "paper"
+#   harness = false
 #
 # [[bench]]
 #   name = "bench_without_pre_comp"
