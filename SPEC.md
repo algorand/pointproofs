@@ -31,8 +31,8 @@ This file is still under construction
 * Definitions
 
   ``` rust
-  /// the VeccomG1 and VeccomG2 are switched to improve verification speed
-  /// VeccomG1 represents G1 in the paper, and is mapped to bls12-381::G2
+  /// the VeccomG1 and VeccomG2 can be switched to improve verification speed
+  /// VeccomG1 represents G1 in the paper, and can be mapped to either bls12-381::G1 or bls12-381::G2
   type VeccomG1 = G2;
   type VeccomG2 = G1;
   type VeccomG1Affine = G2Affine;
@@ -154,7 +154,7 @@ This file is still under construction
   * Error: ciphersuite does not match #elements in parameters
   * Steps:
     1. hash `value`s into `scalar`s
-    2. commit = \prod prover_params[i]^scalar[i] for i in indices
+    2. `commit = \prod prover_params.generators[i]^scalar[i] for i in indices`
 
   ``` rust
   pub fn update<Blob: AsRef<[u8]>>(
@@ -176,7 +176,7 @@ This file is still under construction
   * Steps:
     1. hash `value_before` into `old_scalar`
     2. hash `value_after` into `new_scalar`
-    3. `commit = commit * prover_params[changed_index]^(new_scalar-old_scalar)`
+    3. `commit = commit * prover_params,generators[changed_index]^(new_scalar-old_scalar)`
 
   ``` rust
   pub fn batch_update<Blob: AsRef<[u8]>>(
@@ -200,7 +200,7 @@ This file is still under construction
     1. for `i` in `indices`
       1. hash `value_before[i]`s into `old_scalar[i]`
       2. hash `value_after[i]`s into `new_scalar[i]`
-    2. `commit = commit * \prod prover_params[i]^(new_scalar[i]-old_scalar[i])` for i in indices
+      2. `commit = commit * \prod prover_params.generators[i]^(new_scalar[i]-old_scalar[i])` for i in indices
 
 ## Proofs
 
@@ -230,7 +230,7 @@ This file is still under construction
   * Error: index out of range
   * Steps:
     1. hash the `value`s into `scarlar`s
-    2. `proof = \prod prover_params[n - index + i]^scalar[i]` for i in range(n) except index 
+    2. `proof = \prod prover_params.generators[n - index + i]^scalar[i]` for i in range(n) except index 
 
 
   ``` rust
@@ -256,7 +256,7 @@ This file is still under construction
   * Steps:
     1. hash `value_before` into `old_scalar`
     2. hash `value_after` into `new_scalar`
-    3. `proof = proof * prover_params[changed_index + n - proof_index]^(new_scalar-old_scalar)`
+    3. `proof = proof * prover_params.generators[changed_index + n - proof_index]^(new_scalar-old_scalar)`
 
 
   ``` rust
@@ -277,7 +277,7 @@ This file is still under construction
   * Output: if the proof is valid w.r.t. commit/values/index or not
   * Steps:
     1. Compute `t = hash_to_field_veccom(value)`
-    2. return `e(com^{1/t}, param[n-index-1]) * e(proof^{-1/t}, generator_of_g2) ?= gt_elt`
+    2. return `e(com^{1/t}, veririer_params.generators[n-index-1]) * e(proof^{-1/t}, generator_of_g2) == gt_elt`
 
   ``` rust
   /// Aggregates a vector of proofs into a single one
@@ -325,7 +325,7 @@ This file is still under construction
   * Error: ciphersuite not supported
   * Steps:
     1. if `commit.len() == 1`, return `aggregate(commits[0], proofs[0], set[0], value_sub_vector[0], n)`
-    2. hash to a list of scalars `hash_to_tj(&commits, &set, &value_sub_vector, n)?`
+    2. hash to a list of scalars `hash_to_tj(&commits, &set, &value_sub_vector, n)`
     3. return `proof = \prod proofs[i]^tj[i]`
 
 
@@ -349,7 +349,7 @@ This file is still under construction
   * Error: ciphersuite not supported
   * Steps:
     1. if `commit.len() == 1`, return `aggregate(commits[0], proofs[0], set[0], value_sub_vector[0], n)`
-    2. hash to a list of scalars `hash_to_tj(&commits, &set, &value_sub_vector, n)?`
+    2. hash to a list of scalars `hash_to_tj(&commits, &set, &value_sub_vector, n)`
     3. for  `0<=i<commit.len` compute `pi[i] = aggregate(commits[i], proofs[i], set[i], value_sub_vector[i], n)`
     4. return `proof = \prod pi[i]^tj[i]`
 
@@ -365,12 +365,12 @@ This file is still under construction
   ```
   * Input is similar to `aggregate`
   * Output: if the proof is valid w.r.t. the inputs or not
-  * Formula: `e(com^tmp, g2^{\sum_{i \in set} \alpha^{N+1-i} t_i})* e(proof^{-tmp}, g2)?= e(g1, g2)^{alpha^N+1}` where `tmp = 1/\sum value_i*t_i`
+  * Formula: `e(com, g2^{tmp*\sum_{i \in set} \alpha^{N+1-i} t_i})* e(proof^{-tmp}, g2)?= e(g1, g2)^{alpha^N+1}` where `tmp = 1/\sum value_i*t_i`
   * Steps:
     1. if `set.len() == 1`, return `self.verify(&verifier_params, &com, value_sub_vector[0].as_ref(), set[0]);`
     2. Set `t_i = hash_to_ti(com, set, value_sub_vector, verifier_params.n)`
     3. Compute `tmp = 1/ \sum value_i*t_i`
-    4. Return `e(com^tmp, g2^{\sum_{i \in set} \alpha^{N+1-i} t_i}) * e(proof^{-tmp}, g2) ?= e(g1, g2)^{alpha^N+1}`
+    4. Return `e(com, (\Prod verifier_params.generators[n-i-1]^(tmp * t_i)) * e(proof^{-tmp}, g2) == gt_elt`
 
   ``` rust
   /// verify a proof which was aggregated from 2-dim array of proofs
@@ -384,15 +384,15 @@ This file is still under construction
   ```
   * Input is similar to `cross_commit_aggregate`
   * Output: if the proof is valid w.r.t. the inputs or not
-  * Formula: `\prod e(com[j], g2^{\sum alpha^{n + 1 - i} * t_i,j * tj/tmp} ) * e(proof^{-1/tmp}, g2) ?= e(g1, g2)^{alpha^{n+1}} == verifier_params.Fq12`
-  where `tmp = \sum m_i,j * t_i,j * tj`
+  * Formula: `\prod e(com[j], g2^{\sum alpha^{n + 1 - i} * t_j,i * tj * tmp} ) * e(proof^{-tmp}, g2) == e(g1, g2)^{alpha^{n+1}}`
+  where `tmp = 1/\sum m_j,i * t_j,i * tj`
   * Steps:
     1. if `com.len() == 1`, return `self.batch_verify(&verifier_params, &com[0], &set[0], &value_sub_vector[0])`
-    2. compute `tmp = \sum m_i,j * t_i,j * tj`
+    2. compute `tmp = 1 / sum_j tj (sum_i m_j,i * t_j,i)`
     3. formulate `g1_vec = [com | (1/proof)^tmp]`
-    4. set `g2_vec` as for `j \in [num_commit], g2^{\sum alpha^{n + 1 - i} * t_i,j} * tj/tmp`,
+    4. set `g2_vec` as for `j \in [num_commit], (\Prod for i in set[j] of verifier_params.generators[n-i-1]^(tmp * t_j,i * t_j))`,
     5. `g2_vec.push(G2::one())`
-    6. return `pairing_multi_product(g1_vec, g2_vec) ?= verifier_params.gt_elt`
+    6. return `pairing_multi_product(g1_vec, g2_vec) == verifier_params.gt_elt`
 
 
 
