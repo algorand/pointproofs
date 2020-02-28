@@ -100,7 +100,7 @@ fn test_c_api_aggregate() {
         let proof10 = vcp_prove(pp.clone(), values1.as_ptr(), n, 0);
         let proof11 = vcp_prove(pp.clone(), values1.as_ptr(), n, 1);
         let proof20 = vcp_prove(pp.clone(), values2.as_ptr(), n, 0);
-        let proof21 = vcp_prove(pp, values2.as_ptr(), n, 1);
+        let proof21 = vcp_prove(pp.clone(), values2.as_ptr(), n, 1);
 
         let agg_proof = vcp_x_commit_aggregate_full(
             [com1.clone(), com2.clone()].as_ptr(),
@@ -148,6 +148,13 @@ fn test_c_api_aggregate() {
             2,
             n,
         );
+        let agg_proof11 =
+            vcp_prove_batch_aggregated(pp.clone(), com1.clone(), values1.as_ptr(), n, &[0, 1]);
+        let proof_bytes1 = vcp_proof_serial(agg_proof1.clone());
+        let proof_bytes11 = vcp_proof_serial(agg_proof11.clone());
+        for i in 0..PROOF_LEN {
+            assert_eq!(proof_bytes1.data[i], proof_bytes11.data[i]);
+        }
 
         let agg_proof2 = vcp_same_commit_aggregate(
             com2.clone(),

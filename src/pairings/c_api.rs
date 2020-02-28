@@ -283,6 +283,30 @@ pub unsafe extern "C" fn vcp_prove(
     }
 }
 
+/// Generate a proof
+#[no_mangle]
+pub unsafe extern "C" fn vcp_prove_batch_aggregated(
+    prover: vcp_pp,
+    commit: vcp_commitment,
+    values: *const vcp_value,
+    n: usize,
+    idx: &[libc::size_t],
+) -> vcp_proof {
+    let pprover = &*(prover.data as *const ProverParams);
+    let tmp = slice::from_raw_parts::<vcp_value>(values, n);
+    let mut vvalues: Vec<Vec<u8>> = vec![];
+    for e in tmp {
+        vvalues.push(vcp_value_slice(&e).to_vec());
+    }
+    let pcom = &*(commit.data as *const Commitment);
+    let proof = Proof::batch_new_aggregated(pprover, pcom, &vvalues, idx).unwrap();
+    let buf_box = Box::new(proof);
+
+    vcp_proof {
+        data: Box::into_raw(buf_box) as *mut ffi::c_void,
+    }
+}
+
 /// update an existing proof
 #[no_mangle]
 pub unsafe extern "C" fn vcp_proof_update(
