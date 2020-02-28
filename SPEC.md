@@ -255,7 +255,7 @@ This file is still under construction
     1. hash the `value`s into `scarlar`s
     2. for j in 0..indices.len():
         1. `proof[j] = \prod prover_params[n - indices[j] + i]^scalar[i]` for i in range(n) except index     
-        (_in implementation we implement it as `for i in range(n)` without exception, since the corresponding generator was already set to `0`_)
+        (_in implementation we implement it as `for i in range(n)` without exception, since the corresponding generator was already set to `1`_)
 
 
   ``` rust
@@ -277,11 +277,13 @@ This file is still under construction
   * Error: indices.length = 0 or indices.length > n
     1. hash the `value`s into `scarlar`s
     2. `proof = 1`
-    2. for j in 0..indices.len():
-        1. `proof[j] = \prod prover_params[n - indices[j] + i]^scalar[i]` for i in range(n) except index 
-            (_in implementation we implement it as `for i in range(n)` without exception, since the corresponding generator was already set to `0`_)
+    3. for j in 0..indices.len():
+        1. `proof[j] = \prod prover_params[n - indices[j] + i]^scalar[i]` for i in range(n) except indices[j] 
+            (_in implementation we implement it as `for i in range(n)` without exception, since the corresponding generator was already set to `1`_)
         2. `proof *= proof[j]`
-
+        
+    More efficient implementation is via the following
+    `\prod_k prover_params[k]^c[k]` where `c[k]=\sum scalar[k+i-n] * t_i` for i in indices (with scalars at out-of-range indices understood to be 0)
 
   ``` rust
   /// For updating your proof when someone else's value changes

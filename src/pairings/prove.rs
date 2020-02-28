@@ -52,14 +52,14 @@ impl Proof {
             // pre-computation is faster only when the #basis is <1024
             if prover_params.precomp.len() == 512 * prover_params.n && prover_params.n <= 1024 {
                 VeccomG1Affine::sum_of_products_precomp_256(
-                    &prover_params.generators[prover_params.n - index..2 * prover_params.n - index],
+                    &prover_params.generators[(prover_params.n - index) .. (2 * prover_params.n - index)],
                     &scalars_u64,
                     &prover_params.precomp
-                        [(prover_params.n - index) * 256..(2 * prover_params.n - index) * 256],
+                        [(prover_params.n - index) * 256 .. (2 * prover_params.n - index) * 256],
                 )
             } else {
                 VeccomG1Affine::sum_of_products(
-                    &prover_params.generators[prover_params.n - index..2 * prover_params.n - index],
+                    &prover_params.generators[(prover_params.n - index) .. (2 * prover_params.n - index)],
                     &scalars_u64,
                 )
             }
@@ -124,10 +124,10 @@ impl Proof {
                 .map(|e| Self {
                     ciphersuite: prover_params.ciphersuite,
                     proof: VeccomG1Affine::sum_of_products_precomp_256(
-                        &prover_params.generators[prover_params.n - *e..2 * prover_params.n - *e],
+                        &prover_params.generators[(prover_params.n - *e) .. (2 * prover_params.n - *e)],
                         &scalars_u64,
                         &prover_params.precomp
-                            [(prover_params.n - *e) * 256..(2 * prover_params.n - *e) * 256],
+                            [(prover_params.n - *e) * 256 .. (2 * prover_params.n - *e) * 256],
                     ),
                 })
                 .collect())
@@ -137,7 +137,7 @@ impl Proof {
                 .map(|e| Self {
                     ciphersuite: prover_params.ciphersuite,
                     proof: VeccomG1Affine::sum_of_products(
-                        &prover_params.generators[prover_params.n - *e..2 * prover_params.n - *e],
+                        &prover_params.generators[(prover_params.n - *e) .. (2 * prover_params.n - *e)],
                         &scalars_u64,
                     ),
                 })
@@ -231,7 +231,7 @@ impl Proof {
                 if !e.is_zero() {
                     final_basis_pp = [
                         final_basis_pp,
-                        prover_params.precomp[i * 256..(i + 1) * 256].to_vec(),
+                        prover_params.precomp[i * 256 .. (i + 1) * 256].to_vec(),
                     ]
                     .concat();
                 }
@@ -304,12 +304,12 @@ impl Proof {
             let res = if prover_params.precomp.len() == 6 * prover_params.n {
                 prover_params.generators[param_index].mul_precomp_3(
                     multiplier,
-                    &prover_params.precomp[param_index * 3..(param_index + 1) * 3],
+                    &prover_params.precomp[param_index * 3 .. (param_index + 1) * 3],
                 )
             } else if prover_params.precomp.len() == 512 * prover_params.n {
                 prover_params.generators[param_index].mul_precomp_256(
                     multiplier,
-                    &prover_params.precomp[param_index * 256..(param_index + 1) * 256],
+                    &prover_params.precomp[param_index * 256 .. (param_index + 1) * 256],
                 )
             } else {
                 assert_eq!(prover_params.precomp.len(), 0, "{}", ERR_PARAM);
