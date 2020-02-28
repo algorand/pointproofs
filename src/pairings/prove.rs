@@ -202,13 +202,13 @@ impl Proof {
         // get the list of scalars for each proof
         let ti = hash_to_ti_fr(commit, indices, &value_sub_vector, prover_params.n)?;
 
-        // form the final scalars, which are t[i]*m[n - indices[i] + j] for each index
+        // form the final scalars, which are ti[k]*m[n - indices[k] + j] for each index
         let mut final_scalars: Vec<Fr> = vec![Fr::zero(); 2 * prover_params.n];
-        for i in 0..indices.len() {
+        for k in 0..indices.len() {
             for j in 0..prover_params.n {
-                let mut tmp = ti[i];
+                let mut tmp = ti[k];
                 tmp.mul_assign(&scalars_fr[j]);
-                final_scalars[prover_params.n - indices[i] + j].add_assign(&tmp);
+                final_scalars[prover_params.n - indices[k] + j].add_assign(&tmp);
             }
         }
 
@@ -537,9 +537,9 @@ impl Proof {
     ///         1. The aggregator does not check the validity of the proof.
     ///         2. The proofs are already aggregated within each commitment.
     ///     * Steps:
-    ///         1. t\[j\] = hash_to_tj(...)
-    ///         2. pi\[j\] = same_commit_aggregate(...)
-    ///         3. return prod pi\[j\]^t\[j\]
+    ///         1. t[j] = hash_to_tj(...)
+    ///         2. pi[j] = same_commit_aggregate(...)
+    ///         3. return prod pi[j]^t[j]
     pub fn cross_commit_aggregate_full<Blob: AsRef<[u8]>>(
         commits: &[Commitment],
         proofs: &[Vec<Self>],
@@ -607,21 +607,21 @@ impl Proof {
         // generate the random Fr-s
         let tj = hash_to_tj_fr(&commits, &set, &value_sub_vector, n)?;
         let mut ti_s: Vec<Vec<Fr>> = vec![];
-        for i in 0..commits.len() {
+        for j in 0..commits.len() {
             ti_s.push(hash_to_ti_fr(
-                &commits[i],
-                &set[i],
-                &value_sub_vector[i],
+                &commits[j],
+                &set[j],
+                &value_sub_vector[j],
                 n,
             )?);
         }
         // form the final scalars by multiplying Fr-s
-        // for i in 0..# com, for j in 0..#proof, tj[i] * ti[i,j]
+        // for j in 0..# com, for k in 0..#proof, tj[j] * ti[j,k]
         let mut scalars_repr: Vec<FrRepr> = vec![];
-        for i in 0..tj.len() {
-            for e in ti_s[i].iter() {
+        for j in 0..tj.len() {
+            for e in ti_s[j].iter() {
                 let mut tmp = *e;
-                tmp.mul_assign(&tj[i]);
+                tmp.mul_assign(&tj[j]);
                 scalars_repr.push(tmp.into_repr());
             }
         }
@@ -703,9 +703,9 @@ impl Proof {
 
         // 1.2 tmp = 1/\sum value_i*t_i
         let mut tmp = Fr::zero();
-        for i in 0..set.len() {
-            let mut mi = hash_to_field_veccom(value_sub_vector[i].as_ref());
-            mi.mul_assign(&ti[i]);
+        for k in 0..set.len() {
+            let mut mi = hash_to_field_veccom(value_sub_vector[k].as_ref());
+            mi.mul_assign(&ti[k]);
             tmp.add_assign(&mi);
         }
 
@@ -720,9 +720,9 @@ impl Proof {
 
         // 2.1 compute t_i*tmp
         let mut ti_repr: Vec<FrRepr> = vec![];
-        for i in 0..ti.len() {
-            ti[i].mul_assign(&tmp);
-            ti_repr.push(ti[i].into_repr());
+        for k in 0..ti.len() {
+            ti[k].mul_assign(&tmp);
+            ti_repr.push(ti[k].into_repr());
         }
 
         // 2.2 g2^{\sum_{i \in set} \alpha^{N+1-i} t_i*tmp}
@@ -824,8 +824,8 @@ impl Proof {
 
         // generate all the t_i-s for j \in [num_commit]
         let mut ti_s: Vec<Vec<Fr>> = vec![];
-        for i in 0..num_commit {
-            let ti = match hash_to_ti_fr(&com[i], &set[i], &value_sub_vector[i], verifier_params.n)
+        for j in 0..num_commit {
+            let ti = match hash_to_ti_fr(&com[j], &set[j], &value_sub_vector[j], verifier_params.n)
             {
                 Err(_e) => return false,
                 Ok(p) => p,
@@ -847,9 +847,9 @@ impl Proof {
             let mut tmp2 = Fr::zero();
 
             // tmp2 = sum_i m_ij * t_ij
-            for i in 0..ti_s[j].len() {
-                let mut tmp3 = ti_s[j][i];
-                let mij = hash_to_field_veccom(value_sub_vector[j][i].as_ref());
+            for k in 0..ti_s[j].len() {
+                let mut tmp3 = ti_s[j][k];
+                let mij = hash_to_field_veccom(value_sub_vector[j][k].as_ref());
                 tmp3.mul_assign(&mij);
                 tmp2.add_assign(&tmp3);
             }
@@ -858,7 +858,7 @@ impl Proof {
             // the output of hash should always be a field element
             let tmp3 = Fr::from_repr(tj[j]).unwrap();
             tmp2.mul_assign(&tmp3);
-            // tmp += tj * (sum_i m_ij * t_ij)
+            // tmp += tj * (sum_i m_ji * t_ij)
             tmp.add_assign(&tmp2);
         }
 
@@ -871,7 +871,7 @@ impl Proof {
         // step 2. now the formula becomes
         // \prod e(com[j], g2^{\sum alpha^{n + 1 - i} * t_i,j * tj/tmp} )
         //  * e(proof^{-1/tmp}, g2)
-        //  ?= e(g1, g2)^{alpha^{n+1}} == verifier_params.Fq12
+        //  ?= e(g1, g2)^{alpha^{n+1}} == verifier_params.gt_elt
 
         // g1_vec stores the g1 components for the pairing product
         // for j \in [num_commit], store com[j]
@@ -895,9 +895,9 @@ impl Proof {
             // subset_sum = \prod alpha^{n + 1 - i} * t_i,j}
             let mut bases: Vec<VeccomG2Affine> = vec![];
             let mut scalars_u64: Vec<[u64; 4]> = vec![];
-            for i in 0..ti_s[j].len() {
-                bases.push(verifier_params.generators[verifier_params.n - set[j][i] - 1]);
-                let mut t = ti_s[j][i];
+            for k in 0..ti_s[j].len() {
+                bases.push(verifier_params.generators[verifier_params.n - set[j][k] - 1]);
+                let mut t = ti_s[j][k];
                 t.mul_assign(&tmp3);
                 scalars_u64.push(t.into_repr().0);
             }
@@ -908,11 +908,11 @@ impl Proof {
                 // pre-computation is faster only when the #basis is <1024
                 if verifier_params.precomp.len() == 256 * verifier_params.n && bases.len() <= 1024 {
                     let mut bases_precomp: Vec<VeccomG2Affine> = vec![];
-                    for i in 0..ti_s[j].len() {
+                    for k in 0..ti_s[j].len() {
                         bases_precomp = [
                             bases_precomp,
-                            verifier_params.precomp[(verifier_params.n - set[j][i] - 1) * 256
-                                ..(verifier_params.n - set[j][i] - 1) * 256]
+                            verifier_params.precomp[(verifier_params.n - set[j][k] - 1) * 256
+                                ..(verifier_params.n - set[j][k] - 1) * 256]
                                 .to_vec(),
                         ]
                         .concat();
@@ -931,7 +931,7 @@ impl Proof {
         // the last element for g1_vec is g2
         g2_vec.push(VeccomG2::one().into_affine());
 
-        // now check the pairing product ?= verifier_params.Fq12
+        // now check the pairing product ?= verifier_params.gt_elt
         veccom_pairing_multi_product(&g1_vec[..], &g2_vec[..]) == verifier_params.gt_elt
     }
 }
