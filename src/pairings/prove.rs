@@ -759,7 +759,6 @@ impl Proof {
         // 3 pairing product
         veccom_pairing_product(
             com.commit.into_affine(),
-            //com_mut.into_affine(),
             param_subset_sum.into_affine(),
             proof_mut.into_affine(),
             VeccomG2Affine::one(),
@@ -875,16 +874,20 @@ impl Proof {
 
         // g1_vec stores the g1 components for the pairing product
         // for j \in [num_commit], store com[j]
-        let mut g1_vec: Vec<VeccomG1Affine> = com.iter().map(|x| x.commit.into_affine()).collect();
+        let mut g1_proj: Vec<VeccomG1> = com.iter().map(|x| x.commit).collect();
         // the last element for g1_vec is proof^{-1/tmp}
         let mut tmp2 = self.proof;
         tmp2.negate();
         tmp2.mul_assign(tmp_inverse);
-        g1_vec.push(tmp2.into_affine());
+        g1_proj.push(tmp2);
+
+        // convert g1_proj into g1_affine
+        VeccomG1::batch_normalization(&mut g1_proj);
+        let g1_vec: Vec<VeccomG1Affine> = g1_proj.iter().map(|s| s.into_affine()).collect();
 
         // g2_vec stores the g2 components for the pairing product
         // for j \in [num_commit], g2^{\prod alpha^{n + 1 - i} * t_i,j} * tj/tmp )
-        let mut g2_vec: Vec<VeccomG2Affine> = vec![];
+        let mut g2_proj: Vec<VeccomG2> = vec![];
         for j in 0..num_commit {
             let mut tmp3 = tmp_inverse;
             // safe to unwrap here
@@ -926,11 +929,13 @@ impl Proof {
                     VeccomG2Affine::sum_of_products(&bases, &scalars_u64_ref)
                 }
             };
-            g2_vec.push(param_subset_sum.into_affine());
+            g2_proj.push(param_subset_sum);
         }
         // the last element for g1_vec is g2
-        g2_vec.push(VeccomG2::one().into_affine());
-
+        g2_proj.push(VeccomG2::one());
+        // convert g2_proj into g2_affine
+        VeccomG2::batch_normalization(&mut g2_proj);
+        let g2_vec: Vec<VeccomG2Affine> = g2_proj.iter().map(|s| s.into_affine()).collect();
         // now check the pairing product ?= verifier_params.gt_elt
         veccom_pairing_multi_product(&g1_vec[..], &g2_vec[..]) == verifier_params.gt_elt
     }
