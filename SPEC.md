@@ -87,9 +87,8 @@ This file is still under construction
   * Error: ciphersuite does not match #elements in parameters
   * Error: serialization fails
   * Steps: serialize the parameters into a blob
-    1. For `ProverParams`, convert `|ciphersuite id | n | generators | pp_len | [pre_compute]` to bytes
-    2. For `VerifierParam`, convert  `|ciphersuite id | n | generators |` to bytes
-
+    1. For `ProverParams`, convert `|ciphersuite id | n | generators | pp_len | [pre_compute] |` to bytes
+    2. For `VerifierParam`, convert  `|ciphersuite id | n | generators  | pp_len | [pre_compute] |` to bytes
 
   ``` rust
   fn deserialize<R: Read>(reader: &mut R, compressed: bool) -> Result<Self>
@@ -102,9 +101,9 @@ This file is still under construction
   * Error: encoded buffer has a different compressness than specified
   * Error: deserialization fails
   * Steps: deserialize the blob into parameters
-    1. For `ProverParams`, convert bytes to `|ciphersuite id | n | generators | pp_len | [pre_compute]`
-    2. For `VerifierParam`, convert bytes to `|ciphersuite id | n | generators |`
-
+    1. For `ProverParams`, convert bytes to `|ciphersuite id | n | generators | pp_len | [pre_compute] |`
+    2. For `VerifierParam`, convert bytes to `|ciphersuite id | n | generators | pp_len | [pre_compute] |`
+    
 ## Commitment    
 
 * Definitions
@@ -152,6 +151,7 @@ This file is still under construction
   * Output: a `Commitment`
   * Error: ciphersuite is not supported
   * Error: ciphersuite does not match #elements in parameters
+  * Error: values.length does not match n
   * Steps:
     1. hash `value`s into `scalar`s
     2. `commit = \prod prover_params.generators[i]^scalar[i] for i in indices`
@@ -228,9 +228,59 @@ This file is still under construction
   * Output: a new proof
   * Error: ciphersuite is not supported
   * Error: index out of range
+  * Error: values.length does not match n
   * Steps:
     1. hash the `value`s into `scarlar`s
     2. `proof = \prod prover_params.generators[n - index + i]^scalar[i]` for i in range(n) except index 
+    (_in implementation we implement it as `for i in range(n)` without exception, since the corresponding generator was already set to `0`_)
+
+
+  ``` rust
+  /// generate a list of new proofs
+  pub fn batch_new<Blob: AsRef<[u8]>>(
+      prover_params: &ProverParams,
+      values: &[Blob],
+      indices: &[usize],
+  ) -> Result<Vec<Self>, String>
+  ```
+  * Input: a `ProverParam`
+  * Input: a list of values to commit
+  * Input: a list of indices for which the proofs are generated
+  * Output: a list of proofs, each corresponding to an index
+  * Error: ciphersuite is not supported
+  * Error: index out of range
+  * Error: values.length does not match n
+  * Error: indices.length = 0 or indices.length > n
+  * Steps:
+    1. hash the `value`s into `scarlar`s
+    2. for j in 0..indices.len():
+        1. `proof[j] = \prod prover_params[n - indices[j] + i]^scalar[i]` for i in range(n) except index     
+        (_in implementation we implement it as `for i in range(n)` without exception, since the corresponding generator was already set to `0`_)
+
+
+  ``` rust
+  /// generate a single, aggregated proof
+  pub fn batch_new_aggregated<Blob: AsRef<[u8]>>(
+      prover_params: &ProverParams,
+      commit: &Commitment,
+      values: &[Blob],
+      indices: &[usize],
+  ) -> Result<Self, String>
+  ```
+  * Input: a `ProverParam`
+  * Input: a list of values to commit
+  * Input: a list of indices for which the proofs are generated
+  * Output: an aggregated proof for proofs, each corresponding to an index
+  * Error: ciphersuite is not supported
+  * Error: index out of range
+  * Error: values.length does not match n
+  * Error: indices.length = 0 or indices.length > n
+    1. hash the `value`s into `scarlar`s
+    2. `proof = 1`
+    2. for j in 0..indices.len():
+        1. `proof[j] = \prod prover_params[n - indices[j] + i]^scalar[i]` for i in range(n) except index 
+            (_in implementation we implement it as `for i in range(n)` without exception, since the corresponding generator was already set to `0`_)
+        2. `proof *= proof[j]`
 
 
   ``` rust
