@@ -232,6 +232,7 @@ This file is still under construction
   * Steps:
     1. hash the `value`s into `scarlar`s
     2. `proof = \prod prover_params.generators[n - index + i]^scalar[i]` for i in range(n) except index 
+    (_in implementation we implement it as `for i in range(n)` without exception, since the corresponding generator was already set to `0`_)
 
 
   ``` rust
@@ -253,7 +254,8 @@ This file is still under construction
   * Steps:
     1. hash the `value`s into `scarlar`s
     2. for j in 0..indices.len():
-        1. `proof[j] = \prod prover_params[n - indices[j] + i]^scalar[i]` for i in 0..n
+        1. `proof[j] = \prod prover_params[n - indices[j] + i]^scalar[i]` for i in range(n) except index     
+        (_in implementation we implement it as `for i in range(n)` without exception, since the corresponding generator was already set to `0`_)
 
 
   ``` rust
@@ -276,7 +278,8 @@ This file is still under construction
     1. hash the `value`s into `scarlar`s
     2. `proof = 1`
     2. for j in 0..indices.len():
-        1. `proof[j] = \prod prover_params[n - indices[j] + i]^scalar[i]` for i in 0..n
+        1. `proof[j] = \prod prover_params[n - indices[j] + i]^scalar[i]` for i in range(n) except index 
+            (_in implementation we implement it as `for i in range(n)` without exception, since the corresponding generator was already set to `0`_)
         2. `proof *= proof[j]`
 
 
