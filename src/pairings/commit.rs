@@ -156,7 +156,7 @@ impl Commitment {
         }
 
         // get the scalars from the hashes
-        let mut multiplier_set: Vec<FrRepr> = vec![];
+        let mut multiplier_set: Vec<FrRepr> = Vec::with_capacity(value_before.len());
         for i in 0..value_before.len() {
             // multiplier = hash(new_value) - hash(old_value)
             let mut multiplier = hash_to_field_veccom(&value_before[i]);
@@ -177,8 +177,8 @@ impl Commitment {
             // to use sum_of_products with pre_computation,
             // we need to form the right basis
             if prover_params.precomp.len() == 256 * prover_params.generators.len() {
-                let mut pre: Vec<VeccomG1Affine> = vec![];
-                for e in changed_index.iter().take(value_before.len()) {
+                let mut pre: Vec<VeccomG1Affine> = Vec::with_capacity(changed_index.len() * 256);
+                for e in changed_index.iter() {
                     pre = [
                         pre,
                         prover_params.precomp

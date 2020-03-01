@@ -22,7 +22,7 @@
   libc = { version = "0.2", features = ["align"] }
   # ff = { version = "0.4", features = ["derive"] }
   bigint = { version = "4", default-features = false }
-  veccom-paramgen = { git = "https://github.com//algorand/veccom-paramgen"}
+  veccom-paramgen = { git = "ssh://git@github.com/algorand/veccom-paramgen"}
   # veccom-paramgen = { path = "../veccom-paramgen"}
 
 [features]
@@ -42,14 +42,14 @@
 # [[bench]]
 #   name = "pairings"
 #   harness = false
+#
+# [[bench]]
+#   name = "sum_of_prod"
+#   harness = false
 
 [[bench]]
-  name = "sum_of_prod"
+  name = "paper"
   harness = false
-
-# [[bench]]
-#   name = "paper"
-#   harness = false
 #
 # [[bench]]
 #   name = "bench_without_pre_comp"

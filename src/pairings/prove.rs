@@ -52,14 +52,16 @@ impl Proof {
             // pre-computation is faster only when the #basis is <1024
             if prover_params.precomp.len() == 512 * prover_params.n && prover_params.n <= 1024 {
                 VeccomG1Affine::sum_of_products_precomp_256(
-                    &prover_params.generators[(prover_params.n - index) .. (2 * prover_params.n - index)],
+                    &prover_params.generators
+                        [(prover_params.n - index)..(2 * prover_params.n - index)],
                     &scalars_u64,
                     &prover_params.precomp
-                        [(prover_params.n - index) * 256 .. (2 * prover_params.n - index) * 256],
+                        [(prover_params.n - index) * 256..(2 * prover_params.n - index) * 256],
                 )
             } else {
                 VeccomG1Affine::sum_of_products(
-                    &prover_params.generators[(prover_params.n - index) .. (2 * prover_params.n - index)],
+                    &prover_params.generators
+                        [(prover_params.n - index)..(2 * prover_params.n - index)],
                     &scalars_u64,
                 )
             }
@@ -124,10 +126,11 @@ impl Proof {
                 .map(|e| Self {
                     ciphersuite: prover_params.ciphersuite,
                     proof: VeccomG1Affine::sum_of_products_precomp_256(
-                        &prover_params.generators[(prover_params.n - *e) .. (2 * prover_params.n - *e)],
+                        &prover_params.generators
+                            [(prover_params.n - *e)..(2 * prover_params.n - *e)],
                         &scalars_u64,
                         &prover_params.precomp
-                            [(prover_params.n - *e) * 256 .. (2 * prover_params.n - *e) * 256],
+                            [(prover_params.n - *e) * 256..(2 * prover_params.n - *e) * 256],
                     ),
                 })
                 .collect())
@@ -137,7 +140,8 @@ impl Proof {
                 .map(|e| Self {
                     ciphersuite: prover_params.ciphersuite,
                     proof: VeccomG1Affine::sum_of_products(
-                        &prover_params.generators[(prover_params.n - *e) .. (2 * prover_params.n - *e)],
+                        &prover_params.generators
+                            [(prover_params.n - *e)..(2 * prover_params.n - *e)],
                         &scalars_u64,
                     ),
                 })
@@ -189,7 +193,7 @@ impl Proof {
         }
 
         // generate the list of sub_values
-        let mut value_sub_vector: Vec<&[u8]> = vec![];
+        let mut value_sub_vector: Vec<&[u8]> = Vec::with_capacity(values.len());
         for e in indices {
             value_sub_vector.push(values[*e].as_ref());
         }
@@ -214,27 +218,12 @@ impl Proof {
 
         // remove the generators where the scalars are 0s, to form the final basis
         // also convert Fr-s to FrRepr-s to [u64;4]-s
-        let mut final_basis: Vec<VeccomG1Affine> = vec![];
-        let mut final_scalars_repr: Vec<FrRepr> = vec![];
-        let mut final_basis_pp: Vec<VeccomG1Affine> = vec![];
+        let mut final_basis: Vec<VeccomG1Affine> = Vec::with_capacity(2 * prover_params.n);
+        let mut final_scalars_repr: Vec<FrRepr> = Vec::with_capacity(2 * prover_params.n);
         for (i, e) in final_scalars.iter().enumerate() {
             if !e.is_zero() {
                 final_scalars_repr.push(e.into_repr());
                 final_basis.push(prover_params.generators[i]);
-            }
-        }
-        // the second condition `n <= 1024` comes from benchmarking
-        // pre-computation is faster only when the #basis is <1024
-        if prover_params.precomp.len() == 512 * prover_params.n && final_scalars_repr.len() <= 1024
-        {
-            for (i, e) in final_scalars.iter().enumerate() {
-                if !e.is_zero() {
-                    final_basis_pp = [
-                        final_basis_pp,
-                        prover_params.precomp[i * 256 .. (i + 1) * 256].to_vec(),
-                    ]
-                    .concat();
-                }
             }
         }
         let scalars_u64: Vec<&[u64; 4]> = final_scalars_repr.iter().map(|s| &s.0).collect();
@@ -244,6 +233,17 @@ impl Proof {
             if prover_params.precomp.len() == 512 * prover_params.n
                 && final_scalars_repr.len() <= 1024
             {
+                let mut final_basis_pp: Vec<VeccomG1Affine> =
+                    Vec::with_capacity(512 * prover_params.n);
+                for (i, e) in final_scalars.iter().enumerate() {
+                    if !e.is_zero() {
+                        final_basis_pp = [
+                            final_basis_pp,
+                            prover_params.precomp[i * 256..(i + 1) * 256].to_vec(),
+                        ]
+                        .concat();
+                    }
+                }
                 VeccomG1Affine::sum_of_products_precomp_256(
                     &final_basis,
                     &scalars_u64,
@@ -304,12 +304,12 @@ impl Proof {
             let res = if prover_params.precomp.len() == 6 * prover_params.n {
                 prover_params.generators[param_index].mul_precomp_3(
                     multiplier,
-                    &prover_params.precomp[param_index * 3 .. (param_index + 1) * 3],
+                    &prover_params.precomp[(param_index * 3)..(param_index + 1) * 3],
                 )
             } else if prover_params.precomp.len() == 512 * prover_params.n {
                 prover_params.generators[param_index].mul_precomp_256(
                     multiplier,
-                    &prover_params.precomp[param_index * 256 .. (param_index + 1) * 256],
+                    &prover_params.precomp[(param_index * 256)..(param_index + 1) * 256],
                 )
             } else {
                 assert_eq!(prover_params.precomp.len(), 0, "{}", ERR_PARAM);
@@ -606,7 +606,7 @@ impl Proof {
         // start aggregation
         // generate the random Fr-s
         let tj = hash_to_tj_fr(&commits, &set, &value_sub_vector, n)?;
-        let mut ti_s: Vec<Vec<Fr>> = vec![];
+        let mut ti_s: Vec<Vec<Fr>> = Vec::with_capacity(commits.len());
         for j in 0..commits.len() {
             ti_s.push(hash_to_ti_fr(
                 &commits[j],
@@ -719,11 +719,12 @@ impl Proof {
         //    ?= e(g1, g2)^{alpha^N+1}
 
         // 2.1 compute t_i*tmp
-        let mut ti_repr: Vec<FrRepr> = vec![];
-        for k in 0..ti.len() {
-            ti[k].mul_assign(&tmp);
-            ti_repr.push(ti[k].into_repr());
-        }
+        let ti_repr: Vec<FrRepr> = (0..ti.len())
+            .map(|k| {
+                ti[k].mul_assign(&tmp);
+                ti[k].into_repr()
+            })
+            .collect();
 
         // 2.2 g2^{\sum_{i \in set} \alpha^{N+1-i} t_i*tmp}
         let bases: Vec<VeccomG2Affine> = set
@@ -735,7 +736,7 @@ impl Proof {
             // the second condition `n <= 1024` comes from benchmarking
             // pre-computation is faster only when the #basis is <1024
             if verifier_params.precomp.len() == 256 * verifier_params.n && bases.len() <= 1024 {
-                let mut bases_precomp: Vec<VeccomG2Affine> = vec![];
+                let mut bases_precomp: Vec<VeccomG2Affine> = Vec::with_capacity(bases.len() * 256);
                 for e in set.iter() {
                     bases_precomp = [
                         bases_precomp,
@@ -822,7 +823,7 @@ impl Proof {
         }
 
         // generate all the t_i-s for j \in [num_commit]
-        let mut ti_s: Vec<Vec<Fr>> = vec![];
+        let mut ti_s: Vec<Vec<Fr>> = Vec::with_capacity(num_commit);
         for j in 0..num_commit {
             let ti = match hash_to_ti_fr(&com[j], &set[j], &value_sub_vector[j], verifier_params.n)
             {
@@ -887,8 +888,9 @@ impl Proof {
 
         // g2_vec stores the g2 components for the pairing product
         // for j \in [num_commit], g2^{\prod alpha^{n + 1 - i} * t_i,j} * tj/tmp )
-        let mut g2_proj: Vec<VeccomG2> = vec![];
+        let mut g2_proj: Vec<VeccomG2> = Vec::with_capacity(num_commit + 1);
         for j in 0..num_commit {
+            let num_proof = ti_s[j].len();
             let mut tmp3 = tmp_inverse;
             // safe to unwrap here
             // the output of hash should always be a field element
@@ -896,9 +898,9 @@ impl Proof {
             tmp3.mul_assign(&scalar);
 
             // subset_sum = \prod alpha^{n + 1 - i} * t_i,j}
-            let mut bases: Vec<VeccomG2Affine> = vec![];
-            let mut scalars_u64: Vec<[u64; 4]> = vec![];
-            for k in 0..ti_s[j].len() {
+            let mut bases: Vec<VeccomG2Affine> = Vec::with_capacity(num_proof);
+            let mut scalars_u64: Vec<[u64; 4]> = Vec::with_capacity(num_proof);
+            for k in 0..num_proof {
                 bases.push(verifier_params.generators[verifier_params.n - set[j][k] - 1]);
                 let mut t = ti_s[j][k];
                 t.mul_assign(&tmp3);
@@ -910,8 +912,9 @@ impl Proof {
                 // the second condition `n <= 1024` comes from benchmarking
                 // pre-computation is faster only when the #basis is <1024
                 if verifier_params.precomp.len() == 256 * verifier_params.n && bases.len() <= 1024 {
-                    let mut bases_precomp: Vec<VeccomG2Affine> = vec![];
-                    for k in 0..ti_s[j].len() {
+                    let mut bases_precomp: Vec<VeccomG2Affine> =
+                        Vec::with_capacity(num_proof * 256);
+                    for k in 0..num_proof {
                         bases_precomp = [
                             bases_precomp,
                             verifier_params.precomp[(verifier_params.n - set[j][k] - 1) * 256
