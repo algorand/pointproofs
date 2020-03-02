@@ -909,6 +909,12 @@ impl Proof {
             let scalars_u64_ref: Vec<&[u64; 4]> = scalars_u64.iter().collect();
 
             let param_subset_sum = {
+                // println!(
+                //     "using pre-computation? {} {} {}",
+                //     verifier_params.precomp.len(),
+                //     verifier_params.n,
+                //     bases.len()
+                // );
                 // the second condition `n <= 1024` comes from benchmarking
                 // pre-computation is faster only when the #basis is <1024
                 if verifier_params.precomp.len() == 256 * verifier_params.n && bases.len() <= 1024 {
@@ -918,7 +924,7 @@ impl Proof {
                         bases_precomp = [
                             bases_precomp,
                             verifier_params.precomp[(verifier_params.n - set[j][k] - 1) * 256
-                                ..(verifier_params.n - set[j][k] - 1) * 256]
+                                ..(verifier_params.n - set[j][k]) * 256]
                                 .to_vec(),
                         ]
                         .concat();

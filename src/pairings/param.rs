@@ -113,22 +113,20 @@ fn paramgen_from_alpha(
 impl VerifierParams {
     /// pre-process the public parameters with precomputation value set to 3
     pub fn precomp_3(&mut self) {
-        let twice_n = self.generators.len();
-        self.precomp = vec![VeccomG2Affine::zero(); 3 * twice_n];
-        for i in 0..twice_n {
+        self.precomp = vec![VeccomG2Affine::zero(); 3 * self.n];
+        for i in 0..self.n {
             self.generators[i].precomp_3(&mut self.precomp[i * 3..(i + 1) * 3]);
         }
-        self.pp_len = self.n * 6;
+        self.pp_len = self.n * 3;
     }
 
     /// pre-process the public parameters with precomputation value set to 256
     pub fn precomp_256(&mut self) {
-        let twice_n = self.generators.len();
-        self.precomp = vec![VeccomG2Affine::zero(); 256 * twice_n];
-        for i in 0..twice_n {
+        self.precomp = vec![VeccomG2Affine::zero(); 256 * self.n];
+        for i in 0..self.n {
             self.generators[i].precomp_256(&mut self.precomp[i * 256..(i + 1) * 256]);
         }
-        self.pp_len = self.n * 512;
+        self.pp_len = self.n * 256;
     }
 }
 

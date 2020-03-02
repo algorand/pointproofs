@@ -70,13 +70,10 @@ fn test_same_commit_aggregation_small() {
     let n = 8usize;
     let (prover_params, verifier_params) =
         paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, n).unwrap();
-
     let mut verifier_params3 = verifier_params.clone();
     verifier_params3.precomp_3();
-
     let mut verifier_params256 = verifier_params.clone();
     verifier_params256.precomp_256();
-
     let mut init_values = Vec::with_capacity(n);
     for i in 0..n {
         let s = format!("this is message number {}", i);
@@ -87,7 +84,6 @@ fn test_same_commit_aggregation_small() {
     for e in init_values.iter().take(n) {
         values.push(&e);
     }
-
     let com = Commitment::new(&prover_params, &values).unwrap();
 
     let set = vec![1usize, 4, 7];
@@ -99,7 +95,6 @@ fn test_same_commit_aggregation_small() {
         proofs.push(proof);
         value_sub_vector.push(values[*index]);
     }
-
     let agg_proof =
         Proof::same_commit_aggregate(&com, &proofs, &set, &value_sub_vector, prover_params.n)
             .unwrap();
@@ -112,7 +107,6 @@ fn test_same_commit_aggregation_small() {
     )
     .unwrap();
     assert_eq!(agg_proof, agg_proof2);
-
     assert!(agg_proof.same_commit_batch_verify(&verifier_params, &com, &set, &value_sub_vector));
     assert!(agg_proof.same_commit_batch_verify(&verifier_params3, &com, &set, &value_sub_vector));
     assert!(agg_proof.same_commit_batch_verify(&verifier_params256, &com, &set, &value_sub_vector));
@@ -152,7 +146,6 @@ fn negative_test_cross_commit_aggregation() {
     let mut set = vec![];
     let mut same_commit_proof = vec![];
     for j in 0..4 {
-        println!("{}-th commit", j);
         let mut init_values = Vec::with_capacity(n);
         for i in 0..n {
             let s = format!("this is message number {} for commit {}", i, j);
@@ -299,7 +292,8 @@ fn test_cross_commit_aggregation_small() {
     let n = 8usize;
     let (prover_params, verifier_params) =
         paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, n).unwrap();
-
+    let mut verifier_params256 = verifier_params.clone();
+    verifier_params256.precomp_256();
     let mut values: Vec<Vec<Vec<u8>>> = vec![];
     let mut commits: Vec<Commitment> = vec![];
     let mut proofs: Vec<Vec<Proof>> = vec![];
@@ -307,7 +301,6 @@ fn test_cross_commit_aggregation_small() {
     let mut set = vec![];
     let mut same_commit_proof = vec![];
     for j in 0..4 {
-        println!("{}-th commit", j);
         let mut init_values = Vec::with_capacity(n);
         for i in 0..n {
             let s = format!("this is message number {} for commit {}", i, j);
@@ -362,9 +355,14 @@ fn test_cross_commit_aggregation_small() {
     )
     .unwrap();
     assert_eq!(agg_proof1, agg_proof2);
-
     assert!(agg_proof1.cross_commit_batch_verify(
         &verifier_params,
+        &commits,
+        &set,
+        &value_sub_vector
+    ));
+    assert!(agg_proof1.cross_commit_batch_verify(
+        &verifier_params256,
         &commits,
         &set,
         &value_sub_vector
@@ -431,7 +429,6 @@ fn test_cross_commit_aggregation_large() {
         let mut set = vec![];
         let mut same_commit_proof = vec![];
         for j in 0..8 {
-            println!("{}-th commit", j);
             let mut init_values = Vec::with_capacity(n);
             for i in 0..n {
                 let s = format!("this is message number {} for commit {}", i, j);
