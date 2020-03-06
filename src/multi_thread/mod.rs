@@ -1,5 +1,3 @@
-use crate::pairings::hash_to_field_veccom::*;
-use crate::pairings::param::*;
 use crate::pairings::*;
 use ff::{Field, PrimeField};
 use pairing::{bls12_381::*, CurveAffine, CurveProjective};

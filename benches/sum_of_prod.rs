@@ -7,17 +7,13 @@ extern crate rand_core;
 use criterion::Bencher;
 use criterion::Benchmark;
 use criterion::Criterion;
-use ff::{Field, PrimeField, PrimeFieldRepr, SqrtField};
+use ff::{Field, PrimeField};
 use pairing::bls12_381::*;
-use pairing::serdes::SerDes;
 use pairing::{CurveAffine, CurveProjective};
 use rand_core::SeedableRng;
-use std::ops::Sub;
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::thread::sleep;
-use std::time::SystemTime;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 criterion_group!(bench_mul, bench_g1_mt, bench_g1, bench_g2);
 criterion_main!(bench_mul);
@@ -107,8 +103,9 @@ fn bench_g1_mt(c: &mut Criterion) {
                         let handle = thread::spawn(move || {
                             let fr_u64: Vec<&[u64; 4]> =
                                 scalar_local.iter().map(|x| &x.0).collect();
+                            let tmp = G1Affine::sum_of_products(&basis_local[..], &fr_u64);
                             let mut v = buf_local.lock().unwrap();
-                            v.push(G1Affine::sum_of_products(&basis_local[..], &fr_u64));
+                            v.push(tmp);
                         });
 
                         handles.push(handle);
@@ -129,16 +126,8 @@ fn bench_g1_mt(c: &mut Criterion) {
             let bench = bench.measurement_time(Duration::from_millis(5000));
             let bench = bench.sample_size(100);
             let bench_str = format!("G1, sum of {} products", sample);
-            let now = Instant::now();
-            c.bench(&bench_str, bench);
-            let duration = now.elapsed();
 
-            println!(
-                "samples: {}, threads: {}, duration: {}",
-                sample,
-                thread_size,
-                duration.as_micros(),
-            );
+            c.bench(&bench_str, bench);
         }
     }
 }
