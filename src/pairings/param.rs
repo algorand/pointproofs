@@ -37,7 +37,7 @@ pub fn paramgen_from_seed<Blob: AsRef<[u8]>>(
     if !check_ciphersuite(ciphersuite) {
         return Err(ERR_CIPHERSUITE.to_owned());
     }
-    if n > 65536 {
+    if n > 1000_001 {
         return Err(ERR_MAX_N.to_owned());
     }
 

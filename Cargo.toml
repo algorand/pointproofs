@@ -38,6 +38,10 @@
   rand_core = ""
   rand_xorshift = ""
 
+
+[[bench]]
+  name = "one_m"
+  harness = false
 #
 # [[bench]]
 #   name = "pairings"
@@ -47,9 +51,6 @@
 #   name = "sum_of_prod"
 #   harness = false
 
-[[bench]]
-  name = "paper"
-  harness = false
 #
 # [[bench]]
 #   name = "bench_without_pre_comp"
