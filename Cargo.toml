@@ -43,14 +43,14 @@
 #   name = "pairings"
 #   harness = false
 #
-# [[bench]]
-#   name = "sum_of_prod"
-#   harness = false
-
 [[bench]]
-  name = "paper"
+  name = "sum_of_prod"
   harness = false
-#
+
+# [[bench]]
+#   name = "paper"
+#   harness = false
+# #
 # [[bench]]
 #   name = "bench_without_pre_comp"
 #   harness = false
