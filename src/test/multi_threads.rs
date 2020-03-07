@@ -1,9 +1,11 @@
 use crate::pairings::*;
 use ff::{Field, PrimeField};
 use pairing::{bls12_381::*, CurveAffine, CurveProjective};
+use pairings::param::paramgen_from_seed;
 use rand_core::SeedableRng;
 use std::sync::{Arc, Mutex};
 use std::thread;
+
 #[test]
 fn test_ms() {
     let mut rng = rand_xorshift::XorShiftRng::from_seed([
@@ -39,7 +41,35 @@ fn test_ms() {
     for e in buf_unwrap {
         res2.add_assign(&e);
     }
-    println!("threads: {:?}", buf_unwrap);
-    println!("Result: {:?}", res.into_affine());
-    println!("Result: {:?}", res2.into_affine());
+
+    assert_eq!(res, res2);
+}
+
+#[test]
+fn test_ms_commit() {
+    let n = 16usize;
+    let thd_array = [1, 2, 3, 4];
+    let (prover_params, _verifier_params) =
+        paramgen_from_seed("This is Leo's Favourite very very very long Seed", 0, n).unwrap();
+
+    let mut init_values = Vec::with_capacity(n);
+    for i in 0..n {
+        let s = format!("this is message number {}", i);
+        init_values.push(s.into_bytes());
+    }
+
+    let mut values: Vec<&[u8]> = Vec::with_capacity(n);
+    for e in init_values.iter().take(n) {
+        values.push(&e);
+    }
+
+    for i in 0..n {
+        let proof = Proof::new(&prover_params, &values, i).unwrap();
+        for num_thd in thd_array.iter() {
+            assert_eq!(
+                proof,
+                Proof::new_mt(&prover_params, &values, i, *num_thd).unwrap()
+            );
+        }
+    }
 }

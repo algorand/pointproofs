@@ -107,7 +107,6 @@ fn bench_g1_mt(c: &mut Criterion) {
                             let mut v = buf_local.lock().unwrap();
                             v.push(tmp);
                         });
-
                         handles.push(handle);
                     }
 

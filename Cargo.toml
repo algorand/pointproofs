@@ -43,8 +43,12 @@
 #   name = "pairings"
 #   harness = false
 #
+# [[bench]]
+#   name = "sum_of_prod"
+#   harness = false
+
 [[bench]]
-  name = "sum_of_prod"
+  name = "one_m"
   harness = false
 
 # [[bench]]

@@ -8,9 +8,6 @@ extern crate veccom_paramgen;
 pub mod pairings;
 
 #[cfg(test)]
-mod multi_thread;
-
-#[cfg(test)]
 mod test;
 
 #[cfg(test)]

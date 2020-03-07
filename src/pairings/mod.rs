@@ -149,4 +149,5 @@ pub(crate) mod hash_to_field_veccom;
 pub(crate) mod c_api;
 mod err;
 mod misc;
+mod multi_threads;
 mod serdes;
