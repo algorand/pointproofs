@@ -36,7 +36,7 @@ fn random_index(n: usize, hamming: usize) -> Vec<usize> {
 }
 
 fn one_m(c: &mut Criterion) {
-    let n = 100_000;
+    let n = 1000_000;
 
     let mut values: Vec<String> = Vec::with_capacity(n);
     for i in 0..n {
@@ -64,7 +64,7 @@ fn one_m(c: &mut Criterion) {
         b.iter(|| Proof::new(&pp_clone, &values_clone, 0).unwrap());
     });
 
-    let thd_array = [4, 3, 2, 1];
+    let thd_array = [16, 12, 8, 4, 3, 2, 1];
     for num_thd in thd_array.iter() {
         let pp_clone = pp.clone();
         let values_clone = values.clone();
