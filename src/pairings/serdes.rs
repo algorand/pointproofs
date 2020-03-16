@@ -184,15 +184,22 @@ impl SerDes for ProverParams {
             ));
         }
 
+        if self.n > (u32::max_value() as usize) || self.pp_len > (u32::max_value() as usize) {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                ERR_INVALID_VALUE,
+            ));
+        }
+
         // write csid
         writer.write_all(&[self.ciphersuite])?;
-        writer.write_all(&self.n.to_le_bytes())?;
+        writer.write_all(&(self.n as u32).to_le_bytes())?;
 
         // write the generators
         for e in self.generators.iter() {
             e.serialize(&mut writer, true)?;
         }
-        writer.write_all(&self.pp_len.to_le_bytes())?;
+        writer.write_all(&(self.pp_len as u32).to_le_bytes())?;
         if self.pp_len != 0 {
             for e in self.precomp.iter() {
                 e.serialize(&mut writer, true)?;
@@ -230,10 +237,10 @@ impl SerDes for ProverParams {
         }
 
         // read n
-        let mut buf = [0u8; 8];
+        let mut buf = [0u8; 4];
         reader.read_exact(&mut buf)?;
-        let n = usize::from_le_bytes(buf);
-        if n > 65536 && n == 0 {
+        let n = u32::from_le_bytes(buf) as usize;
+        if n > 65536 || n == 0 {
             // set an upper bounded of n
             // to prevent potential DoS kind of attacks
             return Err(std::io::Error::new(
@@ -251,9 +258,9 @@ impl SerDes for ProverParams {
             generators.push(g);
         }
 
-        let mut buf = [0u8; 8];
+        let mut buf = [0u8; 4];
         reader.read_exact(&mut buf)?;
-        let pp_len = usize::from_le_bytes(buf);
+        let pp_len = u32::from_le_bytes(buf) as usize;
 
         let mut precomp: Vec<VeccomG1Affine> = vec![];
         for _i in 0..pp_len {
@@ -297,16 +304,22 @@ impl SerDes for VerifierParams {
                 ERR_INVALID_VALUE,
             ));
         }
+        if self.n > (u32::max_value() as usize) || self.pp_len > (u32::max_value() as usize) {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                ERR_INVALID_VALUE,
+            ));
+        }
 
         writer.write_all(&[self.ciphersuite])?;
-        writer.write_all(&self.n.to_le_bytes())?;
+        writer.write_all(&(self.n as u32).to_le_bytes())?;
 
         // write the generators
         for e in self.generators.iter() {
             e.serialize(&mut writer, true)?;
         }
 
-        writer.write_all(&self.pp_len.to_le_bytes())?;
+        writer.write_all(&(self.pp_len as u32).to_le_bytes())?;
         if self.pp_len != 0 {
             for e in self.precomp.iter() {
                 e.serialize(&mut writer, true)?;
@@ -345,10 +358,10 @@ impl SerDes for VerifierParams {
         }
 
         // read n
-        let mut buf = [0u8; 8];
+        let mut buf = [0u8; 4];
         reader.read_exact(&mut buf)?;
-        let n = usize::from_le_bytes(buf);
-        if n > 65536 && n == 0 {
+        let n = u32::from_le_bytes(buf) as usize;
+        if n > 65536 || n == 0 {
             // set an upper bounded of n
             // to prevent potential DoS kind of attacks
             return Err(std::io::Error::new(
@@ -356,6 +369,7 @@ impl SerDes for VerifierParams {
                 ERR_MAX_N,
             ));
         }
+
         // write the generators
         let mut generators: Vec<VeccomG2Affine> = vec![];
         for _i in 0..n {
@@ -363,9 +377,9 @@ impl SerDes for VerifierParams {
             generators.push(g);
         }
 
-        let mut buf = [0u8; 8];
+        let mut buf = [0u8; 4];
         reader.read_exact(&mut buf)?;
-        let pp_len = usize::from_le_bytes(buf);
+        let pp_len = u32::from_le_bytes(buf) as usize;
 
         let mut precomp: Vec<VeccomG1Affine> = vec![];
         for _i in 0..pp_len {

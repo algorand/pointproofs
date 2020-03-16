@@ -55,7 +55,7 @@ int test_basic()
   hexDump("verifier param recovered (in bytes)", vcp_vp_string_recover.data, 256);
   #endif
 
-  assert( memcmp(vcp_pp_string.data, vcp_pp_string_recover.data, RAW_PP_LEN) == 0);
+  assert( memcmp(vcp_pp_string.data, vcp_pp_string_recover.data, PP_LEN) == 0);
   assert( memcmp(vcp_vp_string.data, vcp_vp_string_recover.data, VP_LEN) == 0);
 
 
