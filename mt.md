@@ -1,7 +1,8 @@
 # proof generation for multithreading
 * proofs in G1
 * AWS with Intel(R) Xeon(R) Platinum 8124M CPU @ 3.00GHz, [spec](https://en.wikichip.org/wiki/intel/xeon_platinum/8124m)
-* 16 cores
+* 3.5 GHz (1 active core) and 3.4 GHz (2-9 active cores),
+* 18 threads
 
 # proof generation with `n = 1,000,000`
 
