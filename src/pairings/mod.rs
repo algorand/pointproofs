@@ -39,12 +39,12 @@ pub(crate) fn veccom_pairing_multi_product(
     Bls12::pairing_multi_product(g1_vec, g2_vec)
 }
 /// Size for serialized verifier parameter:
-/// ciphersuite `(1 byte) + n (8 bytes) + n * G2 (96 bytes) + pp_len (8 bytes) + Gt (576 bytes)`
-pub const VP_LEN: usize = 98897; // n = 1024
+/// ciphersuite `(1 byte) + n (4 bytes) + n * G2 (96 bytes) + pp_len (4 bytes) + Gt (576 bytes)`
+pub const VP_LEN: usize = 98889; // n = 1024
 /// Size for serialized prover parameter:
-/// ciphersuite `(1 byte) + n (8 bytes) + 2n * G1 (48 bytes) + pp_len (8 bytes)`.
+/// ciphersuite `(1 byte) + n (4 bytes) + 2n * G1 (48 bytes) + pp_len (4 bytes)`.
 /// Does not include the size for pre-computed parameters.
-pub const PP_LEN: usize = 98321; // n = 1024
+pub const PP_LEN: usize = 98313; // n = 1024
 
 /// Size for serialized commitment.
 pub const COMMIT_LEN: usize = 49;
@@ -89,13 +89,13 @@ pub(crate) fn veccom_pairing_multi_product(
     Bls12::pairing_multi_product(g2_vec, g1_vec)
 }
 /// Size for serialized verifier parameter:
-/// ciphersuite `(1 byte) + n (8 bytes) + n * G1 (48 bytes) + pp_len (8 bytes) + Gt (576 bytes)`
-pub const VP_LEN: usize = 49745; // n = 1024
+/// ciphersuite `(1 byte) + n (4 bytes) + n * G1 (48 bytes) + pp_len (4 bytes) + Gt (576 bytes)`
+pub const VP_LEN: usize = 49737; // n = 1024
 
 /// Size for serialized prover parameter:
-/// ciphersuite `(1 byte) + n (8 bytes) + 2n * G2 (96 bytes) + pp_len (8 bytes)`.
+/// ciphersuite `(1 byte) + n (4 bytes) + 2n * G2 (96 bytes) + pp_len (4 bytes)`.
 /// Does not include the size for pre-computed parameters.
-pub const PP_LEN: usize = 196_625; // n = 1024
+pub const PP_LEN: usize = 196_617; // n = 1024
 
 /// Size for serialized commitment.
 pub const COMMIT_LEN: usize = 97;

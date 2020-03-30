@@ -14,7 +14,7 @@ fn test_serdes_prover_param() {
         assert!(prover_params.serialize(&mut buf, false).is_err());
         assert!(prover_params.serialize(&mut buf, true).is_ok());
 
-        assert_eq!(buf.len(), 17 + n * VECCOMG1_LEN * 2);
+        assert_eq!(buf.len(), 9 + n * VECCOMG1_LEN * 2);
 
         let mut invalid_buf = buf.clone();
         let mut valid_buf = buf.clone();
@@ -58,7 +58,7 @@ fn test_serdes_prover_param_slow() {
         assert!(prover_params.serialize(&mut buf, false).is_err());
         assert!(prover_params.serialize(&mut buf, true).is_ok());
 
-        assert_eq!(buf.len(), 17 + n * VECCOMG1_LEN * 2);
+        assert_eq!(buf.len(), 9 + n * VECCOMG1_LEN * 2);
 
         let mut invalid_buf = buf.clone();
         let mut valid_buf = buf.clone();
@@ -102,16 +102,15 @@ fn test_serdes_verifier_param() {
         assert!(verifier_params.serialize(&mut buf, true).is_ok());
         let len = buf.len();
 
-        assert_eq!(len, 593 + n * VECCOMG2_LEN);
+        assert_eq!(len, 585 + n * VECCOMG2_LEN);
 
         assert!(VerifierParams::deserialize(&mut buf[..].as_ref(), false).is_err());
         let verifier_params_recover =
             VerifierParams::deserialize(&mut buf[..].as_ref(), true).unwrap();
         assert_eq!(verifier_params, verifier_params_recover);
 
-        // all 0s is a valid encoding for vp with 0 elements
         let mut valid_buf1 = vec![0; len];
-        assert!(VerifierParams::deserialize(&mut valid_buf1[..].as_ref(), true).is_ok());
+        assert!(VerifierParams::deserialize(&mut valid_buf1[..].as_ref(), true).is_err());
         assert!(VerifierParams::deserialize(&mut valid_buf1[..].as_ref(), false).is_err());
         let mut invalid_buf1 = vec![1; len];
         let mut invalid_buf2 = vec![2; len];
@@ -135,16 +134,15 @@ fn test_serdes_verifier_param_slow() {
         assert!(verifier_params.serialize(&mut buf, true).is_ok());
         let len = buf.len();
 
-        assert_eq!(len, 593 + n * VECCOMG2_LEN);
+        assert_eq!(len, 585 + n * VECCOMG2_LEN);
 
         assert!(VerifierParams::deserialize(&mut buf[..].as_ref(), false).is_err());
         let verifier_params_recover =
             VerifierParams::deserialize(&mut buf[..].as_ref(), true).unwrap();
         assert_eq!(verifier_params, verifier_params_recover);
 
-        // all 0s is a valid encoding for vp with 0 elements
         let mut valid_buf1 = vec![0; len];
-        assert!(VerifierParams::deserialize(&mut valid_buf1[..].as_ref(), true).is_ok());
+        assert!(VerifierParams::deserialize(&mut valid_buf1[..].as_ref(), true).is_err());
         assert!(VerifierParams::deserialize(&mut valid_buf1[..].as_ref(), false).is_err());
         let mut invalid_buf1 = vec![1; len];
         let mut invalid_buf2 = vec![2; len];

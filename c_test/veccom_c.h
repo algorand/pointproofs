@@ -7,13 +7,17 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#define COMMIT_LEN 97
+#define COMMIT_LEN 49
 
-#define PROOF_LEN 97
+#define PP_LEN 98313
 
-#define RAW_PP_LEN 196625
+#define PROOF_LEN 49
 
-#define VP_LEN 49737
+#define VECCOMG1_LEN 48
+
+#define VECCOMG2_LEN 96
+
+#define VP_LEN 98889
 
 /**
  * deserialized commitment struct
@@ -70,7 +74,7 @@ typedef struct vcp_params {
  * serialized prover parameter struct
  */
 typedef struct vcp_pp_bytes {
-  uint8_t data[RAW_PP_LEN];
+  uint8_t data[PP_LEN];
 } vcp_pp_bytes;
 
 /**
