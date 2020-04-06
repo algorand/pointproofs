@@ -22,7 +22,7 @@ fn bench_g1_mt(c: &mut Criterion) {
         0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06, 0xbc,
         0xe5,
     ]);
-    let sample_array = [10_000, 1_000_000];
+    let sample_array = [100, 10_000, 1_000_000];
     let thread_array = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 
     for e in sample_array.iter() {
@@ -42,13 +42,13 @@ fn bench_g1_mt(c: &mut Criterion) {
             let bench_str = format!("with {} threads, mt", thread_size);
 
             let mut thread = Vec::with_capacity(thread_size);
-            let thread_clone = thread.clone();
             for i in 0..thread_size {
                 thread.push((
                     basis[batch * i..batch * (i + 1)].to_vec(),
                     scalar[batch * i..batch * (i + 1)].to_vec(),
                 ));
             }
+            let thread_clone = thread.clone();
             let bench = Benchmark::new(&bench_str, move |b| {
                 b.iter(|| {
                     let mut handles = vec![];
