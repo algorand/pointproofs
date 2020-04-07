@@ -35,6 +35,21 @@ fn bench_g1_mt(c: &mut Criterion) {
             basis.push(tmp.into_affine());
             scalar.push(Fr::random(&mut rng).into_repr());
         }
+        let scalar_clone = scalar.clone();
+        let basis_clone = basis.clone();
+        let bench_str = format!("1 shot");
+        let bench = Benchmark::new(&bench_str, move |b| {
+            b.iter(|| {
+                let fr_u64: Vec<&[u64; 4]> = scalar_clone.iter().map(|x| &x.0).collect();
+                let _res = G1Affine::sum_of_products(&basis_clone[..], &fr_u64);
+            })
+        });
+        let bench = bench.warm_up_time(Duration::from_millis(1000));
+        let bench = bench.measurement_time(Duration::from_millis(5000));
+        let bench = bench.sample_size(100);
+        let bench_str = format!("G1, sum of {} products", sample);
+
+        c.bench(&bench_str, bench);
 
         for f in thread_array.iter() {
             let thread_size = *f;
@@ -101,22 +116,6 @@ fn bench_g1_mt(c: &mut Criterion) {
             let bench = bench.measurement_time(Duration::from_millis(5000));
             let bench = bench.sample_size(100);
             let bench_str = format!("G1, sum of {} products", sample);
-
-            c.bench(&bench_str, bench);
-            let scalar_clone = scalar.clone();
-            let basis_clone = basis.clone();
-            let bench_str = format!("1 shot");
-            let bench = Benchmark::new(&bench_str, move |b| {
-                b.iter(|| {
-                    let fr_u64: Vec<&[u64; 4]> = scalar_clone.iter().map(|x| &x.0).collect();
-                    let _res = G1Affine::sum_of_products(&basis_clone[..], &fr_u64);
-                })
-            });
-            let bench = bench.warm_up_time(Duration::from_millis(1000));
-            let bench = bench.measurement_time(Duration::from_millis(5000));
-            let bench = bench.sample_size(100);
-            let bench_str = format!("G1, sum of {} products", sample);
-
             c.bench(&bench_str, bench);
         }
     }
