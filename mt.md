@@ -11,7 +11,7 @@
 * multi threads, per thread: running `#threads` one after anther, record the average time per thread (`#sums` decreases with `#threads` increases)
 
 | #threads | multi threads, parallel   | multi threads, serial | multi threads, per thread|
-|---:|---:|---:|---:|---:|
+|---:|---:|---:|---:|
 | 1 | 6.13 ms | 6.08 ms | 6.08 ms |
 | 2 | 3.78 ms | 7.42 ms | 3.71 ms |
 | 3 | 3.31 ms | 8.35 ms | 2.78 ms |
@@ -36,7 +36,7 @@
 * baseline - single sum of product: `240.6` ms
 
 | #threads | multi threads, parallel   | multi threads, serial | multi threads, per thread|
-|---:|---:|---:|---:|---:|
+|---:|---:|---:|---:|
 | 1 | 240.9 ms | 240.6 ms | 240.6 ms |
 | 2 | 134.4 ms | 267.9 ms | 134.0 ms |
 | 3 | 95.6 ms | 285.7 ms | 95.2 ms |
