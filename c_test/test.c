@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <assert.h>
-#include "veccom_c.h"
+#include "pointproofs_c.h"
 
 // #define DEBUG
 
@@ -17,7 +17,7 @@ int test_basic()
 
   // values to commit
   int counter = 0;
-  vcp_value values[n];
+  pointproofs_value values[n];
   for (counter =0;counter < n; counter ++) {
     char *tmp = (char*)malloc(64 * sizeof(char));
     sprintf(tmp, "This is message %d for commit %d!", counter, 0);
@@ -33,37 +33,37 @@ int test_basic()
   #endif
 
   // generate parameters
-  char seed[] = "this is a very long seed for veccom tests";
+  char seed[] = "this is a very long seed for pointproofs tests";
   uint8_t ciphersuite = 0;
 
 
-  vcp_params    vcp_param     = vcp_paramgen((const uint8_t *)seed, sizeof(seed), ciphersuite, n);
+  pointproofs_params    pointproofs_param     = pointproofs_paramgen((const uint8_t *)seed, sizeof(seed), ciphersuite, n);
 
   // testing (de)serialization of parameters
-  vcp_pp_bytes  vcp_pp_string = vcp_pp_serial(vcp_param.prover);
-  vcp_vp_bytes  vcp_vp_string = vcp_vp_serial(vcp_param.verifier);
-  vcp_pp        pp_recover    = vcp_pp_deserial(vcp_pp_string);
-  vcp_vp        vp_recover    = vcp_vp_deserial(vcp_vp_string);
-  vcp_pp_bytes  vcp_pp_string_recover = vcp_pp_serial(pp_recover);
-  vcp_vp_bytes  vcp_vp_string_recover = vcp_vp_serial(vp_recover);
+  pointproofs_pp_bytes  pointproofs_pp_string = pointproofs_pp_serial(pointproofs_param.prover);
+  pointproofs_vp_bytes  pointproofs_vp_string = pointproofs_vp_serial(pointproofs_param.verifier);
+  pointproofs_pp        pp_recover    = pointproofs_pp_deserial(pointproofs_pp_string);
+  pointproofs_vp        vp_recover    = pointproofs_vp_deserial(pointproofs_vp_string);
+  pointproofs_pp_bytes  pointproofs_pp_string_recover = pointproofs_pp_serial(pp_recover);
+  pointproofs_vp_bytes  pointproofs_vp_string_recover = pointproofs_vp_serial(vp_recover);
 
   #ifdef DEBUG
-  hexDump("prover param (in bytes)", vcp_pp_string.data, 256);
-  hexDump("prover param recovered (in bytes)", vcp_pp_string_recover.data, 256);
+  hexDump("prover param (in bytes)", pointproofs_pp_string.data, 256);
+  hexDump("prover param recovered (in bytes)", pointproofs_pp_string_recover.data, 256);
 
-  hexDump("verifier param (in bytes)", vcp_vp_string.data, 256);
-  hexDump("verifier param recovered (in bytes)", vcp_vp_string_recover.data, 256);
+  hexDump("verifier param (in bytes)", pointproofs_vp_string.data, 256);
+  hexDump("verifier param recovered (in bytes)", pointproofs_vp_string_recover.data, 256);
   #endif
 
-  assert( memcmp(vcp_pp_string.data, vcp_pp_string_recover.data, PP_LEN) == 0);
-  assert( memcmp(vcp_vp_string.data, vcp_vp_string_recover.data, VP_LEN) == 0);
+  assert( memcmp(pointproofs_pp_string.data, pointproofs_pp_string_recover.data, PP_LEN) == 0);
+  assert( memcmp(pointproofs_vp_string.data, pointproofs_vp_string_recover.data, VP_LEN) == 0);
 
 
   // generate a commit
-  vcp_commitment        commit                = vcp_commit(pp_recover, values, n);
-  vcp_commitment_bytes  commit_string         = vcp_commit_serial(commit);
-  vcp_commitment        commit_recover        = vcp_commit_deserial(commit_string);
-  vcp_commitment_bytes  commit_string_recover = vcp_commit_serial(commit_recover);
+  pointproofs_commitment        commit                = pointproofs_commit(pp_recover, values, n);
+  pointproofs_commitment_bytes  commit_string         = pointproofs_commit_serial(commit);
+  pointproofs_commitment        commit_recover        = pointproofs_commit_deserial(commit_string);
+  pointproofs_commitment_bytes  commit_string_recover = pointproofs_commit_serial(commit_recover);
 
   #ifdef DEBUG
   hexDump("commit (in bytes)", commit_string.data, COMMIT_LEN);
@@ -75,10 +75,10 @@ int test_basic()
   for (counter = 0; counter < 32; counter ++)
   {
     // generate a proof
-    vcp_proof        proof                = vcp_prove(pp_recover, values, n, counter);
-    vcp_proof_bytes  proof_string         = vcp_proof_serial(proof);
-    vcp_proof        proof_recover        = vcp_proof_deserial(proof_string);
-    vcp_proof_bytes  proof_string_recover = vcp_proof_serial(proof_recover);
+    pointproofs_proof        proof                = pointproofs_prove(pp_recover, values, n, counter);
+    pointproofs_proof_bytes  proof_string         = pointproofs_proof_serial(proof);
+    pointproofs_proof        proof_recover        = pointproofs_proof_deserial(proof_string);
+    pointproofs_proof_bytes  proof_string_recover = pointproofs_proof_serial(proof_recover);
 
     #ifdef DEBUG
     hexDump("proof (in bytes)", proof_string.data, PROOF_LEN);
@@ -88,32 +88,32 @@ int test_basic()
     assert( strcmp((const char *)proof_string.data, (const char *)proof_string_recover.data)==0);
 
     // verify the proof
-    assert( vcp_verify(vp_recover, commit, proof, values[counter], counter) == true);
-    vcp_free_proof(proof);
-    vcp_free_proof(proof_recover);
+    assert( pointproofs_verify(vp_recover, commit, proof, values[counter], counter) == true);
+    pointproofs_free_proof(proof);
+    pointproofs_free_proof(proof_recover);
   }
 
   // update the commitment for index = 33
-  vcp_commitment  new_commit  = vcp_commit_update(pp_recover, commit, 33, values[33], values[44]);
+  pointproofs_commitment  new_commit  = pointproofs_commit_update(pp_recover, commit, 33, values[33], values[44]);
   for (counter = 0; counter < 32; counter ++)
   {
     // update the proofs; the updated index will be 33
-    vcp_proof proof     = vcp_prove(pp_recover, values, n, counter);
-    vcp_proof new_proof = vcp_proof_update(pp_recover, proof, counter, 33, values[33], values[44]);
+    pointproofs_proof proof     = pointproofs_prove(pp_recover, values, n, counter);
+    pointproofs_proof new_proof = pointproofs_proof_update(pp_recover, proof, counter, 33, values[33], values[44]);
     // verify the new proof
-    assert( vcp_verify(vp_recover, new_commit, new_proof, values[counter], counter) == true);
-    vcp_free_proof(proof);
-    vcp_free_proof(new_proof);
+    assert( pointproofs_verify(vp_recover, new_commit, new_proof, values[counter], counter) == true);
+    pointproofs_free_proof(proof);
+    pointproofs_free_proof(new_proof);
   }
 
-  vcp_free_commit(commit);
-  vcp_free_commit(commit_recover);
-  vcp_free_commit(new_commit);
+  pointproofs_free_commit(commit);
+  pointproofs_free_commit(commit_recover);
+  pointproofs_free_commit(new_commit);
 
-  vcp_free_prover_params(vcp_param.prover);
-  vcp_free_prover_params(pp_recover);
-  vcp_free_verifier_params(vcp_param.verifier);
-  vcp_free_verifier_params(vp_recover);
+  pointproofs_free_prover_params(pointproofs_param.prover);
+  pointproofs_free_prover_params(pp_recover);
+  pointproofs_free_verifier_params(pointproofs_param.verifier);
+  pointproofs_free_verifier_params(vp_recover);
 
   printf("basis tests: success\n");
   return 0;
@@ -128,7 +128,7 @@ int test_same_commit_aggregation()
 
   // values to commit
   int counter = 0;
-  vcp_value values[n];
+  pointproofs_value values[n];
   for (counter =0;counter < n; counter ++) {
     char *tmp = (char*)malloc(64 * sizeof(char));
     sprintf(tmp, "This is message %d for commit %d!", counter, 0);
@@ -144,43 +144,43 @@ int test_same_commit_aggregation()
   #endif
 
   // generate parameters
-  char seed[] = "this is a very long seed for veccom tests";
+  char seed[] = "this is a very long seed for pointproofs tests";
   uint8_t ciphersuite = 0;
 
 
-  vcp_params  vcp_param = vcp_paramgen((const uint8_t *)seed, sizeof(seed), ciphersuite, n);
-  vcp_pp      pp        = vcp_param.prover;
-  vcp_vp      vp        = vcp_param.verifier;
+  pointproofs_params  pointproofs_param = pointproofs_paramgen((const uint8_t *)seed, sizeof(seed), ciphersuite, n);
+  pointproofs_pp      pp        = pointproofs_param.prover;
+  pointproofs_vp      vp        = pointproofs_param.verifier;
 
   // generate a commit and 32 proofs
-  vcp_commitment  commit  = vcp_commit(pp, values, n);
-  vcp_proof       proof[32];
+  pointproofs_commitment  commit  = pointproofs_commit(pp, values, n);
+  pointproofs_proof       proof[32];
   size_t          index[32];
-  vcp_value       sub_values[32];
+  pointproofs_value       sub_values[32];
   for (counter = 0; counter < 32; counter ++)
   {
     // generate a proof
-    proof[counter]      = vcp_prove(pp, values, n, counter);
+    proof[counter]      = pointproofs_prove(pp, values, n, counter);
     index[counter]      = counter;
     sub_values[counter] = values[counter];
 
     // verify the proof
-    assert( vcp_verify(vp, commit, proof[counter], values[counter], counter) == true);
+    assert( pointproofs_verify(vp, commit, proof[counter], values[counter], counter) == true);
   }
 
   // aggregate
-  vcp_proof agg_proof = vcp_same_commit_aggregate(commit, proof, index, sub_values, 32, n);
+  pointproofs_proof agg_proof = pointproofs_same_commit_aggregate(commit, proof, index, sub_values, 32, n);
 
   // verify the proof
-  assert( vcp_same_commit_batch_verify(vp, commit, agg_proof, index, sub_values, 32) == true);
+  assert( pointproofs_same_commit_batch_verify(vp, commit, agg_proof, index, sub_values, 32) == true);
 
 
-  vcp_free_prover_params(vcp_param.prover);
-  vcp_free_verifier_params(vcp_param.verifier);
-  vcp_free_proof(agg_proof);
-  vcp_free_commit(commit);
+  pointproofs_free_prover_params(pointproofs_param.prover);
+  pointproofs_free_verifier_params(pointproofs_param.verifier);
+  pointproofs_free_proof(agg_proof);
+  pointproofs_free_commit(commit);
   for (counter = 0; counter < 32; counter ++)
-    vcp_free_proof(proof[counter]);
+    pointproofs_free_proof(proof[counter]);
 
   printf("aggregation tests: success\n");
   return 0;
@@ -206,7 +206,7 @@ int test_x_commit_aggregation()
   // values to commit
   int counter = 0;
   int com_counter = 0;
-  vcp_value values[k][n];
+  pointproofs_value values[k][n];
   for (com_counter = 0; com_counter < k; com_counter ++){
     for (counter = 0; counter < n; counter ++) {
       char *tmp = (char*)malloc(64 * sizeof(char));
@@ -227,25 +227,25 @@ int test_x_commit_aggregation()
   #endif
 
   // generate parameters
-  char seed[] = "this is a very long seed for veccom tests";
+  char seed[] = "this is a very long seed for pointproofs tests";
   uint8_t ciphersuite = 0;
 
 
-  vcp_params  vcp_param = vcp_paramgen((const uint8_t *)seed, sizeof(seed), ciphersuite, n);
-  vcp_pp      pp        = vcp_param.prover;
-  vcp_vp      vp        = vcp_param.verifier;
+  pointproofs_params  pointproofs_param = pointproofs_paramgen((const uint8_t *)seed, sizeof(seed), ciphersuite, n);
+  pointproofs_pp      pp        = pointproofs_param.prover;
+  pointproofs_vp      vp        = pointproofs_param.verifier;
 
   // generate 32 commit and 32*32 proofs
-  vcp_commitment  commit[32];
+  pointproofs_commitment  commit[32];
   for (com_counter = 0; com_counter < k; com_counter++) {
-    commit[com_counter] = vcp_commit(pp, values[com_counter], n);
+    commit[com_counter] = pointproofs_commit(pp, values[com_counter], n);
   }
 
 
-  vcp_proof proof[total];
-  vcp_proof same_commit_agg_proof[k];
+  pointproofs_proof proof[total];
+  pointproofs_proof same_commit_agg_proof[k];
   size_t    index[total];
-  vcp_value sub_values[total];
+  pointproofs_value sub_values[total];
 
   i = 0;
   for (com_counter = 0; com_counter < k; com_counter++) {
@@ -253,16 +253,16 @@ int test_x_commit_aggregation()
     for (counter = 0; counter < commit_indices[com_counter]; counter ++)
     {
       // generate a proof
-      proof[i]      = vcp_prove(pp, values[com_counter], n, counter);
+      proof[i]      = pointproofs_prove(pp, values[com_counter], n, counter);
       index[i]      = counter;
       sub_values[i] = values[com_counter][counter];
 
       // verify the proof
-      assert( vcp_verify(vp, commit[com_counter], proof[i], sub_values[i], counter) == true);
+      assert( pointproofs_verify(vp, commit[com_counter], proof[i], sub_values[i], counter) == true);
 
       i ++;
     }
-    same_commit_agg_proof[com_counter]  = vcp_same_commit_aggregate(
+    same_commit_agg_proof[com_counter]  = pointproofs_same_commit_aggregate(
                                   commit[com_counter],
                                   proof + cur_index,
                                   index + cur_index,
@@ -270,7 +270,7 @@ int test_x_commit_aggregation()
                                   commit_indices[com_counter],
                                   n);
 
-    assert( vcp_same_commit_batch_verify(
+    assert( pointproofs_same_commit_batch_verify(
                 vp,
                 commit[com_counter],
                 same_commit_agg_proof[com_counter],
@@ -280,30 +280,30 @@ int test_x_commit_aggregation()
   }
 
   // aggregate full
-  vcp_proof agg_proof1 = vcp_x_commit_aggregate_full(commit, proof, index, sub_values, commit_indices, 32, n);
+  pointproofs_proof agg_proof1 = pointproofs_x_commit_aggregate_full(commit, proof, index, sub_values, commit_indices, 32, n);
   // aggregate partial
-  vcp_proof agg_proof2 = vcp_x_commit_aggregate_partial(commit, same_commit_agg_proof, index, sub_values, commit_indices, 32, n);
+  pointproofs_proof agg_proof2 = pointproofs_x_commit_aggregate_partial(commit, same_commit_agg_proof, index, sub_values, commit_indices, 32, n);
 
-  vcp_proof_bytes  proof_string1  = vcp_proof_serial(agg_proof1);
-  vcp_proof_bytes  proof_string2  = vcp_proof_serial(agg_proof1);
+  pointproofs_proof_bytes  proof_string1  = pointproofs_proof_serial(agg_proof1);
+  pointproofs_proof_bytes  proof_string2  = pointproofs_proof_serial(agg_proof1);
 
   assert( strcmp((const char *)agg_proof1.data, (const char *)agg_proof1.data)==0);
 
   // verify the proof
-  assert(vcp_x_commit_batch_verify(vp, commit, agg_proof1, index, sub_values, commit_indices, 32) == true);
+  assert(pointproofs_x_commit_batch_verify(vp, commit, agg_proof1, index, sub_values, commit_indices, 32) == true);
 
-  vcp_free_prover_params(vcp_param.prover);
-  vcp_free_verifier_params(vcp_param.verifier);
+  pointproofs_free_prover_params(pointproofs_param.prover);
+  pointproofs_free_verifier_params(pointproofs_param.verifier);
 
   for (com_counter = 0; com_counter < k; com_counter++)
-    vcp_free_commit(commit[com_counter]);
+    pointproofs_free_commit(commit[com_counter]);
 
-  vcp_free_proof(agg_proof1);
-  vcp_free_proof(agg_proof2);
+  pointproofs_free_proof(agg_proof1);
+  pointproofs_free_proof(agg_proof2);
   for (com_counter = 0; com_counter < k; com_counter++)
-    vcp_free_proof(same_commit_agg_proof[com_counter]);
+    pointproofs_free_proof(same_commit_agg_proof[com_counter]);
   for (i = 0; i < total; i++)
-    vcp_free_proof(proof[i]);
+    pointproofs_free_proof(proof[i]);
 
   printf("aggregation tests: success\n");
   return 0;

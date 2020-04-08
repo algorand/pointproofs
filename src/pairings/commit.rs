@@ -1,10 +1,10 @@
-//! This file is part of the veccom crate.
+//! this file is part of the pointproofs.
 //! It defines APIs for constructing and updating commitments.
 
 use ff::{Field, PrimeField};
 use pairing::{bls12_381::*, CurveAffine, CurveProjective};
 use pairings::err::*;
-use pairings::hash_to_field_veccom::*;
+use pairings::hash_to_field_pointproofs::*;
 use pairings::param::*;
 use pairings::*;
 
@@ -36,20 +36,20 @@ impl Commitment {
         // hash the values into scalars
         let scalars_fr_repr: Vec<FrRepr> = values
             .iter()
-            .map(|s| hash_to_field_repr_veccom(s.as_ref()))
+            .map(|s| hash_to_field_repr_pointproofs(s.as_ref()))
             .collect();
         let scalars_u64: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
 
         // commit = \prod pp[i]^scalar[i]
         let commit = {
             if prover_params.precomp.len() == 512 * prover_params.n {
-                VeccomG1Affine::sum_of_products_precomp_256(
+                PointproofsG1Affine::sum_of_products_precomp_256(
                     &prover_params.generators[0..prover_params.n],
                     &scalars_u64,
                     &prover_params.precomp,
                 )
             } else {
-                VeccomG1Affine::sum_of_products(
+                PointproofsG1Affine::sum_of_products(
                     &prover_params.generators[0..prover_params.n],
                     &scalars_u64,
                 )
@@ -89,9 +89,9 @@ impl Commitment {
         };
 
         // multiplier = hash(new_value) - hash(old_value)
-        let mut multiplier = hash_to_field_veccom(&value_before);
+        let mut multiplier = hash_to_field_pointproofs(&value_before);
         multiplier.negate();
-        multiplier.add_assign(&hash_to_field_veccom(&value_after));
+        multiplier.add_assign(&hash_to_field_pointproofs(&value_after));
 
         // new_commit = old_commit * g[index]^multiplier
         let res = if prover_params.precomp.len() == 3 * prover_params.generators.len() {
@@ -159,9 +159,9 @@ impl Commitment {
         let mut multiplier_set: Vec<FrRepr> = Vec::with_capacity(value_before.len());
         for i in 0..value_before.len() {
             // multiplier = hash(new_value) - hash(old_value)
-            let mut multiplier = hash_to_field_veccom(&value_before[i]);
+            let mut multiplier = hash_to_field_pointproofs(&value_before[i]);
             multiplier.negate();
-            multiplier.add_assign(&hash_to_field_veccom(&value_after[i]));
+            multiplier.add_assign(&hash_to_field_pointproofs(&value_after[i]));
             multiplier_set.push(multiplier.into_repr());
         }
         let scalars_u64: Vec<&[u64; 4]> = multiplier_set.iter().map(|s| &s.0).collect();
@@ -170,14 +170,15 @@ impl Commitment {
         let basis = changed_index
             .iter()
             .map(|i| prover_params.generators[*i])
-            .collect::<Vec<VeccomG1Affine>>();
+            .collect::<Vec<PointproofsG1Affine>>();
 
         // compute delta = \prod g[index]^multiplier
         let delta = {
             // to use sum_of_products with pre_computation,
             // we need to form the right basis
             if prover_params.precomp.len() == 256 * prover_params.generators.len() {
-                let mut pre: Vec<VeccomG1Affine> = Vec::with_capacity(changed_index.len() * 256);
+                let mut pre: Vec<PointproofsG1Affine> =
+                    Vec::with_capacity(changed_index.len() * 256);
                 for e in changed_index.iter() {
                     pre = [
                         pre,
@@ -187,10 +188,10 @@ impl Commitment {
                     ]
                     .concat();
                 }
-                VeccomG1Affine::sum_of_products_precomp_256(&basis, &scalars_u64, &pre)
+                PointproofsG1Affine::sum_of_products_precomp_256(&basis, &scalars_u64, &pre)
             } else {
                 // without pre_computation
-                VeccomG1Affine::sum_of_products(&basis[..], &scalars_u64)
+                PointproofsG1Affine::sum_of_products(&basis[..], &scalars_u64)
             }
         };
         // new_commit = old_commit * \prod g[index]^multiplier

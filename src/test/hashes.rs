@@ -1,6 +1,6 @@
 use ff::{Field, PrimeField};
 use pairing::bls12_381::*;
-use pairings::hash_to_field_veccom::os2ip_mod_p;
+use pairings::hash_to_field_pointproofs::os2ip_mod_p;
 
 // examples from
 // https://crypto.stackexchange.com/questions/37537/what-are-i2osp-os2ip-in-rsa-pkcs1

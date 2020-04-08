@@ -1,26 +1,29 @@
+// this file is part of the pointproofs.
+// it provides basic benchmarks - the data are presenetd in benchmark.md
+
 #[macro_use]
 extern crate criterion;
 extern crate ff;
 extern crate pairing_plus as pairing;
+extern crate pointproofs;
 extern crate rand;
-extern crate veccom;
 
 use criterion::Benchmark;
 use criterion::Criterion;
 use pairing::serdes::SerDes;
+use pointproofs::pairings::*;
 use rand::Rng;
 use std::time::Duration;
-use veccom::pairings::*;
 
 criterion_group!(
-    paper,
+    basic,
+    aggregate2,
     randomized_batch_new_proof,
     commit_update,
-    aggregate2,
     single_commit,
     aggregate,
 );
-criterion_main!(paper);
+criterion_main!(basic);
 
 fn random_index(n: usize, hamming: usize) -> Vec<usize> {
     let mut rng = rand::thread_rng();
@@ -70,8 +73,7 @@ fn randomized_batch_new_proof(c: &mut Criterion) {
         n,
     )
     .unwrap();
-    let mut pp256 = pp.clone();
-    pp256.precomp_256();
+
     println!("parameters generated");
 
     let com = Commitment::new(&pp, &values).unwrap();
@@ -98,20 +100,6 @@ fn randomized_batch_new_proof(c: &mut Criterion) {
         });
     });
 
-    let pp256_clone = pp256.clone();
-    let values_clone = values.clone();
-
-    let com_clone = com.clone();
-    let bench_str = format!(
-        "single_commit_n_{}_proof_batch_new_aggregated_with_pre256",
-        n
-    );
-    bench = bench.with_function(bench_str, move |b| {
-        b.iter(|| {
-            Proof::batch_new_aggregated(&pp256_clone, &com_clone, &values_clone, &set).unwrap()
-        });
-    });
-
     let num_proof_array = [2, 4, 8, 16, 32, 64, 128, 256, 512];
     for e in num_proof_array.iter() {
         let m = *e;
@@ -130,27 +118,12 @@ fn randomized_batch_new_proof(c: &mut Criterion) {
                 Proof::batch_new_aggregated(&pp_clone, &com_clone, &values_clone, &set2).unwrap()
             });
         });
-
-        // batch proof generation with aggregation
-        let pp256_clone = pp256.clone();
-        let values_clone = values.clone();
-        let com_clone = com.clone();
-        let bench_str = format!(
-            "single_commit_n_{}_proof_{}_batch_new_aggregated_rand_indices_with_pre256",
-            n, m
-        );
-        bench = bench.with_function(bench_str, move |b| {
-            b.iter(|| {
-                let set2 = random_index(n, m);
-                Proof::batch_new_aggregated(&pp256_clone, &com_clone, &values_clone, &set2).unwrap()
-            });
-        });
     }
 
     let bench = bench.warm_up_time(Duration::from_millis(1000));
     let bench = bench.measurement_time(Duration::from_millis(5000));
     let bench = bench.sample_size(100);
-    c.bench("paper", bench);
+    c.bench("basic", bench);
 }
 
 fn single_commit(c: &mut Criterion) {
@@ -181,10 +154,6 @@ fn single_commit(c: &mut Criterion) {
         n,
     )
     .unwrap();
-    let mut pp256 = pp.clone();
-    pp256.precomp_256();
-    let mut vp256 = vp.clone();
-    vp256.precomp_256();
     println!("parameters generated");
 
     let mut com = Commitment::new(&pp, &values).unwrap();
@@ -224,15 +193,6 @@ fn single_commit(c: &mut Criterion) {
         b.iter(|| Proof::batch_new(&pp_clone, &values_clone, &set_clone).unwrap());
     });
 
-    // batch proof generation without aggregation, with pre computation
-    let pp256_clone = pp256.clone();
-    let values_clone = values.clone();
-    let set_clone = set.clone();
-    let bench_str = format!("single_commit_n_{}_proof_batch_new_with_pre256", n);
-    bench = bench.with_function(bench_str, move |b| {
-        b.iter(|| Proof::batch_new(&pp256_clone, &values_clone, &set_clone).unwrap());
-    });
-
     // aggregate 8 proofs
     let proofs_clone = proofs.clone();
     let set_clone = set.clone();
@@ -263,22 +223,6 @@ fn single_commit(c: &mut Criterion) {
         });
     });
 
-    // batch proof generation with aggregation with pre computation
-    let pp256_clone = pp256.clone();
-    let values_clone = values.clone();
-    let set_clone = set;
-    let com_clone = com.clone();
-    let bench_str = format!(
-        "single_commit_n_{}_proof_batch_new_aggregated_with_pre256",
-        n
-    );
-    bench = bench.with_function(bench_str, move |b| {
-        b.iter(|| {
-            Proof::batch_new_aggregated(&pp256_clone, &com_clone, &values_clone, &set_clone)
-                .unwrap()
-        });
-    });
-
     let num_proof_array = [2, 4, 8, 16, 32, 64, 128, 256, 512];
     for e in num_proof_array.iter() {
         let mut set2: Vec<usize> = Vec::with_capacity(8);
@@ -299,22 +243,6 @@ fn single_commit(c: &mut Criterion) {
             });
         });
 
-        // batch proof generation with aggregation with precomputation
-        let pp256_clone = pp256.clone();
-        let values_clone = values.clone();
-        let com_clone = com.clone();
-        let set2_clone = set2.clone();
-        let bench_str = format!(
-            "single_commit_n_{}_proof_{}_batch_new_aggregated_with_pre256",
-            n, *e
-        );
-        bench = bench.with_function(bench_str, move |b| {
-            b.iter(|| {
-                Proof::batch_new_aggregated(&pp256_clone, &com_clone, &values_clone, &set2_clone)
-                    .unwrap()
-            });
-        });
-
         let pp_clone = pp.clone();
         let vp_clone = vp.clone();
         let values_clone = values.clone();
@@ -324,12 +252,12 @@ fn single_commit(c: &mut Criterion) {
         for e in set2.iter() {
             value_subset.push(values[*e].clone());
         }
-        let value_subset2 = value_subset.clone();
+        // let value_subset2 = value_subset.clone();
         let agg_proof =
             Proof::batch_new_aggregated(&pp_clone, &com_clone, &values_clone, &set2_clone).unwrap();
         let mut proof_str: Vec<u8> = vec![];
         agg_proof.serialize(&mut proof_str, true).unwrap();
-        let mut proof_str2 = proof_str.clone();
+        // let mut proof_str2 = proof_str.clone();
         let bench_str = format!("single_commit_n_{}_proof_{}_batch_verify", n, *e);
         bench = bench.with_function(bench_str, move |b| {
             b.iter(|| {
@@ -340,27 +268,6 @@ fn single_commit(c: &mut Criterion) {
                     &com_clone,
                     &set2_clone,
                     &value_subset,
-                )
-            });
-        });
-
-        let vp256_clone = vp256.clone();
-        let com_clone = com.clone();
-        let set2_clone = set2.clone();
-
-        let bench_str = format!(
-            "single_commit_n_{}_proof_{}_batch_verify_with_pre256",
-            n, *e
-        );
-        bench = bench.with_function(bench_str, move |b| {
-            b.iter(|| {
-                let proof_rec =
-                    Proof::deserialize::<&[u8]>(&mut proof_str2[..].as_ref(), true).unwrap();
-                proof_rec.same_commit_batch_verify(
-                    &vp256_clone,
-                    &com_clone,
-                    &set2_clone,
-                    &value_subset2,
                 )
             });
         });
@@ -406,7 +313,7 @@ fn single_commit(c: &mut Criterion) {
     let bench = bench.warm_up_time(Duration::from_millis(1000));
     let bench = bench.measurement_time(Duration::from_millis(5000));
     let bench = bench.sample_size(10);
-    c.bench("paper", bench);
+    c.bench("basic", bench);
 }
 
 fn commit_update(c: &mut Criterion) {
@@ -502,7 +409,7 @@ fn commit_update(c: &mut Criterion) {
     let bench = bench.warm_up_time(Duration::from_millis(1000));
     let bench = bench.measurement_time(Duration::from_millis(5000));
     let bench = bench.sample_size(10);
-    c.bench("paper", bench);
+    c.bench("basic", bench);
 }
 
 fn aggregate2(c: &mut Criterion) {
@@ -617,7 +524,7 @@ fn aggregate2(c: &mut Criterion) {
         let bench = bench.warm_up_time(Duration::from_millis(1000));
         let bench = bench.measurement_time(Duration::from_millis(5000));
         let bench = bench.sample_size(10);
-        c.bench("paper", bench);
+        c.bench("basic", bench);
     }
 }
 
@@ -803,6 +710,6 @@ fn aggregate(c: &mut Criterion) {
         let bench = bench.warm_up_time(Duration::from_millis(1000));
         let bench = bench.measurement_time(Duration::from_millis(5000));
         let bench = bench.sample_size(10);
-        c.bench("paper", bench);
+        c.bench("basic", bench);
     }
 }

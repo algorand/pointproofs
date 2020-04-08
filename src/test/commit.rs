@@ -241,7 +241,7 @@ fn test_commit_batch_update() {
 #[test]
 fn test_commit() {
     let n = 8usize;
-    let mut f = std::fs::File::open("3.param").unwrap();
+    let mut f = std::fs::File::open("crs.param").unwrap();
     let (prover_params, verifier_params) = param::read_param(&mut f).unwrap();
 
     let mut prover_params3 = prover_params.clone();

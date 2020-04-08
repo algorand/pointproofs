@@ -1,7 +1,7 @@
 [package]
-  name = "veccom"
-  description = "Vector commitments with curve BLS12-381"
-  license = "MIT/Apache-2.0"
+  name = "pointproofs"
+  description = "Pointproofs: Aggregating Proofs for Multiple Vector Commitments"
+  license = "MIT"
   authors = [
     "Leo Reyzin <leo@algorand.com>",
     "Zhenfei Zhang <zhenfei@algorand.com>"
@@ -17,13 +17,10 @@
 [dependencies]
   ff = { version = "0.6.3", git = "https://github.com/algorand/ff-zeroize", features = ["derive"]}
   pairing-plus = { git = "https://github.com/algorand/pairing-plus"}
-  #pairing-plus = { path = "../pairing-plus"}
   sha2 = "0.8"
   libc = { version = "0.2", features = ["align"] }
-  # ff = { version = "0.4", features = ["derive"] }
   bigint = { version = "4", default-features = false }
-  veccom-paramgen = { git = "ssh://git@github.com/algorand/veccom-paramgen"}
-
+  pointproofs-paramgen = { git = "ssh://git@github.com/algorand/pointproofs-paramgen"}
 
 [features]
 
@@ -38,23 +35,21 @@
   rand_core = ""
   rand_xorshift = ""
 
-#
-# [[bench]]
-#   name = "pairings"
-#   harness = false
-#
-# [[bench]]
-#   name = "multi_thread"
-#   harness = false
 
-# [[bench]]
-#   name = "one_m"
-#   harness = false
-
+## A set of benchmarks are available under the benches folder
+## Some are quite slow
+## Uncomment the following to use the corresponding tool
 [[bench]]
-  name = "paper"
-  harness = false
+# this file provides basic benchmarks - the data are presenetd in benchmark.md
+  name = "basic"
 #
-# [[bench]]
-#   name = "bench_without_pre_comp"
-#   harness = false
+# # this file benches the cost for cross commitments aggregation and batch verification
+#   name = "bench_aggregation"
+#
+# # this file benches the cost of sum of product vs doing it serialized
+#   name = "bench_mul"
+#
+# # this file provides extra benchmarks using parameters with pre-compution
+#   name = "extra"
+#
+  harness = false

@@ -1,5 +1,5 @@
-//! This file is part of the veccom crate.
-//! It exposes Rust APIs to C.
+//! this file is part of the pointproofs.
+//! it exposes Rust APIs to C.
 
 extern crate libc;
 use pairing::serdes::SerDes;
@@ -9,76 +9,76 @@ use std::slice;
 
 /// non-serialized
 #[repr(C)]
-pub struct vcp_params {
-    pub(crate) prover: vcp_pp,
-    pub(crate) verifier: vcp_vp,
+pub struct pointproofs_params {
+    pub(crate) prover: pointproofs_pp,
+    pub(crate) verifier: pointproofs_vp,
 }
 
 /// values
 #[repr(C)]
 #[derive(Clone)]
-pub struct vcp_value {
+pub struct pointproofs_value {
     pub(crate) data: *const u8,
     pub(crate) len: libc::size_t,
 }
 
 /// serialized prover parameter struct
 #[repr(C)]
-pub struct vcp_pp_bytes {
+pub struct pointproofs_pp_bytes {
     data: [u8; PP_LEN],
 }
 
 /// serialized verifer parameter struct
 #[repr(C)]
-pub struct vcp_vp_bytes {
+pub struct pointproofs_vp_bytes {
     data: [u8; VP_LEN],
 }
 
 /// deserialized prover parameter struct
 #[repr(C)]
 #[derive(Clone)]
-pub struct vcp_pp {
+pub struct pointproofs_pp {
     data: *mut ffi::c_void,
 }
 
 /// deserialized verifier parameter struct
 #[repr(C)]
 #[derive(Clone)]
-pub struct vcp_vp {
+pub struct pointproofs_vp {
     data: *mut ffi::c_void,
 }
 
 /// serialized commitment struct
 #[repr(C)]
 #[derive(Clone)]
-pub struct vcp_commitment_bytes {
+pub struct pointproofs_commitment_bytes {
     pub(crate) data: [u8; COMMIT_LEN],
 }
 
 /// deserialized commitment struct
 #[repr(C)]
 #[derive(Clone)]
-pub struct vcp_commitment {
+pub struct pointproofs_commitment {
     data: *mut ffi::c_void,
 }
 
 /// serialized proof struct
 #[repr(C)]
 #[derive(Clone)]
-pub struct vcp_proof_bytes {
+pub struct pointproofs_proof_bytes {
     pub(crate) data: [u8; PROOF_LEN],
 }
 
 /// deserialized proof struct
 #[repr(C)]
 #[derive(Clone)]
-pub struct vcp_proof {
+pub struct pointproofs_proof {
     data: *mut ffi::c_void,
 }
 
 /// Serializing a prove parameter into bytes
 #[no_mangle]
-pub unsafe extern "C" fn vcp_pp_serial(pprover: vcp_pp) -> vcp_pp_bytes {
+pub unsafe extern "C" fn pointproofs_pp_serial(pprover: pointproofs_pp) -> pointproofs_pp_bytes {
     let pprover = &*(pprover.data as *const ProverParams);
     let mut buf: Vec<u8> = vec![];
     assert!(
@@ -88,24 +88,26 @@ pub unsafe extern "C" fn vcp_pp_serial(pprover: vcp_pp) -> vcp_pp_bytes {
     buf.shrink_to_fit();
     let mut data = [0u8; PP_LEN];
     data.copy_from_slice(&buf);
-    vcp_pp_bytes { data }
+    pointproofs_pp_bytes { data }
 }
 
 /// Deserializing bytes into prover parameters
 #[no_mangle]
-pub unsafe extern "C" fn vcp_pp_deserial(mut pprover: vcp_pp_bytes) -> vcp_pp {
+pub unsafe extern "C" fn pointproofs_pp_deserial(
+    mut pprover: pointproofs_pp_bytes,
+) -> pointproofs_pp {
     let pp = match ProverParams::deserialize(&mut pprover.data[..].as_ref(), true) {
         Ok(p) => p,
         Err(e) => panic!("prover parameter deserialization failed {}", e),
     };
     let buf_box = Box::new(pp);
     let pp_ptr = Box::into_raw(buf_box) as *mut ffi::c_void;
-    vcp_pp { data: pp_ptr }
+    pointproofs_pp { data: pp_ptr }
 }
 
 /// Serializing a verifier parameter into bytes
 #[no_mangle]
-pub unsafe extern "C" fn vcp_vp_serial(pverifier: vcp_vp) -> vcp_vp_bytes {
+pub unsafe extern "C" fn pointproofs_vp_serial(pverifier: pointproofs_vp) -> pointproofs_vp_bytes {
     let pverifier = &*(pverifier.data as *const VerifierParams);
     let mut buf: Vec<u8> = vec![];
     assert!(
@@ -115,24 +117,28 @@ pub unsafe extern "C" fn vcp_vp_serial(pverifier: vcp_vp) -> vcp_vp_bytes {
     buf.shrink_to_fit();
     let mut data = [0u8; VP_LEN];
     data.copy_from_slice(&buf);
-    vcp_vp_bytes { data }
+    pointproofs_vp_bytes { data }
 }
 
 /// Deserializing bytes into verifier parameters
 #[no_mangle]
-pub unsafe extern "C" fn vcp_vp_deserial(mut pverifier: vcp_vp_bytes) -> vcp_vp {
+pub unsafe extern "C" fn pointproofs_vp_deserial(
+    mut pverifier: pointproofs_vp_bytes,
+) -> pointproofs_vp {
     let vp = match VerifierParams::deserialize(&mut pverifier.data[..].as_ref(), true) {
         Ok(p) => p,
         Err(e) => panic!("verifier parameter deserialization failed {}", e),
     };
     let buf_box = Box::new(vp);
     let vp_ptr = Box::into_raw(buf_box) as *mut ffi::c_void;
-    vcp_vp { data: vp_ptr }
+    pointproofs_vp { data: vp_ptr }
 }
 
 /// Serializing commitments into bytes
 #[no_mangle]
-pub unsafe extern "C" fn vcp_commit_serial(commit: vcp_commitment) -> vcp_commitment_bytes {
+pub unsafe extern "C" fn pointproofs_commit_serial(
+    commit: pointproofs_commitment,
+) -> pointproofs_commitment_bytes {
     let com = &*(commit.data as *const Commitment);
     let mut buf: Vec<u8> = vec![];
     assert!(
@@ -142,26 +148,30 @@ pub unsafe extern "C" fn vcp_commit_serial(commit: vcp_commitment) -> vcp_commit
     buf.shrink_to_fit();
     let mut data = [0u8; COMMIT_LEN];
     data.copy_from_slice(&buf);
-    vcp_commitment_bytes { data }
+    pointproofs_commitment_bytes { data }
 }
 
 /// Deserializeing bytes into commitments
 #[no_mangle]
-pub unsafe extern "C" fn vcp_commit_deserial(mut commit: vcp_commitment_bytes) -> vcp_commitment {
+pub unsafe extern "C" fn pointproofs_commit_deserial(
+    mut commit: pointproofs_commitment_bytes,
+) -> pointproofs_commitment {
     let com = match Commitment::deserialize(&mut commit.data[..].as_ref(), true) {
         Ok(p) => p,
         Err(e) => panic!("Commitment deserialization failed {}", e),
     };
     let buf_box = Box::new(com);
 
-    vcp_commitment {
+    pointproofs_commitment {
         data: Box::into_raw(buf_box) as *mut ffi::c_void,
     }
 }
 
 /// Serializing proofs into bytes
 #[no_mangle]
-pub unsafe extern "C" fn vcp_proof_serial(proof: vcp_proof) -> vcp_proof_bytes {
+pub unsafe extern "C" fn pointproofs_proof_serial(
+    proof: pointproofs_proof,
+) -> pointproofs_proof_bytes {
     let proof = &*(proof.data as *const Proof);
     let mut buf: Vec<u8> = vec![];
     assert!(
@@ -171,31 +181,33 @@ pub unsafe extern "C" fn vcp_proof_serial(proof: vcp_proof) -> vcp_proof_bytes {
     buf.shrink_to_fit();
     let mut data = [0u8; PROOF_LEN];
     data.copy_from_slice(&buf);
-    vcp_proof_bytes { data }
+    pointproofs_proof_bytes { data }
 }
 
 /// Deserializeing bytes into proofs
 #[no_mangle]
-pub unsafe extern "C" fn vcp_proof_deserial(mut proof: vcp_proof_bytes) -> vcp_proof {
+pub unsafe extern "C" fn pointproofs_proof_deserial(
+    mut proof: pointproofs_proof_bytes,
+) -> pointproofs_proof {
     let proof = match Proof::deserialize(&mut proof.data[..].as_ref(), true) {
         Ok(p) => p,
         Err(e) => panic!("Proof deserialization failed {}", e),
     };
     let buf_box = Box::new(proof);
 
-    vcp_proof {
+    pointproofs_proof {
         data: Box::into_raw(buf_box) as *mut ffi::c_void,
     }
 }
 
 /// Generating a pair of parameters
 #[no_mangle]
-pub unsafe extern "C" fn vcp_paramgen(
+pub unsafe extern "C" fn pointproofs_paramgen(
     seedbuf: *const u8,
     seedlen: libc::size_t,
     ciphersuite: u8,
     n: libc::size_t,
-) -> vcp_params {
+) -> pointproofs_params {
     let seed = slice::from_raw_parts(seedbuf, seedlen);
     let (pp, vp) = param::paramgen_from_seed(seed, ciphersuite, n).unwrap();
 
@@ -204,123 +216,123 @@ pub unsafe extern "C" fn vcp_paramgen(
     let buf_box = Box::new(vp);
     let vp_ptr = Box::into_raw(buf_box) as *mut ffi::c_void;
 
-    vcp_params {
-        prover: vcp_pp { data: pp_ptr },
-        verifier: vcp_vp { data: vp_ptr },
+    pointproofs_params {
+        prover: pointproofs_pp { data: pp_ptr },
+        verifier: pointproofs_vp { data: vp_ptr },
     }
 }
 
 /// Free prover parameter
 #[no_mangle]
-pub unsafe extern "C" fn vcp_free_prover_params(pp: vcp_pp) {
+pub unsafe extern "C" fn pointproofs_free_prover_params(pp: pointproofs_pp) {
     Box::from_raw(pp.data);
 }
 
 /// Free verifier parameter
 #[no_mangle]
-pub unsafe extern "C" fn vcp_free_verifier_params(vp: vcp_vp) {
+pub unsafe extern "C" fn pointproofs_free_verifier_params(vp: pointproofs_vp) {
     Box::from_raw(vp.data);
 }
 
 /// Free commitment
 #[no_mangle]
-pub unsafe extern "C" fn vcp_free_commit(commit: vcp_commitment) {
+pub unsafe extern "C" fn pointproofs_free_commit(commit: pointproofs_commitment) {
     Box::from_raw(commit.data);
 }
 
 /// Free proof
 #[no_mangle]
-pub unsafe extern "C" fn vcp_free_proof(proof: vcp_proof) {
+pub unsafe extern "C" fn pointproofs_free_proof(proof: pointproofs_proof) {
     Box::from_raw(proof.data);
 }
 
-fn vcp_value_slice<'a>(vv: &vcp_value) -> &'a [u8] {
+fn pointproofs_value_slice<'a>(vv: &pointproofs_value) -> &'a [u8] {
     unsafe { slice::from_raw_parts(vv.data, vv.len) }
 }
 
 /// Generate a commitment
 #[no_mangle]
-pub unsafe extern "C" fn vcp_commit(
-    prover: vcp_pp,
-    values: *const vcp_value,
+pub unsafe extern "C" fn pointproofs_commit(
+    prover: pointproofs_pp,
+    values: *const pointproofs_value,
     n: usize,
-) -> vcp_commitment {
+) -> pointproofs_commitment {
     let pprover = &*(prover.data as *const ProverParams);
-    let tmp = slice::from_raw_parts::<vcp_value>(values, n);
+    let tmp = slice::from_raw_parts::<pointproofs_value>(values, n);
     let mut vvalues: Vec<Vec<u8>> = vec![];
     for e in tmp {
-        vvalues.push(vcp_value_slice(&e).to_vec());
+        vvalues.push(pointproofs_value_slice(&e).to_vec());
     }
 
     let com = Commitment::new(pprover, &vvalues).unwrap();
     let buf_box = Box::new(com);
 
-    vcp_commitment {
+    pointproofs_commitment {
         data: Box::into_raw(buf_box) as *mut ffi::c_void,
     }
 }
 
 /// Generate a proof
 #[no_mangle]
-pub unsafe extern "C" fn vcp_prove(
-    prover: vcp_pp,
-    values: *const vcp_value,
+pub unsafe extern "C" fn pointproofs_prove(
+    prover: pointproofs_pp,
+    values: *const pointproofs_value,
     n: usize,
     idx: libc::size_t,
-) -> vcp_proof {
+) -> pointproofs_proof {
     let pprover = &*(prover.data as *const ProverParams);
-    let tmp = slice::from_raw_parts::<vcp_value>(values, n);
+    let tmp = slice::from_raw_parts::<pointproofs_value>(values, n);
     let mut vvalues: Vec<Vec<u8>> = vec![];
     for e in tmp {
-        vvalues.push(vcp_value_slice(&e).to_vec());
+        vvalues.push(pointproofs_value_slice(&e).to_vec());
     }
 
     let proof = Proof::new(pprover, &vvalues, idx).unwrap();
     let buf_box = Box::new(proof);
 
-    vcp_proof {
+    pointproofs_proof {
         data: Box::into_raw(buf_box) as *mut ffi::c_void,
     }
 }
 
 /// Generate a proof
 #[no_mangle]
-pub unsafe extern "C" fn vcp_prove_batch_aggregated(
-    prover: vcp_pp,
-    commit: vcp_commitment,
-    values: *const vcp_value,
+pub unsafe extern "C" fn pointproofs_prove_batch_aggregated(
+    prover: pointproofs_pp,
+    commit: pointproofs_commitment,
+    values: *const pointproofs_value,
     n: usize,
     idx: &[libc::size_t],
-) -> vcp_proof {
+) -> pointproofs_proof {
     let pprover = &*(prover.data as *const ProverParams);
-    let tmp = slice::from_raw_parts::<vcp_value>(values, n);
+    let tmp = slice::from_raw_parts::<pointproofs_value>(values, n);
     let mut vvalues: Vec<Vec<u8>> = vec![];
     for e in tmp {
-        vvalues.push(vcp_value_slice(&e).to_vec());
+        vvalues.push(pointproofs_value_slice(&e).to_vec());
     }
     let pcom = &*(commit.data as *const Commitment);
     let proof = Proof::batch_new_aggregated(pprover, pcom, &vvalues, idx).unwrap();
     let buf_box = Box::new(proof);
 
-    vcp_proof {
+    pointproofs_proof {
         data: Box::into_raw(buf_box) as *mut ffi::c_void,
     }
 }
 
 /// update an existing proof
 #[no_mangle]
-pub unsafe extern "C" fn vcp_proof_update(
-    prover: vcp_pp,
-    proof: vcp_proof,
+pub unsafe extern "C" fn pointproofs_proof_update(
+    prover: pointproofs_pp,
+    proof: pointproofs_proof,
     idx: libc::size_t,
     changed_idx: libc::size_t,
-    val_old: vcp_value,
-    val_new: vcp_value,
-) -> vcp_proof {
+    val_old: pointproofs_value,
+    val_new: pointproofs_value,
+) -> pointproofs_proof {
     let pprover = &*(prover.data as *const ProverParams);
     let pproof = &*(proof.data as *const Proof);
-    let value_before = vcp_value_slice(&val_old);
-    let value_after = vcp_value_slice(&val_new);
+    let value_before = pointproofs_value_slice(&val_old);
+    let value_after = pointproofs_value_slice(&val_new);
 
     let mut new_proof = pproof.clone();
 
@@ -328,66 +340,66 @@ pub unsafe extern "C" fn vcp_proof_update(
         .update(pprover, idx, changed_idx, value_before, value_after)
         .unwrap();
     let buf_box = Box::new(new_proof);
-    vcp_proof {
+    pointproofs_proof {
         data: Box::into_raw(buf_box) as *mut ffi::c_void,
     }
 }
 
 /// update an existing commitment
 #[no_mangle]
-pub unsafe extern "C" fn vcp_commit_update(
-    prover: vcp_pp,
-    com: vcp_commitment,
+pub unsafe extern "C" fn pointproofs_commit_update(
+    prover: pointproofs_pp,
+    com: pointproofs_commitment,
     changed_idx: libc::size_t,
-    val_old: vcp_value,
-    val_new: vcp_value,
-) -> vcp_commitment {
+    val_old: pointproofs_value,
+    val_new: pointproofs_value,
+) -> pointproofs_commitment {
     let pprover = &*(prover.data as *const ProverParams);
     let pcom = &*(com.data as *const Commitment);
-    let value_before = vcp_value_slice(&val_old);
-    let value_after = vcp_value_slice(&val_new);
+    let value_before = pointproofs_value_slice(&val_old);
+    let value_after = pointproofs_value_slice(&val_new);
     let mut new_com = pcom.clone();
     new_com
         .update(pprover, changed_idx, value_before, value_after)
         .unwrap();
     let buf_box = Box::new(new_com);
-    vcp_commitment {
+    pointproofs_commitment {
         data: Box::into_raw(buf_box) as *mut ffi::c_void,
     }
 }
 
 /// verify the proof against the value and commitment
 #[no_mangle]
-pub unsafe extern "C" fn vcp_verify(
-    verifier: vcp_vp,
-    com: vcp_commitment,
-    proof: vcp_proof,
-    value: vcp_value,
+pub unsafe extern "C" fn pointproofs_verify(
+    verifier: pointproofs_vp,
+    com: pointproofs_commitment,
+    proof: pointproofs_proof,
+    value: pointproofs_value,
     idx: libc::size_t,
 ) -> bool {
     let pverifier = &*(verifier.data as *const VerifierParams);
     let pcom = &*(com.data as *const Commitment);
     let pproof = &*(proof.data as *const Proof);
-    let val = vcp_value_slice(&value);
+    let val = pointproofs_value_slice(&value);
 
     pproof.verify(pverifier, pcom, val, idx)
 }
 
 /// aggregate proofs within a same commitment
 #[no_mangle]
-pub unsafe extern "C" fn vcp_same_commit_aggregate(
-    com: vcp_commitment,
-    proofs: *const vcp_proof,
+pub unsafe extern "C" fn pointproofs_same_commit_aggregate(
+    com: pointproofs_commitment,
+    proofs: *const pointproofs_proof,
     set: *const libc::size_t,
-    values: *const vcp_value,
+    values: *const pointproofs_value,
     nvalues: libc::size_t,
     param_n: libc::size_t,
-) -> vcp_proof {
+) -> pointproofs_proof {
     // parse commit
     let pcom = &*(com.data as *const Commitment);
 
     // parse proofs
-    let tmp = slice::from_raw_parts::<vcp_proof>(proofs, nvalues);
+    let tmp = slice::from_raw_parts::<pointproofs_proof>(proofs, nvalues);
     let mut proof_list: Vec<Proof> = vec![];
     for e in tmp {
         proof_list.push((*(e.data as *const Proof)).clone());
@@ -401,10 +413,10 @@ pub unsafe extern "C" fn vcp_same_commit_aggregate(
     }
 
     // parse values
-    let tmp = slice::from_raw_parts::<vcp_value>(values, nvalues);
+    let tmp = slice::from_raw_parts::<pointproofs_value>(values, nvalues);
     let mut vvalues: Vec<Vec<u8>> = vec![];
     for e in tmp {
-        vvalues.push(vcp_value_slice(&e).to_vec());
+        vvalues.push(pointproofs_value_slice(&e).to_vec());
     }
 
     let agg_proof =
@@ -413,19 +425,19 @@ pub unsafe extern "C" fn vcp_same_commit_aggregate(
             Err(e) => panic!("C wrapper, same commit aggregation failed: {}", e),
         };
     let buf_box = Box::new(agg_proof);
-    vcp_proof {
+    pointproofs_proof {
         data: Box::into_raw(buf_box) as *mut ffi::c_void,
     }
 }
 
 /// verify an aggregated proof within a same commitment
 #[no_mangle]
-pub unsafe extern "C" fn vcp_same_commit_batch_verify(
-    verifier: vcp_vp,
-    com: vcp_commitment,
-    proof: vcp_proof,
+pub unsafe extern "C" fn pointproofs_same_commit_batch_verify(
+    verifier: pointproofs_vp,
+    com: pointproofs_commitment,
+    proof: pointproofs_proof,
     set: *const libc::size_t,
-    values: *const vcp_value,
+    values: *const pointproofs_value,
     nvalues: libc::size_t,
 ) -> bool {
     let pverifier = &*(verifier.data as *const VerifierParams);
@@ -440,10 +452,10 @@ pub unsafe extern "C" fn vcp_same_commit_batch_verify(
     }
 
     // parse values
-    let tmp = slice::from_raw_parts::<vcp_value>(values, nvalues);
+    let tmp = slice::from_raw_parts::<pointproofs_value>(values, nvalues);
     let mut vvalues: Vec<Vec<u8>> = vec![];
     for e in tmp {
-        vvalues.push(vcp_value_slice(&e).to_vec());
+        vvalues.push(pointproofs_value_slice(&e).to_vec());
     }
 
     pproof.same_commit_batch_verify(pverifier, pcom, &set_list, &vvalues)
@@ -451,17 +463,17 @@ pub unsafe extern "C" fn vcp_same_commit_batch_verify(
 
 /// aggregated proofs cross commitments
 #[no_mangle]
-pub unsafe extern "C" fn vcp_x_commit_aggregate_full(
-    com: *const vcp_commitment,
-    proof: *const vcp_proof,
+pub unsafe extern "C" fn pointproofs_x_commit_aggregate_full(
+    com: *const pointproofs_commitment,
+    proof: *const pointproofs_proof,
     set: *const libc::size_t,
-    values: *const vcp_value,
+    values: *const pointproofs_value,
     commit_indices: *const libc::size_t,
     no_commits: libc::size_t,
     param_n: libc::size_t,
-) -> vcp_proof {
+) -> pointproofs_proof {
     // parse commits
-    let tmp = slice::from_raw_parts::<vcp_commitment>(com, no_commits);
+    let tmp = slice::from_raw_parts::<pointproofs_commitment>(com, no_commits);
     let mut com_list: Vec<Commitment> = vec![];
     for e in tmp {
         com_list.push((*(e.data as *const Commitment)).clone());
@@ -478,8 +490,8 @@ pub unsafe extern "C" fn vcp_x_commit_aggregate_full(
 
     // parse indices, values and proofs as a 1-dim arrays
     let set_tmp = slice::from_raw_parts::<libc::size_t>(set, total);
-    let value_tmp = slice::from_raw_parts::<vcp_value>(values, total);
-    let proof_tmp = slice::from_raw_parts::<vcp_proof>(proof, total);
+    let value_tmp = slice::from_raw_parts::<pointproofs_value>(values, total);
+    let proof_tmp = slice::from_raw_parts::<pointproofs_proof>(proof, total);
 
     // convert them into 2-dim arrays
     let mut set_list: Vec<Vec<usize>> = vec![];
@@ -492,7 +504,7 @@ pub unsafe extern "C" fn vcp_x_commit_aggregate_full(
         let mut proof_list_within_com: Vec<Proof> = vec![];
         for _j in 0..e {
             set_list_within_com.push(set_tmp[counter]);
-            value_list_within_com.push(vcp_value_slice(&value_tmp[counter]).to_vec());
+            value_list_within_com.push(pointproofs_value_slice(&value_tmp[counter]).to_vec());
             proof_list_within_com.push((*(proof_tmp[counter].data as *const Proof)).clone());
             counter += 1;
         }
@@ -512,24 +524,24 @@ pub unsafe extern "C" fn vcp_x_commit_aggregate_full(
         Err(e) => panic!("C wrapper, x-commit aggregation failed: {}", e),
     };
     let buf_box = Box::new(agg_proof);
-    vcp_proof {
+    pointproofs_proof {
         data: Box::into_raw(buf_box) as *mut ffi::c_void,
     }
 }
 
 /// aggregated proofs cross commitments
 #[no_mangle]
-pub unsafe extern "C" fn vcp_x_commit_aggregate_partial(
-    com: *const vcp_commitment,
-    agg_proof: *const vcp_proof,
+pub unsafe extern "C" fn pointproofs_x_commit_aggregate_partial(
+    com: *const pointproofs_commitment,
+    agg_proof: *const pointproofs_proof,
     set: *const libc::size_t,
-    values: *const vcp_value,
+    values: *const pointproofs_value,
     commit_indices: *const libc::size_t,
     no_commits: libc::size_t,
     param_n: libc::size_t,
-) -> vcp_proof {
+) -> pointproofs_proof {
     // parse commits
-    let tmp = slice::from_raw_parts::<vcp_commitment>(com, no_commits);
+    let tmp = slice::from_raw_parts::<pointproofs_commitment>(com, no_commits);
     let mut com_list: Vec<Commitment> = vec![];
     for e in tmp {
         com_list.push((*(e.data as *const Commitment)).clone());
@@ -546,8 +558,8 @@ pub unsafe extern "C" fn vcp_x_commit_aggregate_partial(
 
     // parse indices, values and proofs as a 1-dim arrays
     let set_tmp = slice::from_raw_parts::<libc::size_t>(set, total);
-    let value_tmp = slice::from_raw_parts::<vcp_value>(values, total);
-    let agg_proof_tmp = slice::from_raw_parts::<vcp_proof>(agg_proof, no_commits);
+    let value_tmp = slice::from_raw_parts::<pointproofs_value>(values, total);
+    let agg_proof_tmp = slice::from_raw_parts::<pointproofs_proof>(agg_proof, no_commits);
 
     // convert them into 2-dim arrays
     let mut set_list: Vec<Vec<usize>> = vec![];
@@ -559,7 +571,7 @@ pub unsafe extern "C" fn vcp_x_commit_aggregate_partial(
         let mut value_list_within_com: Vec<Vec<u8>> = vec![];
         for _j in 0..commit_indices_vec[i] {
             set_list_within_com.push(set_tmp[counter]);
-            value_list_within_com.push(vcp_value_slice(&value_tmp[counter]).to_vec());
+            value_list_within_com.push(pointproofs_value_slice(&value_tmp[counter]).to_vec());
             counter += 1;
         }
         set_list.push(set_list_within_com);
@@ -578,24 +590,24 @@ pub unsafe extern "C" fn vcp_x_commit_aggregate_partial(
         Err(e) => panic!("C wrapper, x-commit aggregation failed: {}", e),
     };
     let buf_box = Box::new(agg_proof);
-    vcp_proof {
+    pointproofs_proof {
         data: Box::into_raw(buf_box) as *mut ffi::c_void,
     }
 }
 
 /// verify an aggregated proof across commitments
 #[no_mangle]
-pub unsafe extern "C" fn vcp_x_commit_batch_verify(
-    verifier: vcp_vp,
-    com: *const vcp_commitment,
-    proof: vcp_proof,
+pub unsafe extern "C" fn pointproofs_x_commit_batch_verify(
+    verifier: pointproofs_vp,
+    com: *const pointproofs_commitment,
+    proof: pointproofs_proof,
     set: *const libc::size_t,
-    values: *const vcp_value,
+    values: *const pointproofs_value,
     commit_indices: *const libc::size_t,
     no_commits: libc::size_t,
 ) -> bool {
     // parse commits
-    let tmp = slice::from_raw_parts::<vcp_commitment>(com, no_commits);
+    let tmp = slice::from_raw_parts::<pointproofs_commitment>(com, no_commits);
     let mut com_list: Vec<Commitment> = vec![];
     for e in tmp {
         com_list.push((*(e.data as *const Commitment)).clone());
@@ -612,7 +624,7 @@ pub unsafe extern "C" fn vcp_x_commit_batch_verify(
 
     // parse indices, values and proofs as a 1-dim arrays
     let set_tmp = slice::from_raw_parts::<libc::size_t>(set, total);
-    let value_tmp = slice::from_raw_parts::<vcp_value>(values, total);
+    let value_tmp = slice::from_raw_parts::<pointproofs_value>(values, total);
 
     // convert them into 2-dim arrays
     let mut set_list: Vec<Vec<usize>> = vec![];
@@ -623,7 +635,7 @@ pub unsafe extern "C" fn vcp_x_commit_batch_verify(
         let mut value_list_within_com: Vec<Vec<u8>> = vec![];
         for _j in 0..e {
             set_list_within_com.push(set_tmp[counter]);
-            value_list_within_com.push(vcp_value_slice(&value_tmp[counter]).to_vec());
+            value_list_within_com.push(pointproofs_value_slice(&value_tmp[counter]).to_vec());
             counter += 1;
         }
         set_list.push(set_list_within_com);

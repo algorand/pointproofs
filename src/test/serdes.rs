@@ -14,7 +14,7 @@ fn test_serdes_prover_param() {
         assert!(prover_params.serialize(&mut buf, false).is_err());
         assert!(prover_params.serialize(&mut buf, true).is_ok());
 
-        assert_eq!(buf.len(), 9 + n * VECCOMG1_LEN * 2);
+        assert_eq!(buf.len(), 9 + n * POINTPROOFSG1_LEN * 2);
 
         let mut invalid_buf = buf.clone();
         let mut valid_buf = buf.clone();
@@ -58,7 +58,7 @@ fn test_serdes_prover_param_slow() {
         assert!(prover_params.serialize(&mut buf, false).is_err());
         assert!(prover_params.serialize(&mut buf, true).is_ok());
 
-        assert_eq!(buf.len(), 9 + n * VECCOMG1_LEN * 2);
+        assert_eq!(buf.len(), 9 + n * POINTPROOFSG1_LEN * 2);
 
         let mut invalid_buf = buf.clone();
         let mut valid_buf = buf.clone();
@@ -102,7 +102,7 @@ fn test_serdes_verifier_param() {
         assert!(verifier_params.serialize(&mut buf, true).is_ok());
         let len = buf.len();
 
-        assert_eq!(len, 585 + n * VECCOMG2_LEN);
+        assert_eq!(len, 585 + n * POINTPROOFSG2_LEN);
 
         assert!(VerifierParams::deserialize(&mut buf[..].as_ref(), false).is_err());
         let verifier_params_recover =
@@ -134,7 +134,7 @@ fn test_serdes_verifier_param_slow() {
         assert!(verifier_params.serialize(&mut buf, true).is_ok());
         let len = buf.len();
 
-        assert_eq!(len, 585 + n * VECCOMG2_LEN);
+        assert_eq!(len, 585 + n * POINTPROOFSG2_LEN);
 
         assert!(VerifierParams::deserialize(&mut buf[..].as_ref(), false).is_err());
         let verifier_params_recover =
@@ -158,7 +158,7 @@ fn test_serdes_commit() {
     let mut buf: Vec<u8> = vec![];
     let valid_commit = Commitment {
         ciphersuite: 0,
-        commit: VeccomG1::one(),
+        commit: PointproofsG1::one(),
     };
     assert!(valid_commit.serialize(&mut buf, false).is_err());
     assert!(valid_commit.serialize(&mut buf, true).is_ok());
@@ -172,7 +172,7 @@ fn test_serdes_commit() {
 
     let invalid_commit = Commitment {
         ciphersuite: 1,
-        commit: VeccomG1::one(),
+        commit: PointproofsG1::one(),
     };
     assert!(invalid_commit.serialize(&mut buf, true).is_err());
 
@@ -189,7 +189,7 @@ fn test_serdes_proof() {
     let mut buf: Vec<u8> = vec![];
     let valid_proof = Proof {
         ciphersuite: 0,
-        proof: VeccomG1::one(),
+        proof: PointproofsG1::one(),
     };
 
     assert!(valid_proof.serialize(&mut buf, true).is_ok());
@@ -203,7 +203,7 @@ fn test_serdes_proof() {
 
     let invalid_proof = Proof {
         ciphersuite: 1,
-        proof: VeccomG1::one(),
+        proof: PointproofsG1::one(),
     };
     assert!(invalid_proof.serialize(&mut buf, true).is_err());
 

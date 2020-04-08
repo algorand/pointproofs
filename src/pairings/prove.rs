@@ -1,9 +1,9 @@
-//! This file is part of the veccom crate.
-//! Defines functions for proofs.
+//! this file is part of the pointproofs.
+//! It defines functions for proofs.
 use ff::{Field, PrimeField};
 use pairing::{bls12_381::*, CurveAffine, CurveProjective};
 use pairings::err::*;
-use pairings::hash_to_field_veccom::*;
+use pairings::hash_to_field_pointproofs::*;
 use pairings::param::*;
 use pairings::*;
 
@@ -42,7 +42,7 @@ impl Proof {
         // hash into a set of scalars
         let scalars_fr_repr: Vec<FrRepr> = values
             .iter()
-            .map(|s| hash_to_field_repr_veccom(&s.as_ref()))
+            .map(|s| hash_to_field_repr_pointproofs(&s.as_ref()))
             .collect();
         let scalars_u64: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
 
@@ -51,7 +51,7 @@ impl Proof {
             // the second condition `n <= 1024` comes from benchmarking
             // pre-computation is faster only when the #basis is <1024
             if prover_params.precomp.len() == 512 * prover_params.n && prover_params.n <= 1024 {
-                VeccomG1Affine::sum_of_products_precomp_256(
+                PointproofsG1Affine::sum_of_products_precomp_256(
                     &prover_params.generators
                         [(prover_params.n - index)..(2 * prover_params.n - index)],
                     &scalars_u64,
@@ -59,7 +59,7 @@ impl Proof {
                         [(prover_params.n - index) * 256..(2 * prover_params.n - index) * 256],
                 )
             } else {
-                VeccomG1Affine::sum_of_products(
+                PointproofsG1Affine::sum_of_products(
                     &prover_params.generators
                         [(prover_params.n - index)..(2 * prover_params.n - index)],
                     &scalars_u64,
@@ -114,7 +114,7 @@ impl Proof {
         // hash into a set of scalars
         let scalars_fr_repr: Vec<FrRepr> = values
             .iter()
-            .map(|s| hash_to_field_repr_veccom(&s.as_ref()))
+            .map(|s| hash_to_field_repr_pointproofs(&s.as_ref()))
             .collect();
         let scalars_u64: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
 
@@ -125,7 +125,7 @@ impl Proof {
                 .iter()
                 .map(|e| Self {
                     ciphersuite: prover_params.ciphersuite,
-                    proof: VeccomG1Affine::sum_of_products_precomp_256(
+                    proof: PointproofsG1Affine::sum_of_products_precomp_256(
                         &prover_params.generators
                             [(prover_params.n - *e)..(2 * prover_params.n - *e)],
                         &scalars_u64,
@@ -139,7 +139,7 @@ impl Proof {
                 .iter()
                 .map(|e| Self {
                     ciphersuite: prover_params.ciphersuite,
-                    proof: VeccomG1Affine::sum_of_products(
+                    proof: PointproofsG1Affine::sum_of_products(
                         &prover_params.generators
                             [(prover_params.n - *e)..(2 * prover_params.n - *e)],
                         &scalars_u64,
@@ -201,7 +201,7 @@ impl Proof {
         // hash into a set of scalars
         let scalars_fr: Vec<Fr> = values
             .iter()
-            .map(|s| hash_to_field_veccom(&s.as_ref()))
+            .map(|s| hash_to_field_pointproofs(&s.as_ref()))
             .collect();
         // get the list of scalars for each proof
         let ti = hash_to_ti_fr(commit, indices, &value_sub_vector, prover_params.n)?;
@@ -218,7 +218,7 @@ impl Proof {
 
         // remove the generators where the scalars are 0s, to form the final basis
         // also convert Fr-s to FrRepr-s to [u64;4]-s
-        let mut final_basis: Vec<VeccomG1Affine> = Vec::with_capacity(2 * prover_params.n);
+        let mut final_basis: Vec<PointproofsG1Affine> = Vec::with_capacity(2 * prover_params.n);
         let mut final_scalars_repr: Vec<FrRepr> = Vec::with_capacity(2 * prover_params.n);
         for (i, e) in final_scalars.iter().enumerate() {
             if !e.is_zero() {
@@ -233,7 +233,7 @@ impl Proof {
             if prover_params.precomp.len() == 512 * prover_params.n
                 && final_scalars_repr.len() <= 1024
             {
-                let mut final_basis_pp: Vec<VeccomG1Affine> =
+                let mut final_basis_pp: Vec<PointproofsG1Affine> =
                     Vec::with_capacity(512 * prover_params.n);
                 for (i, e) in final_scalars.iter().enumerate() {
                     if !e.is_zero() {
@@ -244,13 +244,13 @@ impl Proof {
                         .concat();
                     }
                 }
-                VeccomG1Affine::sum_of_products_precomp_256(
+                PointproofsG1Affine::sum_of_products_precomp_256(
                     &final_basis,
                     &scalars_u64,
                     &final_basis_pp,
                 )
             } else {
-                VeccomG1Affine::sum_of_products(&final_basis, &scalars_u64)
+                PointproofsG1Affine::sum_of_products(&final_basis, &scalars_u64)
             }
         };
 
@@ -295,9 +295,9 @@ impl Proof {
         // proof_param may be pre-computed -- the code will determine this
         // by checking the length of pre_comp
         if proof_index != changed_index {
-            let mut multiplier = hash_to_field_veccom(&value_before);
+            let mut multiplier = hash_to_field_pointproofs(&value_before);
             multiplier.negate();
-            multiplier.add_assign(&hash_to_field_veccom(&value_after));
+            multiplier.add_assign(&hash_to_field_pointproofs(&value_after));
 
             let param_index = changed_index + prover_params.n - proof_index;
 
@@ -364,7 +364,7 @@ impl Proof {
         // to take advantage of the pairing product computation, which is faster than two pairings.
 
         // step 1. compute hash_inverse
-        let hash = hash_to_field_veccom(&value);
+        let hash = hash_to_field_pointproofs(&value);
         // we can safely assume that hash is invertible
         // see `hash_to_field` function
         let hash_inverse = hash.inverse().unwrap();
@@ -377,11 +377,11 @@ impl Proof {
         proof_mut.mul_assign(hash_inverse);
 
         // step 3. check pairing product
-        veccom_pairing_product(
+        pointproofs_pairing_product(
             com_mut.into_affine(),
             verifier_params.generators[verifier_params.n - index - 1],
             proof_mut.into_affine(),
-            VeccomG2Affine::one(),
+            PointproofsG2Affine::one(),
         ) == verifier_params.gt_elt
     }
 
@@ -426,11 +426,12 @@ impl Proof {
         let ti = hash_to_ti_repr(commit, set, value_sub_vector, n)?;
         let scalars_u64: Vec<&[u64; 4]> = ti.iter().map(|s| &s.0).collect();
 
-        let mut bases: Vec<VeccomG1> = proofs.iter().map(|s| s.proof).collect();
+        let mut bases: Vec<PointproofsG1> = proofs.iter().map(|s| s.proof).collect();
         CurveProjective::batch_normalization(&mut bases);
-        let bases_affine: Vec<VeccomG1Affine> = bases.iter().map(|s| s.into_affine()).collect();
+        let bases_affine: Vec<PointproofsG1Affine> =
+            bases.iter().map(|s| s.into_affine()).collect();
         // proof = \prod proofs[i]^ti[i]
-        let proof = VeccomG1Affine::sum_of_products(&bases_affine[..], &scalars_u64);
+        let proof = PointproofsG1Affine::sum_of_products(&bases_affine[..], &scalars_u64);
 
         Ok(Proof {
             ciphersuite: csid,
@@ -514,12 +515,13 @@ impl Proof {
 
         let scalars_u64: Vec<&[u64; 4]> = scalars.iter().map(|s| &s.0).collect();
 
-        let mut bases: Vec<VeccomG1> = proofs.iter().map(|s| s.proof).collect();
+        let mut bases: Vec<PointproofsG1> = proofs.iter().map(|s| s.proof).collect();
         CurveProjective::batch_normalization(&mut bases);
-        let bases_affine: Vec<VeccomG1Affine> = bases.iter().map(|s| s.into_affine()).collect();
+        let bases_affine: Vec<PointproofsG1Affine> =
+            bases.iter().map(|s| s.into_affine()).collect();
 
         // proof = \prod pi[i] ^ tj[i]
-        let proof = VeccomG1Affine::sum_of_products(&bases_affine[..], &scalars_u64);
+        let proof = PointproofsG1Affine::sum_of_products(&bases_affine[..], &scalars_u64);
 
         Ok(Proof { ciphersuite, proof })
     }
@@ -628,12 +630,13 @@ impl Proof {
         let scalars_u64: Vec<&[u64; 4]> = scalars_repr.iter().map(|s| &s.0).collect();
 
         // form the final basis
-        let mut bases: Vec<VeccomG1> = proofs.concat().iter().map(|x| x.proof).collect();
+        let mut bases: Vec<PointproofsG1> = proofs.concat().iter().map(|x| x.proof).collect();
         CurveProjective::batch_normalization(&mut bases);
-        let bases_affine: Vec<VeccomG1Affine> = bases.iter().map(|s| s.into_affine()).collect();
+        let bases_affine: Vec<PointproofsG1Affine> =
+            bases.iter().map(|s| s.into_affine()).collect();
 
         // proof = \prod pi[i] ^ {tj[i] * ti[i,j]}
-        let proof = VeccomG1Affine::sum_of_products(&bases_affine[..], &scalars_u64);
+        let proof = PointproofsG1Affine::sum_of_products(&bases_affine[..], &scalars_u64);
 
         Ok(Proof { ciphersuite, proof })
     }
@@ -704,7 +707,7 @@ impl Proof {
         // 1.2 tmp = 1/\sum value_i*t_i
         let mut tmp = Fr::zero();
         for k in 0..set.len() {
-            let mut mi = hash_to_field_veccom(value_sub_vector[k].as_ref());
+            let mut mi = hash_to_field_pointproofs(value_sub_vector[k].as_ref());
             mi.mul_assign(&ti[k]);
             tmp.add_assign(&mi);
         }
@@ -727,7 +730,7 @@ impl Proof {
             .collect();
 
         // 2.2 g2^{\sum_{i \in set} \alpha^{N+1-i} t_i*tmp}
-        let bases: Vec<VeccomG2Affine> = set
+        let bases: Vec<PointproofsG2Affine> = set
             .iter()
             .map(|index| verifier_params.generators[verifier_params.n - index - 1])
             .collect();
@@ -736,7 +739,8 @@ impl Proof {
             // the second condition `n <= 1024` comes from benchmarking
             // pre-computation is faster only when the #basis is <1024
             if verifier_params.precomp.len() == 256 * verifier_params.n && bases.len() <= 1024 {
-                let mut bases_precomp: Vec<VeccomG2Affine> = Vec::with_capacity(bases.len() * 256);
+                let mut bases_precomp: Vec<PointproofsG2Affine> =
+                    Vec::with_capacity(bases.len() * 256);
                 for e in set.iter() {
                     bases_precomp = [
                         bases_precomp,
@@ -746,9 +750,13 @@ impl Proof {
                     ]
                     .concat();
                 }
-                VeccomG2Affine::sum_of_products_precomp_256(&bases, &scalars_u64, &bases_precomp)
+                PointproofsG2Affine::sum_of_products_precomp_256(
+                    &bases,
+                    &scalars_u64,
+                    &bases_precomp,
+                )
             } else {
-                VeccomG2Affine::sum_of_products(&bases, &scalars_u64)
+                PointproofsG2Affine::sum_of_products(&bases, &scalars_u64)
             }
         };
 
@@ -758,11 +766,11 @@ impl Proof {
         proof_mut.mul_assign(tmp);
 
         // 3 pairing product
-        veccom_pairing_product(
+        pointproofs_pairing_product(
             com.commit.into_affine(),
             param_subset_sum.into_affine(),
             proof_mut.into_affine(),
-            VeccomG2Affine::one(),
+            PointproofsG2Affine::one(),
         ) == verifier_params.gt_elt
     }
 
@@ -849,7 +857,7 @@ impl Proof {
             // tmp2 = sum_i m_ij * t_ij
             for k in 0..ti_s[j].len() {
                 let mut tmp3 = ti_s[j][k];
-                let mij = hash_to_field_veccom(value_sub_vector[j][k].as_ref());
+                let mij = hash_to_field_pointproofs(value_sub_vector[j][k].as_ref());
                 tmp3.mul_assign(&mij);
                 tmp2.add_assign(&tmp3);
             }
@@ -875,7 +883,7 @@ impl Proof {
 
         // g1_vec stores the g1 components for the pairing product
         // for j \in [num_commit], store com[j]
-        let mut g1_proj: Vec<VeccomG1> = com.iter().map(|x| x.commit).collect();
+        let mut g1_proj: Vec<PointproofsG1> = com.iter().map(|x| x.commit).collect();
         // the last element for g1_vec is proof^{-1/tmp}
         let mut tmp2 = self.proof;
         tmp2.negate();
@@ -883,12 +891,12 @@ impl Proof {
         g1_proj.push(tmp2);
 
         // convert g1_proj into g1_affine
-        VeccomG1::batch_normalization(&mut g1_proj);
-        let g1_vec: Vec<VeccomG1Affine> = g1_proj.iter().map(|s| s.into_affine()).collect();
+        PointproofsG1::batch_normalization(&mut g1_proj);
+        let g1_vec: Vec<PointproofsG1Affine> = g1_proj.iter().map(|s| s.into_affine()).collect();
 
         // g2_vec stores the g2 components for the pairing product
-        // for j \in [num_commit], g2^{\prod alpha^{n + 1 - i} * t_i,j} * tj/tmp )
-        let mut g2_proj: Vec<VeccomG2> = Vec::with_capacity(num_commit + 1);
+        // for j \in [num_commit], g2^{\sum alpha^{n + 1 - i} * t_i,j} * tj/tmp )
+        let mut g2_proj: Vec<PointproofsG2> = Vec::with_capacity(num_commit + 1);
         for j in 0..num_commit {
             let num_proof = ti_s[j].len();
             let mut tmp3 = tmp_inverse;
@@ -897,8 +905,8 @@ impl Proof {
             let scalar = Fr::from_repr(tj[j]).unwrap();
             tmp3.mul_assign(&scalar);
 
-            // subset_sum = \prod alpha^{n + 1 - i} * t_i,j}
-            let mut bases: Vec<VeccomG2Affine> = Vec::with_capacity(num_proof);
+            // subset_sum = \sum alpha^{n + 1 - i} * t_i,j}
+            let mut bases: Vec<PointproofsG2Affine> = Vec::with_capacity(num_proof);
             let mut scalars_u64: Vec<[u64; 4]> = Vec::with_capacity(num_proof);
             for k in 0..num_proof {
                 bases.push(verifier_params.generators[verifier_params.n - set[j][k] - 1]);
@@ -909,16 +917,10 @@ impl Proof {
             let scalars_u64_ref: Vec<&[u64; 4]> = scalars_u64.iter().collect();
 
             let param_subset_sum = {
-                // println!(
-                //     "using pre-computation? {} {} {}",
-                //     verifier_params.precomp.len(),
-                //     verifier_params.n,
-                //     bases.len()
-                // );
                 // the second condition `n <= 1024` comes from benchmarking
                 // pre-computation is faster only when the #basis is <1024
                 if verifier_params.precomp.len() == 256 * verifier_params.n && bases.len() <= 1024 {
-                    let mut bases_precomp: Vec<VeccomG2Affine> =
+                    let mut bases_precomp: Vec<PointproofsG2Affine> =
                         Vec::with_capacity(num_proof * 256);
                     for k in 0..num_proof {
                         bases_precomp = [
@@ -929,23 +931,23 @@ impl Proof {
                         ]
                         .concat();
                     }
-                    VeccomG2Affine::sum_of_products_precomp_256(
+                    PointproofsG2Affine::sum_of_products_precomp_256(
                         &bases,
                         &scalars_u64_ref,
                         &bases_precomp,
                     )
                 } else {
-                    VeccomG2Affine::sum_of_products(&bases, &scalars_u64_ref)
+                    PointproofsG2Affine::sum_of_products(&bases, &scalars_u64_ref)
                 }
             };
             g2_proj.push(param_subset_sum);
         }
         // the last element for g1_vec is g2
-        g2_proj.push(VeccomG2::one());
+        g2_proj.push(PointproofsG2::one());
         // convert g2_proj into g2_affine
-        VeccomG2::batch_normalization(&mut g2_proj);
-        let g2_vec: Vec<VeccomG2Affine> = g2_proj.iter().map(|s| s.into_affine()).collect();
+        PointproofsG2::batch_normalization(&mut g2_proj);
+        let g2_vec: Vec<PointproofsG2Affine> = g2_proj.iter().map(|s| s.into_affine()).collect();
         // now check the pairing product ?= verifier_params.gt_elt
-        veccom_pairing_multi_product(&g1_vec[..], &g2_vec[..]) == verifier_params.gt_elt
+        pointproofs_pairing_multi_product(&g1_vec[..], &g2_vec[..]) == verifier_params.gt_elt
     }
 }

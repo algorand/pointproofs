@@ -31,12 +31,12 @@ This file is still under construction
 * Definitions
 
   ``` rust
-  /// the VeccomG1 and VeccomG2 can be switched to improve verification speed
-  /// VeccomG1 represents G1 in the paper, and can be mapped to either bls12-381::G1 or bls12-381::G2
-  type VeccomG1 = G2;
-  type VeccomG2 = G1;
-  type VeccomG1Affine = G2Affine;
-  type VeccomG2Affine = G1Affine;
+  /// the PointproofsG1 and PointproofsG2 can be switched to improve verification speed
+  /// PointproofsG1 represents G1 in the paper, and can be mapped to either bls12-381::G1 or bls12-381::G2
+  type PointproofsG1 = G2;
+  type PointproofsG2 = G1;
+  type PointproofsG1Affine = G2Affine;
+  type PointproofsG2Affine = G1Affine;
   ```
 
 
@@ -47,9 +47,9 @@ This file is still under construction
   pub struct ProverParams {
       pub ciphersuite: Ciphersuite,
       pub n: usize,
-      pub generators: Vec<VeccomG1Affine>,
+      pub generators: Vec<PointproofsG1Affine>,
       pub pp_len: usize,
-      pub precomp: Vec<VeccomG1Affine>,
+      pub precomp: Vec<PointproofsG1Affine>,
   }
   ```
 
@@ -57,7 +57,7 @@ This file is still under construction
   pub struct VerifierParams {
       ciphersuite: Ciphersuite,
       pub n: usize,
-      generators: Vec<VeccomG2Affine>,
+      generators: Vec<PointproofsG2Affine>,
       gt_elt: Fq12,
   }
   ```
@@ -71,39 +71,41 @@ This file is still under construction
   ```
   * Input: a seed
   * Input: ciphersuite identifier
+  * Input: vector length n
   * Output: prover parameter and verifier parameter
   * Error: ciphersuite is not supported
   * Error: seed is too short
-  * Note: This function is only used for testing. For deployment, use `veccom_paramgen` trait for parameters.
+  * Error: n is too large
+  * Note: This function is only used for testing. For deployment, use `pointproofs_paramgen` trait for parameters.
 
   ``` rust
   fn serialize<W: Write>(&self, writer: &mut W, compressed: bool) -> Result<()>
   ```
   * Input: either a `ProverParams` or a `VerifierParam`
   * Input: a writable buffer
-  * Input: a flag whether to compress the group point or not; must be false
+  * Input: a flag whether to compress the group point or not; must be true
   * Output: none
+  * Error: compression is false
   * Error: ciphersuite is not supported
-  * Error: ciphersuite does not match #elements in parameters
   * Error: serialization fails
   * Steps: serialize the parameters into a blob
     1. For `ProverParams`, convert `|ciphersuite id | n | generators | pp_len | [pre_compute] |` to bytes
-    2. For `VerifierParam`, convert  `|ciphersuite id | n | generators  | pp_len | [pre_compute] |` to bytes
+    2. For `VerifierParam`, convert  `|ciphersuite id | n | generators | pp_len | [pre_compute] | gt_element` to bytes
 
   ``` rust
   fn deserialize<R: Read>(reader: &mut R, compressed: bool) -> Result<Self>
   ```
   * Input: a readeble buffer
-  * Input: a flag whether the group elements are expected to be compressed or not; must be false
+  * Input: a flag whether the group elements are expected to be compressed or not; must be true
   * Output: either a `ProverParams` or a `VerifierParam`
+  * Error: compression is false
   * Error: ciphersuite is not supported
-  * Error: ciphersuite does not match #elements in parameters
   * Error: encoded buffer has a different compressness than specified
   * Error: deserialization fails
   * Steps: deserialize the blob into parameters
     1. For `ProverParams`, convert bytes to `|ciphersuite id | n | generators | pp_len | [pre_compute] |`
-    2. For `VerifierParam`, convert bytes to `|ciphersuite id | n | generators | pp_len | [pre_compute] |`
-    
+    2. For `VerifierParam`, convert bytes to `|ciphersuite id | n | generators | pp_len | [pre_compute] | gt_element`
+
 ## Commitment    
 
 * Definitions
@@ -121,8 +123,9 @@ This file is still under construction
   ```
   * Input: a `Commitment`
   * Input: a writable buffer
-  * Input: a flag whether to compress the group point or not; must be false
+  * Input: a flag whether to compress the group point or not; must be true
   * Output: none
+  * Error: compression is false
   * Error: ciphersuite is not supported
   * Error: serialization fails
   * Steps: convert `| ciphersuite | commit |` to bytes
@@ -132,8 +135,9 @@ This file is still under construction
   fn deserialize<R: Read>(reader: &mut R, compressed: bool) -> Result<Self>
   ```
   * Input: a readeble buffer
-  * Input: a flag whether the group elements are expected to be compressed or not; must be false
+  * Input: a flag whether the group elements are expected to be compressed or not; must be true
   * Output: a `Commitment`
+  * Error: compression is false  
   * Error: ciphersuite is not supported
   * Error: encoded buffer has a different compressness than specified
   * Error: deserialization fails
@@ -172,6 +176,7 @@ This file is still under construction
   * Input: the value updated to
   * Output: mutate self to the updated commit
   * Error: ciphersuite is not supported
+  * Error: self.ciphersuite does not match prover_params.ciphersuite
   * Error: index out of range
   * Steps:
     1. hash `value_before` into `old_scalar`
@@ -194,6 +199,7 @@ This file is still under construction
   * Input: a list of values updated to
   * Output: mutate self to the updated commit
   * Error: ciphersuite is not supported
+  * Error: self.ciphersuite does not match prover_params.ciphersuite
   * Error: index out of range
   * Error: # of changed_index, value_before or value_after do not match
   * Steps:
@@ -209,7 +215,7 @@ This file is still under construction
   ``` rust
   pub struct Proof {
       ciphersuite: Ciphersuite,
-      proof: VeccomG1,
+      proof: PointproofsG1,
   }
   ```
 
@@ -231,7 +237,7 @@ This file is still under construction
   * Error: values.length does not match n
   * Steps:
     1. hash the `value`s into `scarlar`s
-    2. `proof = \prod prover_params.generators[n - index + i]^scalar[i]` for i in range(n) except index 
+    2. `proof = \prod prover_params.generators[n - index + i]^scalar[i]` for i in range(n) except index
     (_in implementation we implement it as `for i in range(n)` without exception, since the corresponding generator was already set to `0`_)
 
 
@@ -278,10 +284,10 @@ This file is still under construction
     1. hash the `value`s into `scarlar`s
     2. `proof = 1`
     3. for j in 0..indices.len():
-        1. `proof[j] = \prod prover_params[n - indices[j] + i]^scalar[i]` for i in range(n) except indices[j] 
+        1. `proof[j] = \prod prover_params[n - indices[j] + i]^scalar[i]` for i in range(n) except indices[j]
             (_in implementation we implement it as `for i in range(n)` without exception, since the corresponding generator was already set to `1`_)
         2. `proof *= proof[j]`
-        
+
     More efficient implementation is via the following
     `\prod_k prover_params[k]^c[k]` where `c[k]=\sum scalar[k+i-n] * t_i` for i in indices (with scalars at out-of-range indices understood to be 0)
 
@@ -328,7 +334,7 @@ This file is still under construction
   * Input: index of the value in the value vector
   * Output: if the proof is valid w.r.t. commit/values/index or not
   * Steps:
-    1. Compute `t = hash_to_field_veccom(value)`
+    1. Compute `t = hash_to_field_pointproofs(value)`
     2. return `e(com^{1/t}, veririer_params.generators[n-index-1]) * e(proof^{-1/t}, generator_of_g2) == gt_elt`
 
   ``` rust
@@ -453,8 +459,9 @@ This file is still under construction
   ```
   * Input: a `Commitment`
   * Input: a writable buffer
-  * Input: a flag whether to compress the group point or not; must be false
+  * Input: a flag whether to compress the group point or not; must be true
   * Output: none
+  * Error: compression is false  
   * Error: ciphersuite is not supported
   * Error: serialization fails
   * Steps: convert `| ciphersuite | proof |` to bytes
@@ -464,8 +471,9 @@ This file is still under construction
   fn deserialize<R: Read>(reader: &mut R, compressed: bool) -> Result<Self>
   ```
   * Input: a readeble buffer
-  * Input: a flag whether the group elements are expected to be compressed or not; must be false
+  * Input: a flag whether the group elements are expected to be compressed or not; must be true  
   * Output: a `Commitment`
+  * Error: compression is false  
   * Error: ciphersuite is not supported
   * Error: encoded buffer has a different compressness than specified
   * Error: deserialization fails
@@ -473,11 +481,11 @@ This file is still under construction
 
 ## hashes
 
-* veccom's hash to field
+* pointproofs' hash to field
 
   ``` rust
-  // hash_to_field_veccom use SHA 512 to hash a blob into a non-zero field element
-  pub fn hash_to_field_veccom<Blob: AsRef<[u8]>>(input: Blob) -> Fr
+  // hash_to_field_pointproofs use SHA 512 to hash a blob into a non-zero field element
+  pub fn hash_to_field_pointproofs<Blob: AsRef<[u8]>>(input: Blob) -> Fr
   ```
   * Steps:
     1. hash `input` into `64` bytes array `data`
@@ -505,8 +513,9 @@ This file is still under construction
   * Steps:
     1. `tmp = {C | S | m[S]} for i \in [0 .. commit.len-1]`
     2. `digest = SHA512(tmp)`
-    3. for `0 <= i < commits.len()`, `res[i] = hash_to_field_veccom(i, digest)`
-
+    3. for `0 <= i < commits.len()`, `res[i] = hash_to_field_pointproofs(i, digest)`
+  * Note: this procedure is a bit different from the paper, where no intermediate
+  digest is generated. We pre-hash the data into a digest to improve efficiency.
 
 * hash to t_i
 
@@ -526,4 +535,24 @@ This file is still under construction
   * Error: lengths do no match
   * Steps:
     1. `digest = SHA512(C | S | m[S])`
-    2. for `0 <= i < set.len()`, `res[i] = hash_to_field_veccom(i, digest)`
+    2. for `0 <= i < set.len()`, `res[i] = hash_to_field_pointproofs(i, digest)`
+  * Note: this procedure is a bit different from the paper, where no intermediate
+  digest is generated. We pre-hash the data into a digest to improve efficiency.
+
+
+## Difference from the paper
+
+Here are a list of minor difference of the spec from the paper.
+Those differences are either to improve the performance or simplicity
+of code. They have no impact on the security of the scheme.
+
+* hash to ti-s and tj-s:
+  * in the code we hash the inputs into a digest first,
+and then use this digest (concatenated with an index) to generate a field
+element.
+  * in the paper, there is no intermediate digest. the input is concatenated
+  with the index to generated a field element.
+
+* indexing:
+  * in the code, the indices start from 0 and end with n-1
+  * in the paper, the indices start from 1 and end with n

@@ -1,11 +1,11 @@
-//! This file is part of the veccom crate.
-//! This module defines system parameters and functions to generate/validate them.
+//! this file is part of the pointproofs.
+//! It defines system parameters and functions to generate/validate them.
 
 use ff::Field;
 use pairing::serdes::SerDes;
 use pairing::{bls12_381::*, CurveAffine, CurveProjective};
 use pairings::err::*;
-use pairings::hash_to_field_veccom::hash_to_field_veccom;
+use pairings::hash_to_field_pointproofs::hash_to_field_pointproofs;
 use pairings::*;
 
 const VALID_CIPHERSUITE: [u8; 1] = [0u8];
@@ -21,7 +21,7 @@ pub fn check_ciphersuite(csid: Ciphersuite) -> bool {
 /// Generate a set of parameters from a seed and a ciphersuite ID.
 /// Returns an error is the seed is not long enough; or ciphersuite is not valid; or n == 0
 /// This function shall only be used for testing purpose.
-/// In deployment you should use `veccom-param` crate to ensure the
+/// In deployment you should use `pointproofs-param` crate to ensure the
 /// security of the public parameters.
 pub fn paramgen_from_seed<Blob: AsRef<[u8]>>(
     seed: Blob,
@@ -43,7 +43,7 @@ pub fn paramgen_from_seed<Blob: AsRef<[u8]>>(
 
     // invoke the internal parameter generation function
     Ok(paramgen_from_alpha(
-        &hash_to_field_veccom(&seed),
+        &hash_to_field_pointproofs(&seed),
         ciphersuite,
         n,
     ))
@@ -61,7 +61,7 @@ fn paramgen_from_alpha(
     println!(
         "\n\n\nWarning!!! \nWarning!!! \nWarning!!! \nWarning!!! \n\
         This function (paramgen_from_alpha) shall only be used for developing purpose.\n\
-        In deployment you should use `veccom-param` crate to ensure \
+        In deployment you should use `pointproofs-paramgen` crate to ensure \
         the security of the public parameters.\n\
         End of warning.\n\n"
     );
@@ -74,22 +74,22 @@ fn paramgen_from_alpha(
     let mut alpha_power = Fr::one();
     for _ in 0..n {
         alpha_power.mul_assign(&alpha); // compute alpha^i
-        g1_vec.push(VeccomG1Affine::one().mul(alpha_power).into_affine());
-        g2_vec.push(VeccomG2Affine::one().mul(alpha_power).into_affine());
+        g1_vec.push(PointproofsG1Affine::one().mul(alpha_power).into_affine());
+        g2_vec.push(PointproofsG2Affine::one().mul(alpha_power).into_affine());
     }
 
     // skip g1^{alpha^{n+1}}
     alpha_power.mul_assign(&alpha);
-    g1_vec.push(VeccomG1::zero().into_affine()); // this 0 is important -- without it, prove will not work correctly
+    g1_vec.push(PointproofsG1::zero().into_affine()); // this 0 is important -- without it, prove will not work correctly
 
     // Now do the rest of the prover
     for _ in n..2 * n - 1 {
         alpha_power.mul_assign(&alpha); // compute alpha^i
-        g1_vec.push(VeccomG1Affine::one().mul(alpha_power).into_affine());
+        g1_vec.push(PointproofsG1Affine::one().mul(alpha_power).into_affine());
     }
 
     // verifier also gets gt^{alpha^{n+1}} in the target group
-    let gt = veccom_pairing(g1_vec[0], g2_vec[n - 1]);
+    let gt = pointproofs_pairing(g1_vec[0], g2_vec[n - 1]);
 
     (
         ProverParams {
@@ -113,7 +113,7 @@ fn paramgen_from_alpha(
 impl VerifierParams {
     /// pre-process the public parameters with precomputation value set to 3
     pub fn precomp_3(&mut self) {
-        self.precomp = vec![VeccomG2Affine::zero(); 3 * self.n];
+        self.precomp = vec![PointproofsG2Affine::zero(); 3 * self.n];
         for i in 0..self.n {
             self.generators[i].precomp_3(&mut self.precomp[i * 3..(i + 1) * 3]);
         }
@@ -122,7 +122,7 @@ impl VerifierParams {
 
     /// pre-process the public parameters with precomputation value set to 256
     pub fn precomp_256(&mut self) {
-        self.precomp = vec![VeccomG2Affine::zero(); 256 * self.n];
+        self.precomp = vec![PointproofsG2Affine::zero(); 256 * self.n];
         for i in 0..self.n {
             self.generators[i].precomp_256(&mut self.precomp[i * 256..(i + 1) * 256]);
         }
@@ -134,7 +134,7 @@ impl ProverParams {
     /// pre-process the public parameters with precomputation value set to 3
     pub fn precomp_3(&mut self) {
         let twice_n = self.generators.len();
-        self.precomp = vec![VeccomG1Affine::zero(); 3 * twice_n];
+        self.precomp = vec![PointproofsG1Affine::zero(); 3 * twice_n];
         for i in 0..twice_n {
             self.generators[i].precomp_3(&mut self.precomp[i * 3..(i + 1) * 3]);
         }
@@ -144,7 +144,7 @@ impl ProverParams {
     /// pre-process the public parameters with precomputation value set to 256
     pub fn precomp_256(&mut self) {
         let twice_n = self.generators.len();
-        self.precomp = vec![VeccomG1Affine::zero(); 256 * twice_n];
+        self.precomp = vec![PointproofsG1Affine::zero(); 256 * twice_n];
         for i in 0..twice_n {
             self.generators[i].precomp_256(&mut self.precomp[i * 256..(i + 1) * 256]);
         }
@@ -170,21 +170,27 @@ impl ProverParams {
         // of the two groups, and see if they all match as appropriate.
 
         for i in 0..self.n {
-            dh_values.push(veccom_pairing(self.generators[i], VeccomG2Affine::one()));
+            dh_values.push(pointproofs_pairing(
+                self.generators[i],
+                PointproofsG2Affine::one(),
+            ));
         }
         dh_values.push(vp.gt_elt);
         for i in self.n + 1..2 * self.n {
-            dh_values.push(veccom_pairing(self.generators[i], VeccomG2Affine::one()));
+            dh_values.push(pointproofs_pairing(
+                self.generators[i],
+                PointproofsG2Affine::one(),
+            ));
         }
         for i in 0..self.n {
-            dh_values.push(veccom_pairing(
+            dh_values.push(pointproofs_pairing(
                 self.generators[2 * self.n - 1],
                 vp.generators[i],
             ));
         }
 
         for (i, e) in dh_values.iter().enumerate().take(self.n) {
-            if e != &veccom_pairing(VeccomG1Affine::one(), vp.generators[i]) {
+            if e != &pointproofs_pairing(PointproofsG1Affine::one(), vp.generators[i]) {
                 return false;
             };
         }
@@ -192,7 +198,8 @@ impl ProverParams {
         for i in 0..2 * self.n {
             if i != self.n {
                 for j in 0..self.n {
-                    if dh_values[i + j + 1] != veccom_pairing(self.generators[i], vp.generators[j])
+                    if dh_values[i + j + 1]
+                        != pointproofs_pairing(self.generators[i], vp.generators[j])
                     {
                         return false;
                     };
@@ -265,7 +272,7 @@ impl std::cmp::PartialEq for VerifierParams {
 
 // read a parameter pair
 // the parameter is organized as
-// pub struct VeccomParams {
+// pub struct PointproofsParams {
 //     /// ciphersuite id
 //     pub ciphersuite: u8,
 //
@@ -290,12 +297,12 @@ impl std::cmp::PartialEq for VerifierParams {
 pub fn read_param<R: std::io::Read>(
     reader: &mut R,
 ) -> Result<(ProverParams, VerifierParams), String> {
-    let param = match veccom_paramgen::VeccomParams::deserialize(reader, true) {
+    let param = match pointproofs_paramgen::PointproofsParams::deserialize(reader, true) {
         Err(e) => return Err(format!("read_param: {}", e.to_string())),
         Ok(p) => p,
     };
 
-    if !veccom_paramgen::consistent(&param) {
+    if !pointproofs_paramgen::consistent(&param) {
         return Err("Input params are not consistent".to_owned());
     };
 
@@ -307,7 +314,7 @@ pub fn read_param<R: std::io::Read>(
         n: param.n,
         generators: [
             param.g1_alpha_1_to_n,
-            vec![VeccomG1::zero().into_affine()],
+            vec![PointproofsG1::zero().into_affine()],
             param.g1_alpha_nplus2_to_2n,
         ]
         .concat(),
@@ -330,7 +337,7 @@ pub fn read_param<R: std::io::Read>(
         n: param.n,
         generators: [
             param.g2_alpha_1_to_n,
-            vec![VeccomG1::zero().into_affine()],
+            vec![PointproofsG1::zero().into_affine()],
             param.g2_alpha_nplus2_to_2n,
         ]
         .concat(),

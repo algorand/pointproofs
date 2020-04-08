@@ -1,8 +1,8 @@
 extern crate pairing_plus as pairing;
-extern crate veccom;
+extern crate pointproofs;
 use pairing::serdes::SerDes;
-use veccom::pairings::param::paramgen_from_seed;
-use veccom::pairings::*;
+use pointproofs::pairings::param::paramgen_from_seed;
+use pointproofs::pairings::*;
 
 fn main() {
     let n = 16usize;

@@ -1,4 +1,4 @@
-//! This file is part of the veccom crate.
+//! this file is part of the pointproofs.
 //! It defines APIs for (de)serialization.
 
 use pairing::bls12_381::*;
@@ -27,7 +27,7 @@ impl SerDes for Commitment {
             ));
         }
 
-        // compressed must be false
+        // compressed must be true
         if !compressed {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
@@ -53,7 +53,7 @@ impl SerDes for Commitment {
         reader: &mut R,
         compressed: Compressed,
     ) -> std::io::Result<Self> {
-        // compressed must be false
+        // compressed must be true
         if !compressed {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
@@ -74,7 +74,7 @@ impl SerDes for Commitment {
         }
 
         // read into commit
-        let commit = VeccomG1::deserialize(reader, compressed)?;
+        let commit = PointproofsG1::deserialize(reader, compressed)?;
 
         // finished
         Ok(Commitment {
@@ -95,7 +95,7 @@ impl SerDes for Proof {
         writer: &mut W,
         compressed: Compressed,
     ) -> std::io::Result<()> {
-        // compressed must be false
+        // compressed must be true
         if !compressed {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
@@ -127,14 +127,14 @@ impl SerDes for Proof {
         reader: &mut R,
         compressed: Compressed,
     ) -> std::io::Result<Self> {
-        // compressed must be false
+        // compressed must be true
         if !compressed {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
                 ERR_COMPRESS,
             ));
         }
-        // constants stores id and the number of ssk-s
+        // constants stores ciphersuite id
         let mut constants: [u8; 1] = [0u8; 1];
 
         reader.read_exact(&mut constants)?;
@@ -148,7 +148,7 @@ impl SerDes for Proof {
         }
 
         // read into proof
-        let proof = VeccomG1::deserialize(reader, compressed)?;
+        let proof = PointproofsG1::deserialize(reader, compressed)?;
 
         // finished
         Ok(Proof {
@@ -169,6 +169,13 @@ impl SerDes for ProverParams {
         mut writer: &mut W,
         compressed: Compressed,
     ) -> std::io::Result<()> {
+        // check the cipher suite id
+        if !check_ciphersuite(self.ciphersuite) {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                ERR_CIPHERSUITE,
+            ));
+        }
         if !compressed {
             // we only support compress == true mode
             return Err(std::io::Error::new(
@@ -250,11 +257,11 @@ impl SerDes for ProverParams {
         }
 
         // write csid
-        let mut generators: Vec<VeccomG1Affine> = vec![];
+        let mut generators: Vec<PointproofsG1Affine> = vec![];
 
         // write the generators
         for _i in 0..n * 2 {
-            let g = VeccomG1Affine::deserialize(reader, true)?;
+            let g = PointproofsG1Affine::deserialize(reader, true)?;
             generators.push(g);
         }
 
@@ -262,9 +269,9 @@ impl SerDes for ProverParams {
         reader.read_exact(&mut buf)?;
         let pp_len = u32::from_le_bytes(buf) as usize;
 
-        let mut precomp: Vec<VeccomG1Affine> = vec![];
+        let mut precomp: Vec<PointproofsG1Affine> = vec![];
         for _i in 0..pp_len {
-            let g = VeccomG1Affine::deserialize(reader, true)?;
+            let g = PointproofsG1Affine::deserialize(reader, true)?;
             precomp.push(g);
         }
 
@@ -280,7 +287,7 @@ impl SerDes for ProverParams {
 }
 
 impl SerDes for VerifierParams {
-    /// Convert a ProverParam into a blob:
+    /// Convert a VerifierParams into a blob:
     ///
     /// `|ciphersuite id | n | generators | pp_len | pre_comp | gt_element` => bytes
     ///
@@ -290,6 +297,13 @@ impl SerDes for VerifierParams {
         mut writer: &mut W,
         compressed: Compressed,
     ) -> std::io::Result<()> {
+        // check the cipher suite id
+        if !check_ciphersuite(self.ciphersuite) {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                ERR_CIPHERSUITE,
+            ));
+        }
         if !compressed {
             // we only support compress == true mode
             return Err(std::io::Error::new(
@@ -330,7 +344,7 @@ impl SerDes for VerifierParams {
 
         Ok(())
     }
-    /// Convert a blob into a ProverParam:
+    /// Convert a blob into a VerifierParams:
     ///
     /// bytes => `|ciphersuite id | n | generators | pp_len | pre_comp | gt_element`
     ///
@@ -371,9 +385,9 @@ impl SerDes for VerifierParams {
         }
 
         // write the generators
-        let mut generators: Vec<VeccomG2Affine> = vec![];
+        let mut generators: Vec<PointproofsG2Affine> = vec![];
         for _i in 0..n {
-            let g = VeccomG2Affine::deserialize(reader, true)?;
+            let g = PointproofsG2Affine::deserialize(reader, true)?;
             generators.push(g);
         }
 
@@ -381,9 +395,9 @@ impl SerDes for VerifierParams {
         reader.read_exact(&mut buf)?;
         let pp_len = u32::from_le_bytes(buf) as usize;
 
-        let mut precomp: Vec<VeccomG1Affine> = vec![];
+        let mut precomp: Vec<PointproofsG1Affine> = vec![];
         for _i in 0..pp_len {
-            let g = VeccomG1Affine::deserialize(reader, true)?;
+            let g = PointproofsG1Affine::deserialize(reader, true)?;
             precomp.push(g);
         }
 

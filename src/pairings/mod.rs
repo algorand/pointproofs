@@ -1,4 +1,5 @@
-//! A pairing based vector commitment scheme, implemented with BLS12-381 curve.
+//! this file is part of the pointproofs,
+//! a pairing based vector commitment scheme, implemented with BLS12-381 curve.
 
 use self::param::Ciphersuite;
 use pairing::bls12_381::*;
@@ -8,33 +9,33 @@ use pairing::Engine;
 // the groups are not switched
 
 /// A wrapper of BLS::G1. Groups are not switched and proof/commits are in BLS::G1
-pub type VeccomG1 = G1;
+pub type PointproofsG1 = G1;
 /// A wrapper of BLS::G2. Groups are not switched and proof/commits are in BLS::G1
-pub type VeccomG2 = G2;
+pub type PointproofsG2 = G2;
 /// A wrapper of BLS::G1Affine. Groups are not switched and proof/commits are in BLS::G1
-pub type VeccomG1Affine = G1Affine;
+pub type PointproofsG1Affine = G1Affine;
 /// A wrapper of BLS::G2Affine. Groups are not switched and proof/commits are in BLS::G1
-pub type VeccomG2Affine = G2Affine;
-pub const VECCOMG1_LEN: usize = 48;
-pub const VECCOMG2_LEN: usize = 96;
+pub type PointproofsG2Affine = G2Affine;
+pub const POINTPROOFSG1_LEN: usize = 48;
+pub const POINTPROOFSG2_LEN: usize = 96;
 
 /// A wrapper of BLS::pairing_product. Groups are switched and proof/commits are in BLS::G1
-pub(crate) fn veccom_pairing(p1: VeccomG1Affine, q1: VeccomG2Affine) -> Fq12 {
+pub(crate) fn pointproofs_pairing(p1: PointproofsG1Affine, q1: PointproofsG2Affine) -> Fq12 {
     Bls12::pairing(p1, q1)
 }
 /// A wrapper of BLS::pairing_product. Groups are switched and proof/commits are in BLS::G1
-pub(crate) fn veccom_pairing_product(
-    p1: VeccomG1Affine,
-    q1: VeccomG2Affine,
-    p2: VeccomG1Affine,
-    q2: VeccomG2Affine,
+pub(crate) fn pointproofs_pairing_product(
+    p1: PointproofsG1Affine,
+    q1: PointproofsG2Affine,
+    p2: PointproofsG1Affine,
+    q2: PointproofsG2Affine,
 ) -> Fq12 {
     Bls12::pairing_product(p1, q1, p2, q2)
 }
 /// A wrapper of BLS::pairing_multi_product. Groups are switched and proof/commits are in BLS::G1
-pub(crate) fn veccom_pairing_multi_product(
-    g1_vec: &[VeccomG1Affine],
-    g2_vec: &[VeccomG2Affine],
+pub(crate) fn pointproofs_pairing_multi_product(
+    g1_vec: &[PointproofsG1Affine],
+    g2_vec: &[PointproofsG2Affine],
 ) -> Fq12 {
     Bls12::pairing_multi_product(g1_vec, g2_vec)
 }
@@ -57,34 +58,34 @@ pub const PROOF_LEN: usize = 49;
 /*
 // the groups are switched
 /// A wrapper of BLS::G2. Groups are switched and proof/commits are in BLS::G2
-pub type VeccomG1 = G2;
+pub type PointproofsG1 = G2;
 /// A wrapper of BLS::G1. Groups are switched and proof/commits are in BLS::G2
-pub type VeccomG2 = G1;
+pub type PointproofsG2 = G1;
 /// A wrapper of BLS::G2Affine. Groups are switched and proof/commits are in BLS::G2
-pub type VeccomG1Affine = G2Affine;
+pub type PointproofsG1Affine = G2Affine;
 /// A wrapper of BLS::G1Affine. Groups are switched and proof/commits are in BLS::G2
-pub type VeccomG2Affine = G1Affine;
+pub type PointproofsG2Affine = G1Affine;
 
-pub const VECCOMG1_LEN: usize = 96;
-pub const VECCOMG2_LEN: usize = 48;
+pub const POINTPROOFSG1_LEN: usize = 96;
+pub const POINTPROOFSG2_LEN: usize = 48;
 
 /// A wrapper of BLS::pairing. Groups are switched and proof/commits are in BLS::G2
-pub(crate) fn veccom_pairing(p1: VeccomG1Affine, q1: VeccomG2Affine) -> Fq12 {
+pub(crate) fn pointproofs_pairing(p1: PointproofsG1Affine, q1: PointproofsG2Affine) -> Fq12 {
     Bls12::pairing(q1, p1)
 }
 /// A wrapper of BLS::pairing_product. Groups are switched and proof/commits are in BLS::G2
-pub(crate) fn veccom_pairing_product(
-    p1: VeccomG1Affine,
-    q1: VeccomG2Affine,
-    p2: VeccomG1Affine,
-    q2: VeccomG2Affine,
+pub(crate) fn pointproofs_pairing_product(
+    p1: PointproofsG1Affine,
+    q1: PointproofsG2Affine,
+    p2: PointproofsG1Affine,
+    q2: PointproofsG2Affine,
 ) -> Fq12 {
     Bls12::pairing_product(q1, p1, q2, p2)
 }
 /// A wrapper of BLS::pairing_multi_product. Groups are switched and proof/commits are in BLS::G2
-pub(crate) fn veccom_pairing_multi_product(
-    g1_vec: &[VeccomG1Affine],
-    g2_vec: &[VeccomG2Affine],
+pub(crate) fn pointproofs_pairing_multi_product(
+    g1_vec: &[PointproofsG1Affine],
+    g2_vec: &[PointproofsG2Affine],
 ) -> Fq12 {
     Bls12::pairing_multi_product(g2_vec, g1_vec)
 }
@@ -109,9 +110,9 @@ pub const PROOF_LEN: usize = 97;
 pub struct ProverParams {
     pub(crate) ciphersuite: Ciphersuite,
     pub(crate) n: usize,
-    generators: Vec<VeccomG1Affine>,
+    generators: Vec<PointproofsG1Affine>,
     pp_len: usize,
-    precomp: Vec<VeccomG1Affine>,
+    precomp: Vec<PointproofsG1Affine>,
 }
 
 /// Structure for verifier parameters.
@@ -119,9 +120,9 @@ pub struct ProverParams {
 pub struct VerifierParams {
     pub(crate) ciphersuite: Ciphersuite,
     pub(crate) n: usize,
-    generators: Vec<VeccomG2Affine>,
+    generators: Vec<PointproofsG2Affine>,
     pp_len: usize,
-    precomp: Vec<VeccomG2Affine>,
+    precomp: Vec<PointproofsG2Affine>,
     gt_elt: Fq12,
 }
 
@@ -129,21 +130,21 @@ pub struct VerifierParams {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Commitment {
     pub(crate) ciphersuite: Ciphersuite,
-    pub(crate) commit: VeccomG1,
+    pub(crate) commit: PointproofsG1,
 }
 
 /// Structure to hold a proof.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Proof {
     pub(crate) ciphersuite: Ciphersuite,
-    pub(crate) proof: VeccomG1,
+    pub(crate) proof: PointproofsG1,
 }
 
 pub(crate) mod commit;
 pub mod param;
 pub(crate) mod prove;
 
-pub(crate) mod hash_to_field_veccom;
+pub(crate) mod hash_to_field_pointproofs;
 
 //mod c_api;
 pub(crate) mod c_api;

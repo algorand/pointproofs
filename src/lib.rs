@@ -3,8 +3,8 @@
 extern crate bigint;
 extern crate ff;
 extern crate pairing_plus as pairing;
+extern crate pointproofs_paramgen;
 extern crate sha2;
-extern crate veccom_paramgen;
 pub mod pairings;
 
 #[cfg(test)]

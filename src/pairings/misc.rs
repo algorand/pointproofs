@@ -1,3 +1,6 @@
+//! this file is part of the pointproofs.
+//! It defines some misc functions.
+
 use std::collections::HashSet;
 use std::hash::Hash;
 

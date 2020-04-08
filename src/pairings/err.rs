@@ -1,5 +1,5 @@
-//! This file is part of the veccom crate.
-//! A list of error messages.
+//! this file is part of the pointproofs.
+//! It defines a list of error messages.
 
 pub(crate) const ERR_SEED_TOO_SHORT: &str = "The seed length is too short";
 pub(crate) const ERR_CIPHERSUITE: &str = "Invalid ciphersuite ID";

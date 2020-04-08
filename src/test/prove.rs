@@ -140,7 +140,7 @@ fn test_proof_edge_case() {
 #[test]
 fn test_proof_edge_case2() {
     let n = 8usize;
-    let mut f = std::fs::File::open("3.param").unwrap();
+    let mut f = std::fs::File::open("crs.param").unwrap();
     let (prover_params, verifier_params) = param::read_param(&mut f).unwrap();
 
     let mut prover_params3 = prover_params.clone();
@@ -249,7 +249,7 @@ fn test_proof_edge_case2() {
 #[test]
 fn test_proof_edge_case3() {
     let n = 8usize;
-    let mut f = std::fs::File::open("3.param").unwrap();
+    let mut f = std::fs::File::open("crs.param").unwrap();
     let (prover_params, verifier_params) = param::read_param(&mut f).unwrap();
 
     let mut prover_params3 = prover_params.clone();
