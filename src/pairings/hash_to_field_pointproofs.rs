@@ -150,8 +150,8 @@ pub(crate) fn hash_to_ti_repr<Blob: AsRef<[u8]>>(
     }
 
     // add values to set; returns an error if index is out of range
-    for i in 0..set.len() {
-        if set[i] >= n {
+    for e in set {
+        if *e >= n {
             return Err(ERR_INVALID_INDEX.to_owned());
         }
     }
@@ -169,8 +169,8 @@ pub(crate) fn hash_to_ti_repr<Blob: AsRef<[u8]>>(
         tmp.append(&mut t.to_vec());
     }
     // add values to set; returns an error if index is out of range
-    for i in 0..set.len() {
-        let t = value_sub_vector[i].as_ref();
+    for e in value_sub_vector {
+        let t = e.as_ref();
         tmp.append(&mut t.to_vec());
     }
 

@@ -21,8 +21,8 @@ criterion_group!(bench_mul, bench_g1, bench_g2);
 criterion_main!(bench_mul);
 
 fn bench_sum_product_helper<G: CurveProjective>(
-    basis: &Vec<G>,
-    scalar: &Vec<Fr>,
+    basis: &[G],
+    scalar: &[Fr],
     n: usize,
     b: &mut Bencher,
 ) {
@@ -42,9 +42,9 @@ fn bench_sum_product_helper<G: CurveProjective>(
 }
 
 fn bench_sum_product_with_precomp_helper<G: CurveProjective>(
-    basis: &Vec<G>,
-    scalar: &Vec<Fr>,
-    pp: &Vec<G::Affine>,
+    basis: &[G],
+    scalar: &[Fr],
+    pp: &[G::Affine],
     n: usize,
     b: &mut Bencher,
 ) {
@@ -84,14 +84,14 @@ fn bench_g1(c: &mut Criterion) {
             scalar.push(Fr::random(&mut rng));
         }
 
-        let bench_str = format!("sum_of_prod");
+        let bench_str = "sum_of_prod".to_string();
         let basis_clone = basis.clone();
         let scalar_clone = scalar.clone();
         let bench = Benchmark::new(&bench_str, move |b| {
             bench_sum_product_helper(&basis_clone, &scalar_clone, sample, b);
         });
 
-        let bench_str = format!("sum_of_prod, with pp");
+        let bench_str = "sum_of_prod, with pp".to_string();
         let basis_clone = basis.clone();
         let scalar_clone = scalar.clone();
         let pp_clone = pp.clone();
@@ -105,7 +105,7 @@ fn bench_g1(c: &mut Criterion) {
             );
         });
 
-        let bench_str = format!("serial_mul");
+        let bench_str = "serial_mul".to_string();
         let bench = bench.with_function(&bench_str, move |b| {
             b.iter(|| {
                 let mut res = G1::zero();
@@ -147,14 +147,14 @@ fn bench_g2(c: &mut Criterion) {
             scalar.push(Fr::random(&mut rng));
         }
 
-        let bench_str = format!("sum_of_prod");
+        let bench_str = "sum_of_prod".to_string();
         let basis_clone = basis.clone();
         let scalar_clone = scalar.clone();
         let bench = Benchmark::new(&bench_str, move |b| {
             bench_sum_product_helper(&basis_clone, &scalar_clone, sample, b);
         });
 
-        let bench_str = format!("sum_of_prod, with pp");
+        let bench_str = "sum_of_prod, with pp".to_string();
         let basis_clone = basis.clone();
         let scalar_clone = scalar.clone();
         let pp_clone = pp.clone();
@@ -168,7 +168,7 @@ fn bench_g2(c: &mut Criterion) {
             );
         });
 
-        let bench_str = format!("serial_mul");
+        let bench_str = "serial_mul".to_string();
         let bench = bench.with_function(&bench_str, move |b| {
             b.iter(|| {
                 let mut res = G2::zero();

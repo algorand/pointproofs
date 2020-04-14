@@ -91,7 +91,7 @@ fn randomized_batch_new_proof(c: &mut Criterion) {
     // batch proof generation with aggregation
     let pp_clone = pp.clone();
     let values_clone = values.clone();
-    let set_clone = set.clone();
+    let set_clone = set;
     let com_clone = com.clone();
     let bench_str = format!("single_commit_n_{}_proof_batch_new_aggregated", n);
     let mut bench = Benchmark::new(bench_str, move |b| {
@@ -214,7 +214,7 @@ fn single_commit(c: &mut Criterion) {
     // batch proof generation with aggregation
     let pp_clone = pp.clone();
     let values_clone = values.clone();
-    let set_clone = set.clone();
+    let set_clone = set;
     let com_clone = com.clone();
     let bench_str = format!("single_commit_n_{}_proof_batch_new_aggregated", n);
     bench = bench.with_function(bench_str, move |b| {

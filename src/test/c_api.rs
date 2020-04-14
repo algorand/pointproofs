@@ -157,14 +157,14 @@ fn test_c_api_aggregate() {
             n,
         );
         let agg_proof11 = pointproofs_prove_batch_aggregated(
-            pp.clone(),
+            pp,
             com1.clone(),
             values1.as_ptr(),
             n,
             &[0, 1],
         );
         let proof_bytes1 = pointproofs_proof_serial(agg_proof1.clone());
-        let proof_bytes11 = pointproofs_proof_serial(agg_proof11.clone());
+        let proof_bytes11 = pointproofs_proof_serial(agg_proof11);
         for i in 0..PROOF_LEN {
             assert_eq!(proof_bytes1.data[i], proof_bytes11.data[i]);
         }
