@@ -20,7 +20,7 @@
   sha2 = "0.8"
   libc = { version = "0.2", features = ["align"] }
   bigint = { version = "4", default-features = false }
-  pointproofs-paramgen = { git = "ssh://git@github.com/algorand/pointproofs-paramgen"}
+  pointproofs-paramgen = { git = "https://github.com/algorand/pointproofs-paramgen"}
 
 [features]
 
