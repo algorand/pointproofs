@@ -26,7 +26,7 @@ This implementation uses bls12-381 curve.
 
 ## Documentation
 * [Spec](https://github.com/algorand/pointproofs/blob/master/SPEC.md)
-* [Preprint](https://eprint.iacr.org/2020/tbd).
+* [Preprint](https://eprint.iacr.org/2020/419).
 
 
 ## Code status
