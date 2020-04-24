@@ -4,7 +4,7 @@
 
 #[macro_use]
 extern crate criterion;
-extern crate ff;
+extern crate ff_zeroize as ff;
 extern crate pairing_plus as pairing;
 extern crate rand_core;
 
