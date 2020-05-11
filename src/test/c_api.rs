@@ -76,7 +76,7 @@ fn test_c_api_basic() {
         );
         assert!(
             pointproofs_proof_update(
-                pp.clone(),
+                pp,
                 proof,
                 0,
                 1,
