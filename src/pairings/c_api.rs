@@ -9,6 +9,7 @@ use std::slice;
 
 /// non-serialized
 #[repr(C)]
+#[derive(Default)]
 pub struct pointproofs_params {
     pub(crate) prover: pointproofs_pp,
     pub(crate) verifier: pointproofs_vp,
@@ -78,126 +79,172 @@ pub struct pointproofs_proof {
 
 /// Serializing a prove parameter into bytes
 #[no_mangle]
-pub unsafe extern "C" fn pointproofs_pp_serial(pprover: pointproofs_pp) -> pointproofs_pp_bytes {
+pub unsafe extern "C" fn pointproofs_pp_serial(
+    pprover: pointproofs_pp,
+    bytes: *mut pointproofs_pp_bytes,
+) -> i32 {
     let pprover = &*(pprover.data as *const ProverParams);
     let mut buf: Vec<u8> = vec![];
-    assert!(
-        pprover.serialize(&mut buf, true).is_ok(),
-        "prover parameter serialization failed"
-    );
+
+    match pprover.serialize(&mut buf, true) {
+        Ok(p) => p,
+        Err(_e) => {
+            println!("C wrapper, prover parameter serialization failed");
+            return -1;
+        }
+    };
+
     buf.shrink_to_fit();
     let mut data = [0u8; PP_LEN];
     data.copy_from_slice(&buf);
-    pointproofs_pp_bytes { data }
+    *bytes = pointproofs_pp_bytes { data };
+    0
 }
 
-/// Deserializing bytes into prover parameters
 #[no_mangle]
 pub unsafe extern "C" fn pointproofs_pp_deserial(
     mut pprover: pointproofs_pp_bytes,
-) -> pointproofs_pp {
+    prover: *mut pointproofs_pp,
+) -> i32 {
     let pp = match ProverParams::deserialize(&mut pprover.data[..].as_ref(), true) {
         Ok(p) => p,
-        Err(e) => panic!("prover parameter deserialization failed {}", e),
+        Err(_e) => {
+            println!("C wrapper, prover parameter deserialization failed");
+            return -1;
+        }
     };
     let buf_box = Box::new(pp);
     let pp_ptr = Box::into_raw(buf_box) as *mut ffi::c_void;
-    pointproofs_pp { data: pp_ptr }
+    *prover = pointproofs_pp { data: pp_ptr };
+    0
 }
 
-/// Serializing a verifier parameter into bytes
+/// Serializing a prove parameter into bytes
 #[no_mangle]
-pub unsafe extern "C" fn pointproofs_vp_serial(pverifier: pointproofs_vp) -> pointproofs_vp_bytes {
+pub unsafe extern "C" fn pointproofs_vp_serial(
+    pverifier: pointproofs_vp,
+    bytes: *mut pointproofs_vp_bytes,
+) -> i32 {
     let pverifier = &*(pverifier.data as *const VerifierParams);
     let mut buf: Vec<u8> = vec![];
-    assert!(
-        pverifier.serialize(&mut buf, true).is_ok(),
-        "verifier parameter serialization failed"
-    );
+
+    match pverifier.serialize(&mut buf, true) {
+        Ok(p) => p,
+        Err(_e) => {
+            println!("C wrapper, verifier parameter serialization failed");
+            return -1;
+        }
+    };
+
     buf.shrink_to_fit();
     let mut data = [0u8; VP_LEN];
     data.copy_from_slice(&buf);
-    pointproofs_vp_bytes { data }
+    *bytes = pointproofs_vp_bytes { data };
+    0
 }
 
-/// Deserializing bytes into verifier parameters
 #[no_mangle]
 pub unsafe extern "C" fn pointproofs_vp_deserial(
     mut pverifier: pointproofs_vp_bytes,
-) -> pointproofs_vp {
-    let vp = match VerifierParams::deserialize(&mut pverifier.data[..].as_ref(), true) {
+    verifier: *mut pointproofs_vp,
+) -> i32 {
+    let pp = match VerifierParams::deserialize(&mut pverifier.data[..].as_ref(), true) {
         Ok(p) => p,
-        Err(e) => panic!("verifier parameter deserialization failed {}", e),
+        Err(_e) => {
+            println!("C wrapper, verifier parameter deserialization failed");
+            return -1;
+        }
     };
-    let buf_box = Box::new(vp);
+    let buf_box = Box::new(pp);
     let vp_ptr = Box::into_raw(buf_box) as *mut ffi::c_void;
-    pointproofs_vp { data: vp_ptr }
+    *verifier = pointproofs_vp { data: vp_ptr };
+    0
 }
 
 /// Serializing commitments into bytes
 #[no_mangle]
 pub unsafe extern "C" fn pointproofs_commit_serial(
     commit: pointproofs_commitment,
-) -> pointproofs_commitment_bytes {
+    bytes: *mut pointproofs_commitment_bytes,
+) -> i32 {
     let com = &*(commit.data as *const Commitment);
     let mut buf: Vec<u8> = vec![];
-    assert!(
-        com.serialize(&mut buf, true).is_ok(),
-        "commitment serialization failed"
-    );
+    match com.serialize(&mut buf, true) {
+        Ok(p) => p,
+        Err(_e) => {
+            println!("C wrapper, commitment serialization failed");
+            return -1;
+        }
+    };
     buf.shrink_to_fit();
     let mut data = [0u8; COMMIT_LEN];
     data.copy_from_slice(&buf);
-    pointproofs_commitment_bytes { data }
+    *bytes = pointproofs_commitment_bytes { data };
+    0
 }
 
 /// Deserializeing bytes into commitments
 #[no_mangle]
 pub unsafe extern "C" fn pointproofs_commit_deserial(
-    mut commit: pointproofs_commitment_bytes,
-) -> pointproofs_commitment {
-    let com = match Commitment::deserialize(&mut commit.data[..].as_ref(), true) {
+    mut commit_bytes: pointproofs_commitment_bytes,
+    commit: *mut pointproofs_commitment,
+) -> i32 {
+    let com = match Commitment::deserialize(&mut commit_bytes.data[..].as_ref(), true) {
         Ok(p) => p,
-        Err(e) => panic!("Commitment deserialization failed {}", e),
+        Err(_e) => {
+            println!("C wrapper, commitment deserialization failed");
+            return -1;
+        }
     };
     let buf_box = Box::new(com);
 
-    pointproofs_commitment {
+    *commit = pointproofs_commitment {
         data: Box::into_raw(buf_box) as *mut ffi::c_void,
-    }
+    };
+    0
 }
 
 /// Serializing proofs into bytes
 #[no_mangle]
 pub unsafe extern "C" fn pointproofs_proof_serial(
     proof: pointproofs_proof,
-) -> pointproofs_proof_bytes {
+    bytes: *mut pointproofs_proof_bytes,
+) -> i32 {
     let proof = &*(proof.data as *const Proof);
     let mut buf: Vec<u8> = vec![];
-    assert!(
-        proof.serialize(&mut buf, true).is_ok(),
-        "proof serialization failed"
-    );
+    match proof.serialize(&mut buf, true) {
+        Ok(p) => p,
+        Err(_e) => {
+            println!("C wrapper, proof serialization failed");
+            return -1;
+        }
+    };
     buf.shrink_to_fit();
     let mut data = [0u8; PROOF_LEN];
     data.copy_from_slice(&buf);
-    pointproofs_proof_bytes { data }
+    *bytes = pointproofs_proof_bytes { data };
+    0
 }
 
 /// Deserializeing bytes into proofs
 #[no_mangle]
 pub unsafe extern "C" fn pointproofs_proof_deserial(
-    mut proof: pointproofs_proof_bytes,
-) -> pointproofs_proof {
-    let proof = match Proof::deserialize(&mut proof.data[..].as_ref(), true) {
+    mut proof_bytes: pointproofs_proof_bytes,
+    proof: *mut pointproofs_proof,
+) -> i32 {
+    let pr = match Proof::deserialize(&mut proof_bytes.data[..].as_ref(), true) {
         Ok(p) => p,
-        Err(e) => panic!("Proof deserialization failed {}", e),
+        Err(_e) => {
+            println!("C wrapper, proof deserialization failed");
+            return -1;
+        }
     };
-    let buf_box = Box::new(proof);
+    let buf_box = Box::new(pr);
 
-    pointproofs_proof {
+    *proof = pointproofs_proof {
         data: Box::into_raw(buf_box) as *mut ffi::c_void,
-    }
+    };
+    0
 }
 
 /// Generating a pair of parameters
@@ -207,7 +254,8 @@ pub unsafe extern "C" fn pointproofs_paramgen(
     seedlen: libc::size_t,
     ciphersuite: u8,
     n: libc::size_t,
-) -> pointproofs_params {
+    param: *mut pointproofs_params,
+) -> i32 {
     let seed = slice::from_raw_parts(seedbuf, seedlen);
     let (pp, vp) = param::paramgen_from_seed(seed, ciphersuite, n).unwrap();
 
@@ -216,10 +264,11 @@ pub unsafe extern "C" fn pointproofs_paramgen(
     let buf_box = Box::new(vp);
     let vp_ptr = Box::into_raw(buf_box) as *mut ffi::c_void;
 
-    pointproofs_params {
+    *param = pointproofs_params {
         prover: pointproofs_pp { data: pp_ptr },
         verifier: pointproofs_vp { data: vp_ptr },
-    }
+    };
+    0
 }
 
 /// Free prover parameter
@@ -256,7 +305,8 @@ pub unsafe extern "C" fn pointproofs_commit(
     prover: pointproofs_pp,
     values: *const pointproofs_value,
     n: usize,
-) -> pointproofs_commitment {
+    commit: *mut pointproofs_commitment,
+) -> i32 {
     let pprover = &*(prover.data as *const ProverParams);
     let tmp = slice::from_raw_parts::<pointproofs_value>(values, n);
     let mut vvalues: Vec<Vec<u8>> = vec![];
@@ -267,9 +317,10 @@ pub unsafe extern "C" fn pointproofs_commit(
     let com = Commitment::new(pprover, &vvalues).unwrap();
     let buf_box = Box::new(com);
 
-    pointproofs_commitment {
+    *commit = pointproofs_commitment {
         data: Box::into_raw(buf_box) as *mut ffi::c_void,
-    }
+    };
+    0
 }
 
 /// Generate a proof
@@ -279,7 +330,8 @@ pub unsafe extern "C" fn pointproofs_prove(
     values: *const pointproofs_value,
     n: usize,
     idx: libc::size_t,
-) -> pointproofs_proof {
+    proof: *mut pointproofs_proof,
+) -> i32 {
     let pprover = &*(prover.data as *const ProverParams);
     let tmp = slice::from_raw_parts::<pointproofs_value>(values, n);
     let mut vvalues: Vec<Vec<u8>> = vec![];
@@ -287,12 +339,13 @@ pub unsafe extern "C" fn pointproofs_prove(
         vvalues.push(pointproofs_value_slice(&e).to_vec());
     }
 
-    let proof = Proof::new(pprover, &vvalues, idx).unwrap();
-    let buf_box = Box::new(proof);
+    let pr = Proof::new(pprover, &vvalues, idx).unwrap();
+    let buf_box = Box::new(pr);
 
-    pointproofs_proof {
+    *proof = pointproofs_proof {
         data: Box::into_raw(buf_box) as *mut ffi::c_void,
-    }
+    };
+    0
 }
 
 /// Generate a proof
@@ -303,7 +356,8 @@ pub unsafe extern "C" fn pointproofs_prove_batch_aggregated(
     values: *const pointproofs_value,
     n: usize,
     idx: &[libc::size_t],
-) -> pointproofs_proof {
+    proof: *mut pointproofs_proof,
+) -> i32 {
     let pprover = &*(prover.data as *const ProverParams);
     let tmp = slice::from_raw_parts::<pointproofs_value>(values, n);
     let mut vvalues: Vec<Vec<u8>> = vec![];
@@ -311,12 +365,13 @@ pub unsafe extern "C" fn pointproofs_prove_batch_aggregated(
         vvalues.push(pointproofs_value_slice(&e).to_vec());
     }
     let pcom = &*(commit.data as *const Commitment);
-    let proof = Proof::batch_new_aggregated(pprover, pcom, &vvalues, idx).unwrap();
-    let buf_box = Box::new(proof);
+    let pr = Proof::batch_new_aggregated(pprover, pcom, &vvalues, idx).unwrap();
+    let buf_box = Box::new(pr);
 
-    pointproofs_proof {
+    *proof = pointproofs_proof {
         data: Box::into_raw(buf_box) as *mut ffi::c_void,
-    }
+    };
+    0
 }
 
 /// update an existing proof
@@ -328,21 +383,23 @@ pub unsafe extern "C" fn pointproofs_proof_update(
     changed_idx: libc::size_t,
     val_old: pointproofs_value,
     val_new: pointproofs_value,
-) -> pointproofs_proof {
+    new_proof: &mut pointproofs_proof,
+) -> i32 {
     let pprover = &*(prover.data as *const ProverParams);
     let pproof = &*(proof.data as *const Proof);
     let value_before = pointproofs_value_slice(&val_old);
     let value_after = pointproofs_value_slice(&val_new);
 
-    let mut new_proof = pproof.clone();
+    let mut new_pr = pproof.clone();
 
-    new_proof
+    new_pr
         .update(pprover, idx, changed_idx, value_before, value_after)
         .unwrap();
-    let buf_box = Box::new(new_proof);
-    pointproofs_proof {
+    let buf_box = Box::new(new_pr);
+    *new_proof = pointproofs_proof {
         data: Box::into_raw(buf_box) as *mut ffi::c_void,
-    }
+    };
+    0
 }
 
 /// update an existing commitment
@@ -353,19 +410,21 @@ pub unsafe extern "C" fn pointproofs_commit_update(
     changed_idx: libc::size_t,
     val_old: pointproofs_value,
     val_new: pointproofs_value,
-) -> pointproofs_commitment {
+    new_com: *mut pointproofs_commitment,
+) -> i32 {
     let pprover = &*(prover.data as *const ProverParams);
     let pcom = &*(com.data as *const Commitment);
     let value_before = pointproofs_value_slice(&val_old);
     let value_after = pointproofs_value_slice(&val_new);
-    let mut new_com = pcom.clone();
-    new_com
+    let mut new_commit = pcom.clone();
+    new_commit
         .update(pprover, changed_idx, value_before, value_after)
         .unwrap();
-    let buf_box = Box::new(new_com);
-    pointproofs_commitment {
+    let buf_box = Box::new(new_commit);
+    *new_com = pointproofs_commitment {
         data: Box::into_raw(buf_box) as *mut ffi::c_void,
-    }
+    };
+    0
 }
 
 /// verify the proof against the value and commitment
@@ -394,7 +453,8 @@ pub unsafe extern "C" fn pointproofs_same_commit_aggregate(
     values: *const pointproofs_value,
     nvalues: libc::size_t,
     param_n: libc::size_t,
-) -> pointproofs_proof {
+    agg_proof: *mut pointproofs_proof,
+) -> i32 {
     // parse commit
     let pcom = &*(com.data as *const Commitment);
 
@@ -419,15 +479,19 @@ pub unsafe extern "C" fn pointproofs_same_commit_aggregate(
         vvalues.push(pointproofs_value_slice(&e).to_vec());
     }
 
-    let agg_proof =
+    let agg_pr =
         match Proof::same_commit_aggregate(&pcom, &proof_list, &set_list, &vvalues, param_n) {
             Ok(p) => p,
-            Err(e) => panic!("C wrapper, same commit aggregation failed: {}", e),
+            Err(e) => {
+                println!("C wrapper, same commit aggregation failed: {}", e);
+                return -1;
+            }
         };
-    let buf_box = Box::new(agg_proof);
-    pointproofs_proof {
+    let buf_box = Box::new(agg_pr);
+    *agg_proof = pointproofs_proof {
         data: Box::into_raw(buf_box) as *mut ffi::c_void,
-    }
+    };
+    0
 }
 
 /// verify an aggregated proof within a same commitment
@@ -471,7 +535,8 @@ pub unsafe extern "C" fn pointproofs_x_commit_aggregate_full(
     commit_indices: *const libc::size_t,
     no_commits: libc::size_t,
     param_n: libc::size_t,
-) -> pointproofs_proof {
+    x_proof: *mut pointproofs_proof,
+) -> i32 {
     // parse commits
     let tmp = slice::from_raw_parts::<pointproofs_commitment>(com, no_commits);
     let mut com_list: Vec<Commitment> = vec![];
@@ -521,12 +586,16 @@ pub unsafe extern "C" fn pointproofs_x_commit_aggregate_full(
         param_n,
     ) {
         Ok(p) => p,
-        Err(e) => panic!("C wrapper, x-commit aggregation failed: {}", e),
+        Err(e) => {
+            println!("C wrapper, x-commit aggregation failed: {}", e);
+            return -1;
+        }
     };
     let buf_box = Box::new(agg_proof);
-    pointproofs_proof {
+    *x_proof = pointproofs_proof {
         data: Box::into_raw(buf_box) as *mut ffi::c_void,
-    }
+    };
+    0
 }
 
 /// aggregated proofs cross commitments
@@ -539,7 +608,8 @@ pub unsafe extern "C" fn pointproofs_x_commit_aggregate_partial(
     commit_indices: *const libc::size_t,
     no_commits: libc::size_t,
     param_n: libc::size_t,
-) -> pointproofs_proof {
+    x_proof: *mut pointproofs_proof,
+) -> i32 {
     // parse commits
     let tmp = slice::from_raw_parts::<pointproofs_commitment>(com, no_commits);
     let mut com_list: Vec<Commitment> = vec![];
@@ -587,12 +657,16 @@ pub unsafe extern "C" fn pointproofs_x_commit_aggregate_partial(
         param_n,
     ) {
         Ok(p) => p,
-        Err(e) => panic!("C wrapper, x-commit aggregation failed: {}", e),
+        Err(e) => {
+            println!("C wrapper, x-commit aggregation failed: {}", e);
+            return -1;
+        }
     };
     let buf_box = Box::new(agg_proof);
-    pointproofs_proof {
+    *x_proof = pointproofs_proof {
         data: Box::into_raw(buf_box) as *mut ffi::c_void,
-    }
+    };
+    0
 }
 
 /// verify an aggregated proof across commitments
@@ -647,4 +721,64 @@ pub unsafe extern "C" fn pointproofs_x_commit_batch_verify(
     let pproof = &*(proof.data as *const Proof);
 
     pproof.cross_commit_batch_verify(pverifier, &com_list, &set_list, &value_list)
+}
+
+impl Default for pointproofs_vp {
+    fn default() -> Self {
+        pointproofs_vp {
+            data: std::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for pointproofs_pp {
+    fn default() -> Self {
+        pointproofs_pp {
+            data: std::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for pointproofs_pp_bytes {
+    fn default() -> Self {
+        pointproofs_pp_bytes { data: [0; PP_LEN] }
+    }
+}
+
+impl Default for pointproofs_vp_bytes {
+    fn default() -> Self {
+        pointproofs_vp_bytes { data: [0; VP_LEN] }
+    }
+}
+
+impl Default for pointproofs_commitment {
+    fn default() -> Self {
+        pointproofs_commitment {
+            data: std::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for pointproofs_commitment_bytes {
+    fn default() -> Self {
+        pointproofs_commitment_bytes {
+            data: [0; COMMIT_LEN],
+        }
+    }
+}
+
+impl Default for pointproofs_proof {
+    fn default() -> Self {
+        pointproofs_proof {
+            data: std::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for pointproofs_proof_bytes {
+    fn default() -> Self {
+        pointproofs_proof_bytes {
+            data: [0; PROOF_LEN],
+        }
+    }
 }
