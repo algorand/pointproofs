@@ -4,8 +4,8 @@ This file is still under construction
 --->
 
 
-* Link to the paper: TBD
-
+* Paper: https://eprint.iacr.org/2020/419
+* Code: https://github.com/algorand/pointproofs/
 
 
 ## Ciphersuites
