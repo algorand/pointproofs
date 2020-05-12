@@ -4,6 +4,7 @@ use ff::{Field, PrimeField};
 use pairing::{bls12_381::*, CurveAffine, CurveProjective};
 use pairings::err::*;
 use pairings::hash_to_field_pointproofs::*;
+use pairings::misc::*;
 use pairings::param::*;
 use pairings::*;
 
@@ -47,25 +48,14 @@ impl Proof {
         let scalars_u64: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
 
         // generate the proof use `sum of product` function
-        let proof = {
-            // the second condition `n <= 1024` comes from benchmarking
-            // pre-computation is faster only when the #basis is <1024
-            if prover_params.precomp.len() == 512 * prover_params.n && prover_params.n <= 1024 {
-                PointproofsG1Affine::sum_of_products_precomp_256(
-                    &prover_params.generators
-                        [(prover_params.n - index)..(2 * prover_params.n - index)],
-                    &scalars_u64,
-                    &prover_params.precomp
-                        [(prover_params.n - index) * 256..(2 * prover_params.n - index) * 256],
-                )
-            } else {
-                PointproofsG1Affine::sum_of_products(
-                    &prover_params.generators
-                        [(prover_params.n - index)..(2 * prover_params.n - index)],
-                    &scalars_u64,
-                )
-            }
-        };
+        // proof = \sum_{i=prover_params.n - index}^{2 * prover_params.n - index}
+        //          param.generator[i]^scarlar_u64[i]
+        let proof = pp_sum_of_prod_helper(
+            &prover_params,
+            &scalars_u64,
+            prover_params.n - index,
+            2 * prover_params.n - index,
+        );
 
         Ok(Self {
             ciphersuite: prover_params.ciphersuite,
@@ -118,35 +108,18 @@ impl Proof {
             .collect();
         let scalars_u64: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
 
-        // the second condition `n <= 1024` comes from benchmarking
-        // pre-computation is faster only when the #basis is <1024
-        if prover_params.precomp.len() == 512 * prover_params.n && scalars_fr_repr.len() <= 1024 {
-            Ok(indices
-                .iter()
-                .map(|e| Self {
-                    ciphersuite: prover_params.ciphersuite,
-                    proof: PointproofsG1Affine::sum_of_products_precomp_256(
-                        &prover_params.generators
-                            [(prover_params.n - *e)..(2 * prover_params.n - *e)],
-                        &scalars_u64,
-                        &prover_params.precomp
-                            [(prover_params.n - *e) * 256..(2 * prover_params.n - *e) * 256],
-                    ),
-                })
-                .collect())
-        } else {
-            Ok(indices
-                .iter()
-                .map(|e| Self {
-                    ciphersuite: prover_params.ciphersuite,
-                    proof: PointproofsG1Affine::sum_of_products(
-                        &prover_params.generators
-                            [(prover_params.n - *e)..(2 * prover_params.n - *e)],
-                        &scalars_u64,
-                    ),
-                })
-                .collect())
-        }
+        Ok(indices
+            .iter()
+            .map(|e| Self {
+                ciphersuite: prover_params.ciphersuite,
+                proof: pp_sum_of_prod_helper(
+                    &prover_params,
+                    &scalars_u64,
+                    prover_params.n - *e,
+                    2 * prover_params.n - *e,
+                ),
+            })
+            .collect())
     }
 
     /// Generate a new set of proofs.
@@ -300,21 +273,7 @@ impl Proof {
             multiplier.add_assign(&hash_to_field_pointproofs(&value_after));
 
             let param_index = changed_index + prover_params.n - proof_index;
-
-            let res = if prover_params.precomp.len() == 6 * prover_params.n {
-                prover_params.generators[param_index].mul_precomp_3(
-                    multiplier,
-                    &prover_params.precomp[(param_index * 3)..(param_index + 1) * 3],
-                )
-            } else if prover_params.precomp.len() == 512 * prover_params.n {
-                prover_params.generators[param_index].mul_precomp_256(
-                    multiplier,
-                    &prover_params.precomp[(param_index * 256)..(param_index + 1) * 256],
-                )
-            } else {
-                assert_eq!(prover_params.precomp.len(), 0, "{}", ERR_PARAM);
-                prover_params.generators[param_index].mul(multiplier)
-            };
+            let res = pp_single_exp_helper(&prover_params, multiplier, param_index);
 
             self.proof.add_assign(&res);
         }
@@ -632,6 +591,8 @@ impl Proof {
         // form the final basis
         let mut bases: Vec<PointproofsG1> = proofs.concat().iter().map(|x| x.proof).collect();
         CurveProjective::batch_normalization(&mut bases);
+        // `into_affine()` here only performs a type conversion
+        // the CurveProjective points are already normalized via batch nomarlization
         let bases_affine: Vec<PointproofsG1Affine> =
             bases.iter().map(|s| s.into_affine()).collect();
 
@@ -872,7 +833,7 @@ impl Proof {
 
         let tmp_inverse = match tmp.inverse() {
             Some(p) => p,
-            // tmp == 0 should never happen in practise
+            // tmp == 0 should never happen in practice
             None => panic!("some thing is wrong, check verification formula"),
         };
 

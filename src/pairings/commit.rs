@@ -5,6 +5,7 @@ use ff::{Field, PrimeField};
 use pairing::{bls12_381::*, CurveAffine, CurveProjective};
 use pairings::err::*;
 use pairings::hash_to_field_pointproofs::*;
+use pairings::misc::*;
 use pairings::param::*;
 use pairings::*;
 
@@ -41,20 +42,7 @@ impl Commitment {
         let scalars_u64: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
 
         // commit = \prod pp[i]^scalar[i]
-        let commit = {
-            if prover_params.precomp.len() == 512 * prover_params.n {
-                PointproofsG1Affine::sum_of_products_precomp_256(
-                    &prover_params.generators[0..prover_params.n],
-                    &scalars_u64,
-                    &prover_params.precomp,
-                )
-            } else {
-                PointproofsG1Affine::sum_of_products(
-                    &prover_params.generators[0..prover_params.n],
-                    &scalars_u64,
-                )
-            }
-        };
+        let commit = pp_sum_of_prod_helper(&prover_params, &scalars_u64, 0, prover_params.n);
 
         Ok(Self {
             ciphersuite: prover_params.ciphersuite,
@@ -94,21 +82,9 @@ impl Commitment {
         multiplier.add_assign(&hash_to_field_pointproofs(&value_after));
 
         // new_commit = old_commit * g[index]^multiplier
-        let res = if prover_params.precomp.len() == 3 * prover_params.generators.len() {
-            prover_params.generators[changed_index].mul_precomp_3(
-                multiplier,
-                &prover_params.precomp[changed_index * 3..(changed_index + 1) * 3],
-            )
-        } else if prover_params.precomp.len() == 256 * prover_params.generators.len() {
-            prover_params.generators[changed_index].mul_precomp_256(
-                multiplier,
-                &prover_params.precomp[changed_index * 256..(changed_index + 1) * 256],
-            )
-        } else {
-            prover_params.generators[changed_index].mul(multiplier)
-        };
-
+        let res = pp_single_exp_helper(&prover_params, multiplier, changed_index);
         self.commit.add_assign(&res);
+
         Ok(())
     }
 
