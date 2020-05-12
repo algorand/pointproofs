@@ -9,5 +9,7 @@ before_script:
 
 script:
   - cargo clippy --all-targets --all-features -- -D warnings
-  - cargo test
-  - cargo run
+  - cargo test --release --features=group_switched
+  - cargo run --release --features=group_switched
+  - cargo test --release
+  - cargo run --release

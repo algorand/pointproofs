@@ -306,9 +306,8 @@ pub fn read_param<R: std::io::Read>(
         return Err("Input params are not consistent".to_owned());
     };
 
-    //
-    // uncomment the following if the groups are unswitched
-
+    // groups are NOT switched
+    #[cfg(not(feature = "group_switched"))]
     let pp = ProverParams {
         ciphersuite: 0,
         n: param.n,
@@ -321,6 +320,8 @@ pub fn read_param<R: std::io::Read>(
         pp_len: 0,
         precomp: vec![],
     };
+
+    #[cfg(not(feature = "group_switched"))]
     let vp = VerifierParams {
         ciphersuite: 0,
         n: param.n,
@@ -330,8 +331,8 @@ pub fn read_param<R: std::io::Read>(
         gt_elt: param.gt_alpha_nplus1,
     };
 
-    /*
     // groups switched
+    #[cfg(feature = "group_switched")]
     let pp = ProverParams {
         ciphersuite: 0,
         n: param.n,
@@ -344,6 +345,7 @@ pub fn read_param<R: std::io::Read>(
         pp_len: 0,
         precomp: vec![],
     };
+    #[cfg(feature = "group_switched")]
     let vp = VerifierParams {
         ciphersuite: 0,
         n: param.n,
@@ -352,7 +354,6 @@ pub fn read_param<R: std::io::Read>(
         precomp: vec![],
         gt_elt: param.gt_alpha_nplus1,
     };
-    */
 
     Ok((pp, vp))
 }

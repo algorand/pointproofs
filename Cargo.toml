@@ -24,7 +24,10 @@
   pointproofs-paramgen = { git = "https://github.com/algorand/pointproofs-paramgen"}
 
 [features]
-
+  # group switched: PointproofsG1 is in fact G2 in BLS-group
+  # in this setting almost everything is slower, except that
+  # the (batch) verification will be faster
+  group_switched = []
 
 [build-dependencies]
   cbindgen = "0.9.0"

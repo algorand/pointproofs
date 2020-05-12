@@ -6,6 +6,7 @@ use pairing::serdes::SerDes;
 use pairing::CurveProjective;
 use pairings::err::*;
 use pairings::param::*;
+use pairings::pointproofs_groups::*;
 use pairings::*;
 
 type Compressed = bool;

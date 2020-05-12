@@ -1,5 +1,5 @@
 use pairings::c_api::*;
-use pairings::*;
+use pairings::pointproofs_groups::*;
 
 #[test]
 fn test_c_api_basic() {
