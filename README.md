@@ -32,7 +32,7 @@ This implementation uses bls12-381 curve.
 ## Code status
 
 * Version 0.1.
-* This code is __NOT__ production-ready yet. It passed one external audit, but additional auditing and testing is required before deployment
+* This code is __NOT__ production-ready yet. It passed two external audits, but additional auditing and testing is required before deployment
 
 ## Use this library directly
 * Install rust and cargo toolchain
