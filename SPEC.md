@@ -33,10 +33,17 @@ This file is still under construction
   ``` rust
   /// the PointproofsG1 and PointproofsG2 can be switched to improve verification speed
   /// PointproofsG1 represents G1 in the paper, and can be mapped to either bls12-381::G1 or bls12-381::G2
-  type PointproofsG1 = G2;
-  type PointproofsG2 = G1;
-  type PointproofsG1Affine = G2Affine;
-  type PointproofsG2Affine = G1Affine;
+  type PointproofsG1 = G1;
+  type PointproofsG2 = G2;
+  type PointproofsG1Affine = G1Affine;
+  type PointproofsG2Affine = G2Affine;
+  ```
+
+  Group switching can be enabled during compiling with a flag.
+  By default, the groups are __NOT__ switched.
+
+  ```
+  features=group_switched
   ```
 
 
