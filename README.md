@@ -59,6 +59,20 @@ This implementation uses bls12-381 curve.
 
 MIT
 
+
+## Citation
+
+``` bibtex
+@misc{Algo20,
+    author    = {Algorand},
+    title     = {Source code for Pointproofs},
+    note      = "\url{https://github.com/algorand/pointproofs}",
+    year      = {2020},
+}
+```
+
+
+
 ## Performance
 * dimension = 1024
 * AWS with Intel(R) Xeon(R) CPU E5-2686 v4 @ 2.30 GHz
