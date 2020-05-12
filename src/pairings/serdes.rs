@@ -3,6 +3,7 @@
 
 use pairing::bls12_381::*;
 use pairing::serdes::SerDes;
+use pairing::CurveProjective;
 use pairings::err::*;
 use pairings::param::*;
 use pairings::*;
@@ -36,7 +37,7 @@ impl SerDes for Commitment {
         }
 
         let mut buf: Vec<u8> = vec![self.ciphersuite];
-        self.commit.serialize(&mut buf, compressed)?;
+        self.commit.into_affine().serialize(&mut buf, compressed)?;
 
         // format the output
         writer.write_all(&buf)?;
@@ -110,7 +111,7 @@ impl SerDes for Proof {
             ));
         }
         let mut buf: Vec<u8> = vec![self.ciphersuite];
-        self.proof.serialize(&mut buf, compressed)?;
+        self.proof.into_affine().serialize(&mut buf, compressed)?;
 
         // format the output
         writer.write_all(&buf)?;
