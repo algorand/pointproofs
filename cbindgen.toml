@@ -46,6 +46,7 @@ style = "both"
 [defines]
 # "target_os = freebsd" = "DEFINE_FREEBSD"
 # "feature = serde" = "DEFINE_SERDE"
+"feature = group_switched" = "GROUP_SWITCHED"
 
 
 

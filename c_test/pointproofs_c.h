@@ -7,17 +7,53 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#if !defined(GROUP_SWITCHED)
 #define COMMIT_LEN 49
+#endif
 
+#if defined(GROUP_SWITCHED)
+#define COMMIT_LEN 97
+#endif
+
+#if !defined(GROUP_SWITCHED)
 #define POINTPROOFSG1_LEN 48
+#endif
 
+#if defined(GROUP_SWITCHED)
+#define POINTPROOFSG1_LEN 96
+#endif
+
+#if !defined(GROUP_SWITCHED)
 #define POINTPROOFSG2_LEN 96
+#endif
 
+#if defined(GROUP_SWITCHED)
+#define POINTPROOFSG2_LEN 48
+#endif
+
+#if !defined(GROUP_SWITCHED)
 #define PP_LEN 98313
+#endif
 
+#if defined(GROUP_SWITCHED)
+#define PP_LEN 196617
+#endif
+
+#if !defined(GROUP_SWITCHED)
 #define PROOF_LEN 49
+#endif
 
+#if defined(GROUP_SWITCHED)
+#define PROOF_LEN 97
+#endif
+
+#if !defined(GROUP_SWITCHED)
 #define VP_LEN 98889
+#endif
+
+#if defined(GROUP_SWITCHED)
+#define VP_LEN 49737
+#endif
 
 /**
  * deserialized prover parameter struct
