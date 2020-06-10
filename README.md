@@ -46,6 +46,7 @@ This implementation uses bls12-381 curve.
 ## C wrapper
 * generate the header: `make`
 * test C wrapper: `make test`
+* test C wrapper for dynamic length array: `make dtest`
 
 ## Dependency
 * `Pairing-plus` library: [stable](https://crates.io/crates/pairing-plus) [dev](https://github.com/algorand/pairing-plus).
