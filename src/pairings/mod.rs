@@ -49,6 +49,7 @@ pub mod pointproofs_groups;
 
 //mod c_api;
 pub(crate) mod c_api;
+pub(crate) mod c_api_dynamic;
 mod err;
 mod misc;
 mod serdes;

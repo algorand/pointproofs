@@ -7,17 +7,91 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+/**
+ * Size for serialized commitment.
+ */
 #define COMMIT_LEN 49
+
+/**
+ * Size for serialized commitment.
+ */
+#define COMMIT_LEN 97
 
 #define POINTPROOFSG1_LEN 48
 
+#define POINTPROOFSG1_LEN 96
+
 #define POINTPROOFSG2_LEN 96
 
+#define POINTPROOFSG2_LEN 48
+
+/**
+ * Size for serialized prover parameter:
+ * ciphersuite `(1 byte) + n (4 bytes) + 2n * G1 (48 bytes) + pp_len (4 bytes)`.
+ * Does not include the size for pre-computed parameters.
+ */
 #define PP_LEN 98313
 
+/**
+ * Size for serialized prover parameter:
+ * ciphersuite `(1 byte) + n (4 bytes) + 2n * G2 (96 bytes) + pp_len (4 bytes)`.
+ * Does not include the size for pre-computed parameters.
+ */
+#define PP_LEN 196617
+
+/**
+ * Size for serialized proof.
+ */
 #define PROOF_LEN 49
 
+/**
+ * Size for serialized proof.
+ */
+#define PROOF_LEN 97
+
+/**
+ * Size for serialized verifier parameter:
+ * ciphersuite `(1 byte) + n (4 bytes) + n * G2 (96 bytes) + pp_len (4 bytes) + Gt (576 bytes)`
+ */
 #define VP_LEN 98889
+
+/**
+ * Size for serialized verifier parameter:
+ * ciphersuite `(1 byte) + n (4 bytes) + n * G1 (48 bytes) + pp_len (4 bytes) + Gt (576 bytes)`
+ */
+#define VP_LEN 49737
+
+/**
+ * serialized commitment struct
+ */
+typedef struct pointproofs_commitment_bytes_dynamic {
+  uint8_t *data;
+  uintptr_t len;
+} pointproofs_commitment_bytes_dynamic;
+
+/**
+ * serialized prover parameter struct
+ */
+typedef struct pointproofs_pp_bytes_dynamic {
+  uint8_t *data;
+  uintptr_t len;
+} pointproofs_pp_bytes_dynamic;
+
+/**
+ * serialized proof struct
+ */
+typedef struct pointproofs_proof_bytes_dynamic {
+  uint8_t *data;
+  uintptr_t len;
+} pointproofs_proof_bytes_dynamic;
+
+/**
+ * serialized verifer parameter struct
+ */
+typedef struct pointproofs_vp_bytes_dynamic {
+  uint8_t *data;
+  uintptr_t len;
+} pointproofs_vp_bytes_dynamic;
 
 /**
  * deserialized prover parameter struct
@@ -91,6 +165,14 @@ typedef struct pointproofs_vp_bytes {
   uint8_t data[VP_LEN];
 } pointproofs_vp_bytes;
 
+void active_pointproofs_commit_free(pointproofs_commitment_bytes_dynamic buf);
+
+void active_pointproofs_pp_free(pointproofs_pp_bytes_dynamic buf);
+
+void active_pointproofs_proof_free(pointproofs_proof_bytes_dynamic buf);
+
+void active_pointproofs_vp_free(pointproofs_vp_bytes_dynamic buf);
+
 /**
  * Generate a commitment
  */
@@ -106,10 +188,22 @@ int32_t pointproofs_commit_deserial(pointproofs_commitment_bytes commit_bytes,
                                     pointproofs_commitment *commit);
 
 /**
+ * Deserializeing bytes into commitments
+ */
+int32_t pointproofs_commit_deserial_dynamic(pointproofs_commitment_bytes_dynamic commit_bytes,
+                                            pointproofs_commitment *commit);
+
+/**
  * Serializing commitments into bytes
  */
 int32_t pointproofs_commit_serial(pointproofs_commitment commit,
                                   pointproofs_commitment_bytes *bytes);
+
+/**
+ * Serializing commitments into bytes
+ */
+int32_t pointproofs_commit_serial_dynamic(pointproofs_commitment commit,
+                                          pointproofs_commitment_bytes_dynamic *bytes);
 
 /**
  * update an existing commitment
@@ -152,10 +246,18 @@ int32_t pointproofs_paramgen(const uint8_t *seedbuf,
 
 int32_t pointproofs_pp_deserial(pointproofs_pp_bytes pprover, pointproofs_pp *prover);
 
+int32_t pointproofs_pp_deserial_dynamic(pointproofs_pp_bytes_dynamic pprover,
+                                        pointproofs_pp *prover);
+
 /**
  * Serializing a prove parameter into bytes
  */
 int32_t pointproofs_pp_serial(pointproofs_pp pprover, pointproofs_pp_bytes *bytes);
+
+/**
+ * Serializing a prove parameter into bytes
+ */
+int32_t pointproofs_pp_serial_dynamic(pointproofs_pp pprover, pointproofs_pp_bytes_dynamic *bytes);
 
 /**
  * Deserializeing bytes into proofs
@@ -163,9 +265,21 @@ int32_t pointproofs_pp_serial(pointproofs_pp pprover, pointproofs_pp_bytes *byte
 int32_t pointproofs_proof_deserial(pointproofs_proof_bytes proof_bytes, pointproofs_proof *proof);
 
 /**
+ * Deserializeing bytes into proofs
+ */
+int32_t pointproofs_proof_deserial_dynamic(pointproofs_proof_bytes_dynamic proof_bytes,
+                                           pointproofs_proof *proof);
+
+/**
  * Serializing proofs into bytes
  */
 int32_t pointproofs_proof_serial(pointproofs_proof proof, pointproofs_proof_bytes *bytes);
+
+/**
+ * Serializing proofs into bytes
+ */
+int32_t pointproofs_proof_serial_dynamic(pointproofs_proof proof,
+                                         pointproofs_proof_bytes_dynamic *bytes);
 
 /**
  * update an existing proof
@@ -219,10 +333,19 @@ bool pointproofs_verify(pointproofs_vp verifier,
 
 int32_t pointproofs_vp_deserial(pointproofs_vp_bytes pverifier, pointproofs_vp *verifier);
 
+int32_t pointproofs_vp_deserial_dynamic(pointproofs_vp_bytes_dynamic pverifier,
+                                        pointproofs_vp *verifier);
+
 /**
  * Serializing a prove parameter into bytes
  */
 int32_t pointproofs_vp_serial(pointproofs_vp pverifier, pointproofs_vp_bytes *bytes);
+
+/**
+ * Serializing a prove parameter into bytes
+ */
+int32_t pointproofs_vp_serial_dynamic(pointproofs_vp pverifier,
+                                      pointproofs_vp_bytes_dynamic *bytes);
 
 /**
  * aggregated proofs cross commitments

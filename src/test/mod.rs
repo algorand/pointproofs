@@ -5,3 +5,4 @@ mod hashes;
 mod param;
 mod prove;
 mod serdes;
+mod c_api_dynamic;
