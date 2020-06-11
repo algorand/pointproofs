@@ -4,6 +4,10 @@
 #include <string.h>
 #include <assert.h>
 #include "pointproofs_c.h"
+
+
+// #define GROUP_SWITCHED
+
 // #define DEBUG
 
 // Credit: https://stackoverflow.com/questions/7775991/how-to-get-hexdump-of-a-structure-data

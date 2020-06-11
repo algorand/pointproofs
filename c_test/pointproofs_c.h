@@ -7,59 +7,70 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+
 /**
  * Size for serialized commitment.
  */
+#if !defined(GROUP_SWITCHED)
 #define COMMIT_LEN 49
+#endif
 
-/**
- * Size for serialized commitment.
- */
+#if defined(GROUP_SWITCHED)
 #define COMMIT_LEN 97
+#endif
 
+#if !defined(GROUP_SWITCHED)
 #define POINTPROOFSG1_LEN 48
+#endif
 
+#if defined(GROUP_SWITCHED)
 #define POINTPROOFSG1_LEN 96
+#endif
 
+#if !defined(GROUP_SWITCHED)
 #define POINTPROOFSG2_LEN 96
+#endif
 
+#if defined(GROUP_SWITCHED)
 #define POINTPROOFSG2_LEN 48
+#endif
 
 /**
  * Size for serialized prover parameter:
  * ciphersuite `(1 byte) + n (4 bytes) + 2n * G1 (48 bytes) + pp_len (4 bytes)`.
  * Does not include the size for pre-computed parameters.
  */
+#if !defined(GROUP_SWITCHED)
 #define PP_LEN 98313
+#endif
 
 /**
- * Size for serialized prover parameter:
- * ciphersuite `(1 byte) + n (4 bytes) + 2n * G2 (96 bytes) + pp_len (4 bytes)`.
- * Does not include the size for pre-computed parameters.
+ * Size for serialized proof.
  */
+#if defined(GROUP_SWITCHED)
 #define PP_LEN 196617
+#endif
 
-/**
- * Size for serialized proof.
- */
+#if !defined(GROUP_SWITCHED)
 #define PROOF_LEN 49
+#endif
 
-/**
- * Size for serialized proof.
- */
+#if defined(GROUP_SWITCHED)
 #define PROOF_LEN 97
+#endif
 
 /**
  * Size for serialized verifier parameter:
  * ciphersuite `(1 byte) + n (4 bytes) + n * G2 (96 bytes) + pp_len (4 bytes) + Gt (576 bytes)`
  */
+#if !defined(GROUP_SWITCHED)
 #define VP_LEN 98889
+#endif
 
-/**
- * Size for serialized verifier parameter:
- * ciphersuite `(1 byte) + n (4 bytes) + n * G1 (48 bytes) + pp_len (4 bytes) + Gt (576 bytes)`
- */
+#if defined(GROUP_SWITCHED)
 #define VP_LEN 49737
+#endif
+
 
 /**
  * serialized commitment struct
