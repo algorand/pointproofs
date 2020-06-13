@@ -44,15 +44,6 @@ pub(crate) fn pointproofs_pairing_multi_product(
 ) -> Fq12 {
     Bls12::pairing_multi_product(g1_vec, g2_vec)
 }
-/// Size for serialized verifier parameter:
-/// ciphersuite `(1 byte) + n (4 bytes) + n * G2 (96 bytes) + pp_len (4 bytes) + Gt (576 bytes)`
-#[cfg(not(feature = "group_switched"))]
-pub const VP_LEN: usize = 98889; // n = 1024
-/// Size for serialized prover parameter:
-/// ciphersuite `(1 byte) + n (4 bytes) + 2n * G1 (48 bytes) + pp_len (4 bytes)`.
-/// Does not include the size for pre-computed parameters.
-#[cfg(not(feature = "group_switched"))]
-pub const PP_LEN: usize = 98313; // n = 1024
 
 /// Size for serialized commitment.
 #[cfg(not(feature = "group_switched"))]
@@ -106,16 +97,7 @@ pub(crate) fn pointproofs_pairing_multi_product(
 ) -> Fq12 {
     Bls12::pairing_multi_product(g2_vec, g1_vec)
 }
-/// Size for serialized verifier parameter:
-/// ciphersuite `(1 byte) + n (4 bytes) + n * G1 (48 bytes) + pp_len (4 bytes) + Gt (576 bytes)`
-#[cfg(feature = "group_switched")]
-pub const VP_LEN: usize = 49737; // n = 1024
 
-/// Size for serialized prover parameter:
-/// ciphersuite `(1 byte) + n (4 bytes) + 2n * G2 (96 bytes) + pp_len (4 bytes)`.
-/// Does not include the size for pre-computed parameters.
-#[cfg(feature = "group_switched")]
-pub const PP_LEN: usize = 196_617; // n = 1024
 
 /// Size for serialized commitment.
 #[cfg(feature = "group_switched")]

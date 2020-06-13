@@ -26,13 +26,15 @@ pub struct pointproofs_value {
 /// serialized prover parameter struct
 #[repr(C)]
 pub struct pointproofs_pp_bytes {
-    data: [u8; PP_LEN],
+    data: *mut u8,
+    len: usize,
 }
 
 /// serialized verifer parameter struct
 #[repr(C)]
 pub struct pointproofs_vp_bytes {
-    data: [u8; VP_LEN],
+    data: *mut u8,
+    len: usize,
 }
 
 /// deserialized prover parameter struct
@@ -53,7 +55,8 @@ pub struct pointproofs_vp {
 #[repr(C)]
 #[derive(Clone)]
 pub struct pointproofs_commitment_bytes {
-    pub(crate) data: [u8; COMMIT_LEN],
+    pub(crate) data: *mut u8,
+    pub(crate) len: usize,
 }
 
 /// deserialized commitment struct
@@ -67,7 +70,8 @@ pub struct pointproofs_commitment {
 #[repr(C)]
 #[derive(Clone)]
 pub struct pointproofs_proof_bytes {
-    pub(crate) data: [u8; PROOF_LEN],
+    pub(crate) data: *mut u8,
+    pub(crate) len: usize,
 }
 
 /// deserialized proof struct
@@ -95,18 +99,27 @@ pub unsafe extern "C" fn pointproofs_pp_serial(
     };
 
     buf.shrink_to_fit();
-    let mut data = [0u8; PP_LEN];
-    data.copy_from_slice(&buf);
-    *bytes = pointproofs_pp_bytes { data };
+    let mut boxed_buf = buf.into_boxed_slice();
+    let data = boxed_buf.as_mut_ptr();
+    let len = boxed_buf.len();
+    std::mem::forget(boxed_buf);
+    *bytes = pointproofs_pp_bytes { data, len };
     0
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn pointproofs_free_pp_string(buf: pointproofs_pp_bytes) {
+    let s = std::slice::from_raw_parts_mut(buf.data as *mut u8, buf.len);
+    Box::from_raw(s as *mut [u8]);
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn pointproofs_pp_deserial(
-    mut pprover: pointproofs_pp_bytes,
+    pprover: pointproofs_pp_bytes,
     prover: *mut pointproofs_pp,
 ) -> i32 {
-    let pp = match ProverParams::deserialize(&mut pprover.data[..].as_ref(), true) {
+    let s: &mut [u8] = std::slice::from_raw_parts_mut(pprover.data as *mut u8, pprover.len);
+    let pp = match ProverParams::deserialize(&mut &s[..], true) {
         Ok(p) => p,
         Err(_e) => {
             println!("C wrapper, prover parameter deserialization failed");
@@ -137,18 +150,27 @@ pub unsafe extern "C" fn pointproofs_vp_serial(
     };
 
     buf.shrink_to_fit();
-    let mut data = [0u8; VP_LEN];
-    data.copy_from_slice(&buf);
-    *bytes = pointproofs_vp_bytes { data };
+    let mut boxed_buf = buf.into_boxed_slice();
+    let data = boxed_buf.as_mut_ptr();
+    let len = boxed_buf.len();
+    std::mem::forget(boxed_buf);
+    *bytes = pointproofs_vp_bytes { data, len };
     0
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn pointproofs_free_vp_string(buf: pointproofs_vp_bytes) {
+    let s = std::slice::from_raw_parts_mut(buf.data as *mut u8, buf.len);
+    Box::from_raw(s as *mut [u8]);
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn pointproofs_vp_deserial(
-    mut pverifier: pointproofs_vp_bytes,
+    pverifier: pointproofs_vp_bytes,
     verifier: *mut pointproofs_vp,
 ) -> i32 {
-    let pp = match VerifierParams::deserialize(&mut pverifier.data[..].as_ref(), true) {
+    let s: &mut [u8] = std::slice::from_raw_parts_mut(pverifier.data as *mut u8, pverifier.len);
+    let pp = match VerifierParams::deserialize(&mut &s[..], true) {
         Ok(p) => p,
         Err(_e) => {
             println!("C wrapper, verifier parameter deserialization failed");
@@ -177,19 +199,28 @@ pub unsafe extern "C" fn pointproofs_commit_serial(
         }
     };
     buf.shrink_to_fit();
-    let mut data = [0u8; COMMIT_LEN];
-    data.copy_from_slice(&buf);
-    *bytes = pointproofs_commitment_bytes { data };
+    let mut boxed_buf = buf.into_boxed_slice();
+    let data = boxed_buf.as_mut_ptr();
+    let len = boxed_buf.len();
+    std::mem::forget(boxed_buf);
+    *bytes = pointproofs_commitment_bytes { data, len };
     0
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn pointproofs_free_commit_string(buf: pointproofs_commitment_bytes) {
+    let s = std::slice::from_raw_parts_mut(buf.data as *mut u8, buf.len);
+    Box::from_raw(s as *mut [u8]);
 }
 
 /// Deserializeing bytes into commitments
 #[no_mangle]
 pub unsafe extern "C" fn pointproofs_commit_deserial(
-    mut commit_bytes: pointproofs_commitment_bytes,
+    commit_bytes: pointproofs_commitment_bytes,
     commit: *mut pointproofs_commitment,
 ) -> i32 {
-    let com = match Commitment::deserialize(&mut commit_bytes.data[..].as_ref(), true) {
+    let s: &mut [u8] = std::slice::from_raw_parts_mut(commit_bytes.data as *mut u8, commit_bytes.len);
+    let com = match Commitment::deserialize(&mut &s[..], true) {
         Ok(p) => p,
         Err(_e) => {
             println!("C wrapper, commitment deserialization failed");
@@ -220,19 +251,28 @@ pub unsafe extern "C" fn pointproofs_proof_serial(
         }
     };
     buf.shrink_to_fit();
-    let mut data = [0u8; PROOF_LEN];
-    data.copy_from_slice(&buf);
-    *bytes = pointproofs_proof_bytes { data };
+    let mut boxed_buf = buf.into_boxed_slice();
+    let data = boxed_buf.as_mut_ptr();
+    let len = boxed_buf.len();
+    std::mem::forget(boxed_buf);
+    *bytes = pointproofs_proof_bytes { data, len };
     0
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn pointproofs_free_proof_string(buf: pointproofs_proof_bytes) {
+    let s = std::slice::from_raw_parts_mut(buf.data as *mut u8, buf.len);
+    Box::from_raw(s as *mut [u8]);
 }
 
 /// Deserializeing bytes into proofs
 #[no_mangle]
 pub unsafe extern "C" fn pointproofs_proof_deserial(
-    mut proof_bytes: pointproofs_proof_bytes,
+    proof_bytes: pointproofs_proof_bytes,
     proof: *mut pointproofs_proof,
 ) -> i32 {
-    let pr = match Proof::deserialize(&mut proof_bytes.data[..].as_ref(), true) {
+    let s: &mut [u8] = std::slice::from_raw_parts_mut(proof_bytes.data as *mut u8, proof_bytes.len);
+    let pr = match Proof::deserialize(&mut &s[..], true) {
         Ok(p) => p,
         Err(_e) => {
             println!("C wrapper, proof deserialization failed");
@@ -741,13 +781,13 @@ impl Default for pointproofs_pp {
 
 impl Default for pointproofs_pp_bytes {
     fn default() -> Self {
-        pointproofs_pp_bytes { data: [0; PP_LEN] }
+        pointproofs_pp_bytes { data: std::ptr::null_mut(), len: 0 }
     }
 }
 
 impl Default for pointproofs_vp_bytes {
     fn default() -> Self {
-        pointproofs_vp_bytes { data: [0; VP_LEN] }
+        pointproofs_vp_bytes { data: std::ptr::null_mut(), len: 0 }
     }
 }
 
@@ -762,7 +802,7 @@ impl Default for pointproofs_commitment {
 impl Default for pointproofs_commitment_bytes {
     fn default() -> Self {
         pointproofs_commitment_bytes {
-            data: [0; COMMIT_LEN],
+            data: std::ptr::null_mut(), len: 0
         }
     }
 }
@@ -778,7 +818,7 @@ impl Default for pointproofs_proof {
 impl Default for pointproofs_proof_bytes {
     fn default() -> Self {
         pointproofs_proof_bytes {
-            data: [0; PROOF_LEN],
+            data: std::ptr::null_mut(), len: 0
         }
     }
 }

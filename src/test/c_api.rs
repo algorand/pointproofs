@@ -45,7 +45,7 @@ fn test_c_api_basic() {
         assert!(pointproofs_commit_deserial(com_bytes.clone(), &mut com_rec) == 0);
         assert!(pointproofs_commit_serial(com_rec, &mut com_bytes_rec) == 0);
         for i in 0..COMMIT_LEN {
-            assert_eq!(com_bytes.data[i], com_bytes_rec.data[i]);
+            assert_eq!(com_bytes.data.add(i).read(), com_bytes_rec.data.add(i).read());
         }
 
         assert!(pointproofs_prove(pp.clone(), values.as_ptr(), n, 0, &mut proof) == 0);
@@ -53,7 +53,7 @@ fn test_c_api_basic() {
         assert!(pointproofs_proof_deserial(proof_bytes.clone(), &mut proof_rec) == 0);
         assert!(pointproofs_proof_serial(proof_rec, &mut proof_bytes_rec) == 0);
         for i in 0..PROOF_LEN {
-            assert_eq!(proof_bytes.data[i], proof_bytes_rec.data[i]);
+            assert_eq!(proof_bytes.data.add(i).read(), proof_bytes_rec.data.add(i).read());
         }
 
         assert!(pointproofs_verify(
@@ -222,7 +222,7 @@ fn test_c_api_aggregate() {
         assert!(pointproofs_proof_serial(agg_proof1.clone(), &mut proof_bytes1) == 0);
         assert!(pointproofs_proof_serial(agg_proof11, &mut proof_bytes11) == 0);
         for i in 0..PROOF_LEN {
-            assert_eq!(proof_bytes1.data[i], proof_bytes11.data[i]);
+            assert_eq!(proof_bytes1.data.add(i).read(), proof_bytes11.data.add(i).read());
         }
 
         assert!(
