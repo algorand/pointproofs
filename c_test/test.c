@@ -6,7 +6,7 @@
 #include "pointproofs_c.h"
 
 
-// #define GROUP_SWITCHED
+//#define GROUP_SWITCHED
 
 // #define DEBUG
 
@@ -15,7 +15,10 @@ void hexDump (const char *desc, const void *addr, const int len);
 
 // very simple and basic tests for commit/prove/(de)serializations
 int test_basic() {
-  size_t n = 1024;
+  size_t n = 1028;
+  size_t k = n-8; // For more flexible `n` val. 
+  size_t u_index = k + 1;
+  size_t u_index_new = k ;
 
   // values to commit
   int counter = 0;
@@ -29,7 +32,7 @@ int test_basic() {
 
 #ifdef DEBUG
   printf("values:\n");
-  for (counter = 0; counter < 20; counter++) {
+  for (counter = 0; counter < n; counter++) {
     printf("%zu: %s\n", values[counter].len, values[counter].data);
   }
 #endif
@@ -57,15 +60,15 @@ int test_basic() {
   assert(pointproofs_vp_serial(vp_recover, &pointproofs_vp_string_recover) == 0);
 
 #ifdef DEBUG
-  hexDump("prover param (in bytes)", pointproofs_pp_string.data, 256);
-  hexDump("prover param recovered (in bytes)", pointproofs_pp_string_recover.data, 256);
+  hexDump("prover param (in bytes)", pointproofs_pp_string.data, pointproofs_pp_string.len);
+  hexDump("prover param recovered (in bytes)", pointproofs_pp_string_recover.data, pointproofs_pp_string_recover.len);
 
-  hexDump("verifier param (in bytes)", pointproofs_vp_string.data, 256);
-  hexDump("verifier param recovered (in bytes)", pointproofs_vp_string_recover.data, 256);
+  hexDump("verifier param (in bytes)", pointproofs_vp_string.data, pointproofs_vp_string.len);
+  hexDump("verifier param recovered (in bytes)", pointproofs_vp_string_recover.data, pointproofs_vp_string_recover.len);
 #endif
 
-  assert(memcmp(pointproofs_pp_string.data, pointproofs_pp_string_recover.data, PP_LEN) == 0);
-  assert(memcmp(pointproofs_vp_string.data, pointproofs_vp_string_recover.data, VP_LEN) == 0);
+  assert(memcmp(pointproofs_pp_string.data, pointproofs_pp_string_recover.data, pointproofs_pp_string.len) == 0);
+  assert(memcmp(pointproofs_vp_string.data, pointproofs_vp_string_recover.data, pointproofs_vp_string.len) == 0);
 
   // generate a commit
   pointproofs_commitment commit;
@@ -79,8 +82,8 @@ int test_basic() {
   assert(pointproofs_commit_serial(commit_recover, &commit_string_recover) == 0);
 
 #ifdef DEBUG
-  hexDump("commit (in bytes)", commit_string.data, COMMIT_LEN);
-  hexDump("commit recovered (in bytes)", commit_string_recover.data, COMMIT_LEN);
+  hexDump("commit (in bytes)", commit_string.data, commit_string.len);
+  hexDump("commit recovered (in bytes)", commit_string_recover.data, commit_string_recover.len);
 #endif
 
   assert(strcmp((const char*) commit_string.data, (const char*) commit_string_recover.data) == 0);
@@ -90,7 +93,7 @@ int test_basic() {
   pointproofs_proof proof_recover;
   pointproofs_proof_bytes proof_string_recover;
 
-  for (counter = 0; counter < 32; counter++) {
+  for (counter = 0; counter < k; counter++) {
     // generate a proof
     assert(pointproofs_prove(pp_recover, values, n, counter, &proof) == 0);
     assert(pointproofs_proof_serial(proof, &proof_string) == 0);
@@ -98,8 +101,8 @@ int test_basic() {
     assert(pointproofs_proof_serial(proof_recover, &proof_string_recover) == 0);
 
 #ifdef DEBUG
-    hexDump("proof (in bytes)", proof_string.data, PROOF_LEN);
-    hexDump("proof recovered (in bytes)", proof_string_recover.data, PROOF_LEN);
+    hexDump("proof (in bytes)", proof_string.data, proof_string.len);
+    hexDump("proof recovered (in bytes)", proof_string_recover.data, proof_string_recover.len);
 #endif
 
     assert(strcmp((const char*) proof_string.data, (const char*) proof_string_recover.data) == 0);
@@ -111,11 +114,11 @@ int test_basic() {
   // update the commitment for index = 33
   pointproofs_commitment new_commit;
   pointproofs_proof new_proof;
-  assert(pointproofs_commit_update(pp_recover, commit, 33, values[33], values[44], &new_commit) == 0);
-  for (counter = 0; counter < 32; counter++) {
+  assert(pointproofs_commit_update(pp_recover, commit, u_index, values[u_index], values[u_index_new], &new_commit) == 0);
+  for (counter = 0; counter < k; counter++) {
     // update the proofs; the updated index will be 33
     assert(pointproofs_prove(pp_recover, values, n, counter, &proof) == 0);
-    assert(pointproofs_proof_update(pp_recover, proof, counter, 33, values[33], values[44], &new_proof) == 0);
+    assert(pointproofs_proof_update(pp_recover, proof, counter, u_index, values[u_index], values[u_index_new], &new_proof) == 0);
     // verify the new proof
     assert(pointproofs_verify(vp_recover, new_commit, new_proof, values[counter], counter) == true);
   }
@@ -130,6 +133,16 @@ int test_basic() {
   pointproofs_free_prover_params(pp_recover);
   pointproofs_free_verifier_params(pointproofs_param.verifier);
   pointproofs_free_verifier_params(vp_recover);
+
+  pointproofs_free_pp_string(pointproofs_pp_string); //need to free.
+  pointproofs_free_pp_string(pointproofs_pp_string_recover); //need to free.
+  pointproofs_free_vp_string(pointproofs_vp_string); //need to free.
+  pointproofs_free_vp_string(pointproofs_vp_string_recover); //need to free.
+  pointproofs_free_commit_string(commit_string); //need to free.
+  pointproofs_free_commit_string(commit_string_recover); //need to free.
+  pointproofs_free_proof_string(proof_string); //need to free.
+  pointproofs_free_proof_string(proof_string_recover); //need to free.
+
 
   printf("basis tests: success\n");
   return 0;

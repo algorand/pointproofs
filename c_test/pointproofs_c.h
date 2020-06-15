@@ -8,10 +8,16 @@
 #include <stdlib.h>
 
 #if !defined(GROUP_SWITCHED)
+/**
+ * Size for serialized commitment.
+ */
 #define COMMIT_LEN 49
 #endif
 
 #if defined(GROUP_SWITCHED)
+/**
+ * Size for serialized commitment.
+ */
 #define COMMIT_LEN 97
 #endif
 
@@ -32,27 +38,17 @@
 #endif
 
 #if !defined(GROUP_SWITCHED)
-#define PP_LEN 98313
-#endif
-
-#if defined(GROUP_SWITCHED)
-#define PP_LEN 196617
-#endif
-
-#if !defined(GROUP_SWITCHED)
+/**
+ * Size for serialized proof.
+ */
 #define PROOF_LEN 49
 #endif
 
 #if defined(GROUP_SWITCHED)
+/**
+ * Size for serialized proof.
+ */
 #define PROOF_LEN 97
-#endif
-
-#if !defined(GROUP_SWITCHED)
-#define VP_LEN 98889
-#endif
-
-#if defined(GROUP_SWITCHED)
-#define VP_LEN 49737
 #endif
 
 /**
@@ -81,8 +77,17 @@ typedef struct pointproofs_commitment {
  * serialized commitment struct
  */
 typedef struct pointproofs_commitment_bytes {
-  uint8_t data[COMMIT_LEN];
+  uint8_t *data;
+  uintptr_t len;
 } pointproofs_commitment_bytes;
+
+/**
+ * serialized prover parameter struct
+ */
+typedef struct pointproofs_pp_bytes {
+  uint8_t *data;
+  uintptr_t len;
+} pointproofs_pp_bytes;
 
 /**
  * deserialized proof struct
@@ -92,11 +97,27 @@ typedef struct pointproofs_proof {
 } pointproofs_proof;
 
 /**
+ * serialized proof struct
+ */
+typedef struct pointproofs_proof_bytes {
+  uint8_t *data;
+  uintptr_t len;
+} pointproofs_proof_bytes;
+
+/**
  * deserialized verifier parameter struct
  */
 typedef struct pointproofs_vp {
   void *data;
 } pointproofs_vp;
+
+/**
+ * serialized verifer parameter struct
+ */
+typedef struct pointproofs_vp_bytes {
+  uint8_t *data;
+  uintptr_t len;
+} pointproofs_vp_bytes;
 
 /**
  * non-serialized
@@ -105,27 +126,6 @@ typedef struct pointproofs_params {
   pointproofs_pp prover;
   pointproofs_vp verifier;
 } pointproofs_params;
-
-/**
- * serialized prover parameter struct
- */
-typedef struct pointproofs_pp_bytes {
-  uint8_t data[PP_LEN];
-} pointproofs_pp_bytes;
-
-/**
- * serialized proof struct
- */
-typedef struct pointproofs_proof_bytes {
-  uint8_t data[PROOF_LEN];
-} pointproofs_proof_bytes;
-
-/**
- * serialized verifer parameter struct
- */
-typedef struct pointproofs_vp_bytes {
-  uint8_t data[VP_LEN];
-} pointproofs_vp_bytes;
 
 /**
  * Generate a commitment
@@ -162,10 +162,16 @@ int32_t pointproofs_commit_update(pointproofs_pp prover,
  */
 void pointproofs_free_commit(pointproofs_commitment commit);
 
+void pointproofs_free_commit_string(pointproofs_commitment_bytes buf);
+
+void pointproofs_free_pp_string(pointproofs_pp_bytes buf);
+
 /**
  * Free proof
  */
 void pointproofs_free_proof(pointproofs_proof proof);
+
+void pointproofs_free_proof_string(pointproofs_proof_bytes buf);
 
 /**
  * Free prover parameter
@@ -176,6 +182,8 @@ void pointproofs_free_prover_params(pointproofs_pp pp);
  * Free verifier parameter
  */
 void pointproofs_free_verifier_params(pointproofs_vp vp);
+
+void pointproofs_free_vp_string(pointproofs_vp_bytes buf);
 
 /**
  * Generating a pair of parameters
