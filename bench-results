@@ -1,0 +1,155 @@
+warning: use of deprecated item 'std::error::Error::description': use the Display impl or to_string()
+   --> /home/ubuntu/go/src/github.com/algorand/pairing-fork/src/lib.rs:430:39
+    |
+430 |             _ => write!(f, "{}", self.description()),
+    |                                       ^^^^^^^^^^^
+    |
+    = note: `#[warn(deprecated)]` on by default
+
+warning: this method call currently resolves to `<&[T; N] as IntoIterator>::into_iter` (due to autoref coercions), but that might change in the future when `IntoIterator` impls for arrays are added.
+   --> /home/ubuntu/go/src/github.com/algorand/pairing-fork/src/lib.rs:100:62
+    |
+100 |             [(&(p.into().prepare()), &(q.into().prepare()))].into_iter(),
+    |                                                              ^^^^^^^^^ help: use `.iter()` instead of `.into_iter()` to avoid ambiguity: `iter`
+    |
+    = note: `#[warn(array_into_iter)]` on by default
+    = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+    = note: for more information, see issue #66145 <https://github.com/rust-lang/rust/issues/66145>
+
+warning: this method call currently resolves to `<&[T; N] as IntoIterator>::into_iter` (due to autoref coercions), but that might change in the future when `IntoIterator` impls for arrays are added.
+   --> /home/ubuntu/go/src/github.com/algorand/pairing-fork/src/lib.rs:115:14
+    |
+115 |             .into_iter(),
+    |              ^^^^^^^^^ help: use `.iter()` instead of `.into_iter()` to avoid ambiguity: `iter`
+    |
+    = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+    = note: for more information, see issue #66145 <https://github.com/rust-lang/rust/issues/66145>
+
+   Compiling veccom v0.1.0 (/home/ubuntu/go/src/github.com/algorand/veccom-rust)
+    Finished bench [optimized] target(s) in 2.56s
+     Running target/release/deps/veccom-3674ce32c99ec170
+
+running 3 tests
+test merkle::tests::test_com_merkle ... ignored
+test pairings::tests::test_com_pairings ... ignored
+test pairings::tests::test_paramgen ... ignored
+
+test result: ok. 0 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out
+
+     Running target/release/deps/run_merkle-99d89f866263a555
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out
+
+     Running target/release/deps/run_pairings-40d926689b283c9e
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out
+
+     Running target/release/deps/merkle-ccb0cc819e2d8feb
+
+running 9 tests
+test bench_com_merkle                      ... bench:     858,526 ns/iter (+/- 558)
+test bench_commit_update_merkle            ... bench:       6,068 ns/iter (+/- 7)
+test bench_proof_update_no_helper_merkle   ... bench:       4,822 ns/iter (+/- 5)
+test bench_proof_update_with_helper_merkle ... bench:          12 ns/iter (+/- 0)
+test bench_prove_from_scratch_merkle       ... bench:     852,475 ns/iter (+/- 435)
+test bench_prove_from_tree_merkle          ... bench:          63 ns/iter (+/- 0)
+test bench_tree_building_merkle            ... bench:     855,243 ns/iter (+/- 1,282)
+test bench_tree_update_merkle              ... bench:       5,937 ns/iter (+/- 11)
+test bench_verify_merkle                   ... bench:       6,026 ns/iter (+/- 5)
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 9 measured
+
+     Running target/release/deps/pairings-8e8a4296bb9d0494
+Gnuplot not found, disabling plotting
+Benchmarking pairings/commit_no_precomp
+Benchmarking pairings/commit_no_precomp: Warming up for 1.0000 s
+Benchmarking pairings/commit_no_precomp: Collecting 10 samples in estimated 56.327 s (55 iterations)
+Benchmarking pairings/commit_no_precomp: Analyzing
+pairings/commit_no_precomp
+                        time:   [35.332 ms 35.363 ms 35.416 ms]
+Found 2 outliers among 10 measurements (20.00%)
+  1 (10.00%) high mild
+  1 (10.00%) high severe
+Benchmarking pairings/commit_precomp_256
+Benchmarking pairings/commit_precomp_256: Warming up for 1.0000 s
+Benchmarking pairings/commit_precomp_256: Collecting 10 samples in estimated 378.58 s (55 iterations)
+Benchmarking pairings/commit_precomp_256: Analyzing
+pairings/commit_precomp_256
+                        time:   [28.584 ms 28.770 ms 29.167 ms]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking pairings/prove_no_precomp
+Benchmarking pairings/prove_no_precomp: Warming up for 1.0000 s
+Benchmarking pairings/prove_no_precomp: Collecting 10 samples in estimated 55.801 s (55 iterations)
+Benchmarking pairings/prove_no_precomp: Analyzing
+pairings/prove_no_precomp
+                        time:   [35.369 ms 35.390 ms 35.412 ms]
+Found 2 outliers among 10 measurements (20.00%)
+  1 (10.00%) low severe
+  1 (10.00%) high severe
+Benchmarking pairings/prove_precomp_256
+Benchmarking pairings/prove_precomp_256: Warming up for 1.0000 s
+Benchmarking pairings/prove_precomp_256: Collecting 10 samples in estimated 377.84 s (55 iterations)
+Benchmarking pairings/prove_precomp_256: Analyzing
+pairings/prove_precomp_256
+                        time:   [28.259 ms 28.280 ms 28.329 ms]
+Benchmarking pairings/verify
+Benchmarking pairings/verify: Warming up for 1.0000 s
+Benchmarking pairings/verify: Collecting 10 samples in estimated 25.101 s (55 iterations)
+Benchmarking pairings/verify: Analyzing
+pairings/verify         time:   [2.9468 ms 2.9484 ms 2.9521 ms]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+Benchmarking pairings/commit_update_no_precomp
+Benchmarking pairings/commit_update_no_precomp: Warming up for 1.0000 s
+Benchmarking pairings/commit_update_no_precomp: Collecting 10 samples in estimated 55.907 s (55 iterations)
+Benchmarking pairings/commit_update_no_precomp: Analyzing
+pairings/commit_update_no_precomp
+                        time:   [193.07 us 194.92 us 198.06 us]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+Benchmarking pairings/commit_update_precomp_3
+Benchmarking pairings/commit_update_precomp_3: Warming up for 1.0000 s
+Benchmarking pairings/commit_update_precomp_3: Collecting 10 samples in estimated 69.158 s (55 iterations)
+Benchmarking pairings/commit_update_precomp_3: Analyzing
+pairings/commit_update_precomp_3
+                        time:   [104.10 us 104.19 us 104.25 us]
+Found 2 outliers among 10 measurements (20.00%)
+  1 (10.00%) low mild
+  1 (10.00%) high severe
+Benchmarking pairings/commit_update_precomp_256
+Benchmarking pairings/commit_update_precomp_256: Warming up for 1.0000 s
+Benchmarking pairings/commit_update_precomp_256: Collecting 10 samples in estimated 377.98 s (55 iterations)
+Benchmarking pairings/commit_update_precomp_256: Analyzing
+pairings/commit_update_precomp_256
+                        time:   [50.801 us 50.973 us 51.271 us]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+Benchmarking pairings/proof_update_no_precomp
+Benchmarking pairings/proof_update_no_precomp: Warming up for 1.0000 s
+Benchmarking pairings/proof_update_no_precomp: Collecting 10 samples in estimated 2000.8 s (55 iterations)
+Benchmarking pairings/proof_update_no_precomp: Analyzing
+pairings/proof_update_no_precomp
+                        time:   [192.31 us 192.50 us 192.91 us]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking pairings/proof_update_precomp_3
+Benchmarking pairings/proof_update_precomp_3: Warming up for 1.0000 s
+Benchmarking pairings/proof_update_precomp_3: Collecting 10 samples in estimated 2012.0 s (55 iterations)
+Benchmarking pairings/proof_update_precomp_3: Analyzing
+pairings/proof_update_precomp_3
+                        time:   [101.29 us 101.48 us 101.90 us]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking pairings/proof_update_precomp_256
+Benchmarking pairings/proof_update_precomp_256: Warming up for 1.0000 s
+Benchmarking pairings/proof_update_precomp_256: Collecting 10 samples in estimated 1918.4 s (55 iterations)
+Benchmarking pairings/proof_update_precomp_256: Analyzing
+pairings/proof_update_precomp_256
+                        time:   [48.830 us 50.006 us 51.644 us]
+
+Gnuplot not found, disabling plotting
